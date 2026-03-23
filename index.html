@@ -51,10 +51,11 @@
       const snap = await getDoc(doc(db, 'users', uid));
       if (!snap.exists()) return;
       const d = snap.data();
-      if (d.errorLog)  { window.errorLog      = d.errorLog;  localStorage.setItem('danskFrem_errorLog', JSON.stringify(d.errorLog)); }
-      if (d.stats)     { window.stats         = d.stats;     localStorage.setItem('danskFrem_stats',    JSON.stringify(d.stats)); }
-      if (d.notes)     { window.notes         = d.notes;     localStorage.setItem('danskFrem_notes',    JSON.stringify(d.notes)); }
-      if (d.oeer)      { window.sprogOeer     = d.oeer;      localStorage.setItem('danskFrem_oeer',     JSON.stringify(d.oeer)); }
+      if (d.errorLog)   { window.errorLog    = d.errorLog;   localStorage.setItem('danskFrem_errorLog',   JSON.stringify(d.errorLog)); }
+      if (d.stats)      { window.stats       = d.stats;      localStorage.setItem('danskFrem_stats',      JSON.stringify(d.stats)); }
+      if (d.notes)      { window.notes       = d.notes;      localStorage.setItem('danskFrem_notes',      JSON.stringify(d.notes)); }
+      if (d.archiveLog) { window.archiveLog  = d.archiveLog; localStorage.setItem('danskFrem_archiveLog', JSON.stringify(d.archiveLog)); }
+      if (d.oeer)       { window.sprogOeer   = d.oeer;       localStorage.setItem('danskFrem_oeer',       JSON.stringify(d.oeer)); }
       if (d.apiKey)    { window._danskApiKey  = d.apiKey;    window.appSettings = {...(window.appSettings||{}), apiKey: d.apiKey}; localStorage.setItem('danskFrem_settings', JSON.stringify(window.appSettings)); const el = document.getElementById('apiKeyInput'); if(el) el.value = d.apiKey; }
       if (typeof window.updateUI === 'function') window.updateUI();
       if (typeof window.renderNotes === 'function') window.renderNotes();
@@ -68,10 +69,11 @@
     syncUnsubscribe = onSnapshot(doc(db, 'users', uid), (snap) => {
       if (!snap.exists()) return;
       const d = snap.data();
-      if (d.errorLog)  window.errorLog      = d.errorLog;
-      if (d.stats)     window.stats         = d.stats;
-      if (d.notes)     window.notes         = d.notes;
-      if (d.oeer)      { window.sprogOeer   = d.oeer; localStorage.setItem('danskFrem_oeer', JSON.stringify(d.oeer)); }
+      if (d.errorLog)   window.errorLog   = d.errorLog;
+      if (d.stats)      window.stats      = d.stats;
+      if (d.notes)      window.notes      = d.notes;
+      if (d.archiveLog) { window.archiveLog = d.archiveLog; localStorage.setItem('danskFrem_archiveLog', JSON.stringify(d.archiveLog)); }
+      if (d.oeer)       { window.sprogOeer  = d.oeer; localStorage.setItem('danskFrem_oeer', JSON.stringify(d.oeer)); }
       // phrases removed
       if (typeof window.updateUI === 'function') window.updateUI();
       if (typeof window.renderOeList === 'function') window.renderOeList();
@@ -1680,7 +1682,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.8.2";
+const APP_VERSION = "3.8.3";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
@@ -1767,7 +1769,7 @@ function saveData() {
   try { localStorage.setItem('danskFrem_stats', JSON.stringify(stats)); } catch(e){}
   try { localStorage.setItem('danskFrem_archiveLog', JSON.stringify(archiveLog)); } catch(e){}
   // Cloud sync
-  if (window._fbSave) window._fbSave({ errorLog, stats });
+  if (window._fbSave) window._fbSave({ errorLog, stats, archiveLog });
   updateUI();
 }
 function loadData() {
