@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dansk Frem – Lær dansk til job og liv</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -52,7 +54,7 @@
       if (d.errorLog)  { window.errorLog      = d.errorLog;  localStorage.setItem('danskFrem_errorLog', JSON.stringify(d.errorLog)); }
       if (d.stats)     { window.stats         = d.stats;     localStorage.setItem('danskFrem_stats',    JSON.stringify(d.stats)); }
       if (d.notes)     { window.notes         = d.notes;     localStorage.setItem('danskFrem_notes',    JSON.stringify(d.notes)); }
-      if (d.phrases)   { window.customPhrases = d.phrases; }
+      if (d.oeer)      { window.sprogOeer     = d.oeer;      localStorage.setItem('danskFrem_oeer',     JSON.stringify(d.oeer)); }
       if (d.apiKey)    { window._danskApiKey  = d.apiKey;    window.appSettings = {...(window.appSettings||{}), apiKey: d.apiKey}; localStorage.setItem('danskFrem_settings', JSON.stringify(window.appSettings)); const el = document.getElementById('apiKeyInput'); if(el) el.value = d.apiKey; }
       if (typeof window.updateUI === 'function') window.updateUI();
       if (typeof window.renderNotes === 'function') window.renderNotes();
@@ -68,6 +70,7 @@
       if (d.errorLog)  window.errorLog      = d.errorLog;
       if (d.stats)     window.stats         = d.stats;
       if (d.notes)     window.notes         = d.notes;
+      if (d.oeer)      { window.sprogOeer   = d.oeer; localStorage.setItem('danskFrem_oeer', JSON.stringify(d.oeer)); }
       // phrases removed
       if (typeof window.updateUI === 'function') window.updateUI();
     });
@@ -1644,7 +1647,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.7.8";
+const APP_VERSION = "3.8.0";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
@@ -1959,44 +1962,41 @@ function parseImageErrors(feedbackText, source) {
     ? feedbackText.slice(0, feedbackText.indexOf(splitMarker))
     : feedbackText;
 
-  // Normalize: collapse newlines within Fejl/Ret blocks
-  const normalized = feedbackOnly.replace(/\n+/g, ' ');
-
-  // Format: "Fejl: X → Ret: Y" optionally followed by "— explanation" or "Tip: ..."
-  // Captures everything after → Ret: up to the next Fejl: or end
-  const re1 = /Fejl:\s*(.+?)\s*(?:→|–>|->)\s*Ret:\s*(.+?)(?=\s*Fejl:|\s*$)/gi;
+  // Try line-by-line format first (Fejl/Ret on separate lines)
+  const lines = feedbackOnly.split('\n').map(l => l.trim()).filter(Boolean);
+  let fejl = '', ret = '', tip = '';
   let found = false;
-  for (const m of normalized.matchAll(re1)) {
-    const fejl = m[1].trim();
-    let retRaw = m[2].trim();
-    // Extract tip/explanation after — or Tip:
-    let tip = '';
-    const dashMatch = retRaw.match(/^(.+?)\s*[—–-]{1,2}\s*(.+)$/);
-    const tipMatch  = retRaw.match(/^(.+?)\s+Tip:\s*(.+)$/i);
-    if (tipMatch)  { retRaw = tipMatch[1].trim();  tip = tipMatch[2].trim(); }
-    else if (dashMatch) { retRaw = dashMatch[1].trim(); tip = dashMatch[2].trim(); }
-    if (fejl && retRaw) { saveError(fejl, retRaw, tip, source); found = true; }
-  }
 
-  // Format 2: Fejl/Ret on separate lines (fallback)
-  if (!found) {
-    const lines = feedbackOnly.split('\n').map(l => l.trim()).filter(Boolean);
-    let fejl = '', ret = '', tip = '';
-    for (const l of lines) {
-      if (/^[-–•*]?\s*Fejl:/i.test(l)) {
-        if (fejl && ret) { saveError(fejl, ret, tip, source); tip = ''; }
-        fejl = l.replace(/^[-–•*]?\s*Fejl:/i, '').trim();
-        ret = ''; tip = '';
-      } else if (/^[-–•*]?\s*Ret:/i.test(l)) {
-        let retRaw = l.replace(/^[-–•*]?\s*Ret:/i, '').trim();
-        const dashMatch = retRaw.match(/^(.+?)\s*[—–-]{1,2}\s*(.+)$/);
-        if (dashMatch) { retRaw = dashMatch[1].trim(); tip = dashMatch[2].trim(); }
-        ret = retRaw;
-      } else if (/^[-–•*]?\s*Tip:/i.test(l)) {
-        tip = l.replace(/^[-–•*]?\s*Tip:/i, '').trim();
-      }
+  for (const l of lines) {
+    if (/^[-–•*\d.]+\s*Fejl:/i.test(l) || /^Fejl:/i.test(l)) {
+      if (fejl && ret) { saveError(fejl, ret, tip, source); found = true; tip = ''; }
+      fejl = l.replace(/^[-–•*\d.]+\s*Fejl:/i, '').replace(/^Fejl:/i, '').trim();
+      ret = ''; tip = '';
+    } else if (/^[-–•*]?\s*Ret:/i.test(l)) {
+      let retRaw = l.replace(/^[-–•*]?\s*Ret:/i, '').trim();
+      const dashMatch = retRaw.match(/^(.+?)\s*[—–-]{1,2}\s*(.+)$/);
+      if (dashMatch) { retRaw = dashMatch[1].trim(); tip = dashMatch[2].trim(); }
+      ret = retRaw;
+    } else if (/^[-–•*]?\s*Tip:/i.test(l)) {
+      tip = l.replace(/^[-–•*]?\s*Tip:/i, '').trim();
     }
-    if (fejl && ret) saveError(fejl, ret, tip, source);
+  }
+  if (fejl && ret) { saveError(fejl, ret, tip, source); found = true; }
+
+  // Fallback: inline format "Fejl: X → Ret: Y" on same line
+  if (!found) {
+    const re1 = /Fejl:\s*(.+?)\s*(?:→|–>|->)\s*Ret:\s*(.+?)(?=\s*(?:Fejl:|$))/gi;
+    const normalized = feedbackOnly.replace(/\n+/g, ' ');
+    for (const m of normalized.matchAll(re1)) {
+      const f = m[1].trim();
+      let retRaw = m[2].trim();
+      let t2 = '';
+      const dashMatch = retRaw.match(/^(.+?)\s*[—–-]{1,2}\s*(.+)$/);
+      const tipMatch  = retRaw.match(/^(.+?)\s+Tip:\s*(.+)$/i);
+      if (tipMatch)  { retRaw = tipMatch[1].trim();  t2 = tipMatch[2].trim(); }
+      else if (dashMatch) { retRaw = dashMatch[1].trim(); t2 = dashMatch[2].trim(); }
+      if (f && retRaw) saveError(f, retRaw, t2, source);
+    }
   }
 }
 
@@ -4837,6 +4837,7 @@ function loadOeer() {
 }
 function saveOeer() {
   try { localStorage.setItem('danskFrem_oeer', JSON.stringify(sprogOeer)); } catch(e){}
+  if (window._fbSave) window._fbSave({ oeer: sprogOeer });
 }
 
 function renderOeList() {
