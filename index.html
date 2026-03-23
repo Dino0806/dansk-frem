@@ -1479,6 +1479,37 @@
         <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Byg dit personlige ordforråd inden for emner du kender godt – via en samtale med Claude.</div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openNewOe()">+ Ny ø</button>
+      <button class="btn btn-ghost btn-sm" onclick="openCsvImport()">⬆ CSV importeren</button>
+    </div>
+
+    <!-- CSV Import panel -->
+    <div id="oeCSVImport" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">⬆ CSV importeren</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
+        CSV-Datei mit zwei Spalten: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">Zielsprache,Deutsch</code> – mit oder ohne Kopfzeile.
+      </div>
+      <div style="margin-bottom:12px;">
+        <div class="anki-label">Thema / Inselname</div>
+        <input class="anki-input" type="text" id="csvImportTopic" placeholder="z.B. Arkitektur, Kochen …" style="margin-bottom:0;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none;" onchange="handleCsvFile(this)">
+        <div id="csvDropZone" onclick="document.getElementById('csvFileInput').click()"
+          style="border:2px dashed rgba(255,255,255,0.15);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color 0.2s;"
+          onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+          <div style="font-size:1.5rem;margin-bottom:8px;">📄</div>
+          <div style="font-size:0.88rem;color:var(--muted);">CSV-Datei auswählen oder hierher ziehen</div>
+        </div>
+      </div>
+      <!-- Preview -->
+      <div id="csvPreview" style="display:none;margin-bottom:14px;">
+        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;">Vorschau (<span id="csvRowCount">0</span> Sätze)</div>
+        <div id="csvPreviewList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="csvImportBtn" onclick="importCsvAsOe()" style="display:none;">✓ Als Insel importieren</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeCsvImport()">Abbrechen</button>
+      </div>
     </div>
 
     <!-- Island list -->
@@ -1649,7 +1680,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.8.1";
+const APP_VERSION = "3.8.2";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
@@ -4839,10 +4870,17 @@ function loadOeer() {
 }
 function saveOeer() {
   try { localStorage.setItem('danskFrem_oeer', JSON.stringify(window.sprogOeer)); } catch(e){}
-  if (window._fbSave) window._fbSave({ oeer: window.sprogOeer });
+  // Strip interview history before saving to Firebase (can be very large → Firestore 1MB limit)
+  if (window._fbSave) {
+    const slim = window.sprogOeer.map(oe => {
+      const { history, ...rest } = oe;
+      return rest;
+    });
+    window._fbSave({ oeer: slim });
+  }
 }
 
-function renderOeList() {
+window.renderOeList = function renderOeList() {
   const list = document.getElementById('oeList');
   if (!list) return;
   if (!window.sprogOeer.length) {
@@ -4881,6 +4919,87 @@ function renderOeList() {
       </div>
     </div>`).join('');
 }
+
+// ── CSV IMPORT ────────────────────────────────────────────
+let csvParsedPhrases = [];
+
+function openCsvImport() {
+  document.getElementById('oeCSVImport').style.display = 'block';
+  document.getElementById('oeCreator').style.display = 'none';
+  document.getElementById('csvImportTopic').focus();
+  csvParsedPhrases = [];
+  document.getElementById('csvPreview').style.display = 'none';
+  document.getElementById('csvImportBtn').style.display = 'none';
+  document.getElementById('csvFileInput').value = '';
+}
+function closeCsvImport() {
+  document.getElementById('oeCSVImport').style.display = 'none';
+  csvParsedPhrases = [];
+}
+
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseCsvContent(e.target.result);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCsvContent(text) {
+  csvParsedPhrases = [];
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    // Split on comma or semicolon or tab, respecting quotes
+    const cols = line.match(/("(?:[^"]|"")*"|[^,;\t]+)(?:[,;\t]|$)/g)
+      ?.map(c => c.replace(/[,;\t]$/, '').replace(/^"|"$/g, '').replace(/""/g, '"').trim()) || [];
+    if (cols.length < 2) continue;
+    const [col1, col2] = cols;
+    // Skip header rows
+    if (/^(dansk|target|sprache|language|sentence|satz|da|de)$/i.test(col1)) continue;
+    if (col1 && col2) csvParsedPhrases.push({ da: col1, de: col2 });
+  }
+  // Show preview
+  document.getElementById('csvRowCount').textContent = csvParsedPhrases.length;
+  const previewList = document.getElementById('csvPreviewList');
+  previewList.innerHTML = csvParsedPhrases.slice(0, 10).map(p =>
+    `<div style="font-size:0.83rem;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;">
+      <span style="color:var(--white);">${esc(p.da)}</span>
+      <span style="color:var(--muted);margin-left:8px;">– ${esc(p.de)}</span>
+    </div>`
+  ).join('') + (csvParsedPhrases.length > 10 ? `<div style="font-size:0.75rem;color:var(--muted);padding:4px 10px;">+ ${csvParsedPhrases.length - 10} mehr …</div>` : '');
+  document.getElementById('csvPreview').style.display = csvParsedPhrases.length ? 'block' : 'none';
+  document.getElementById('csvImportBtn').style.display = csvParsedPhrases.length ? 'inline-flex' : 'none';
+}
+
+function importCsvAsOe() {
+  if (!csvParsedPhrases.length) return;
+  const topic = document.getElementById('csvImportTopic').value.trim() || 'CSV Import';
+  const newOe = {
+    topic,
+    desc: `Importiert aus CSV – ${csvParsedPhrases.length} Sätze`,
+    phrases: csvParsedPhrases,
+    date: new Date().toLocaleDateString('da-DK'),
+    history: []
+  };
+  window.sprogOeer.unshift(newOe);
+  saveOeer();
+  closeCsvImport();
+  window.renderOeList();
+}
+
+// Drag & drop on CSV zone
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('csvDropZone');
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--red)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor = 'rgba(255,255,255,0.15)'; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.borderColor = 'rgba(255,255,255,0.15)';
+    const file = e.dataTransfer.files[0];
+    if (file) { const r = new FileReader(); r.onload = ev => parseCsvContent(ev.target.result); r.readAsText(file, 'UTF-8'); }
+  });
+});
 
 function openNewOe() {
   document.getElementById('oeCreator').style.display = 'block';
