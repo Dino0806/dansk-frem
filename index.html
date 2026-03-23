@@ -1597,7 +1597,7 @@ function getApiKey() {
 }
 
 // ── Daily request limit ───────────────────────────────────
-const DAILY_LIMIT = 20;
+const DAILY_LIMIT = 50;
 const ADMIN_PASS  = 'dansker2025'; // change this to your own password
 
 function isAdminMode() {
@@ -1644,7 +1644,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.7.7";
+const APP_VERSION = "3.7.8";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
