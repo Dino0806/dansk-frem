@@ -756,6 +756,17 @@
     <hr class="settings-divider">
 
     <div class="settings-section">
+      <div class="settings-label" data-i18n="settingsSync">☁️ Cloud-Sync</div>
+      <div id="syncStatus" style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Ikke logget ind – data gemmes kun lokalt</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="syncLoginBtn" class="btn btn-ghost btn-sm" onclick="window.firebaseLogin && window.firebaseLogin()" data-i18n="syncLoginBtn">Log ind med Google</button>
+        <button id="syncLogoutBtn" class="btn btn-ghost btn-sm" onclick="window.firebaseLogout && window.firebaseLogout()" style="display:none;" data-i18n="syncLogoutBtn">Log ud</button>
+      </div>
+    </div>
+
+    <hr class="settings-divider">
+
+    <div class="settings-section">
       <div class="settings-label">🔑 API-nøgle</div>
       <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;" id="apiKeyStatusText">Nøgle gemt i din browser</div>
       <button class="btn btn-ghost btn-sm" onclick="showApiKeyModal()">Skift API-nøgle</button>
@@ -1633,7 +1644,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.7.6";
+const APP_VERSION = "3.7.7";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
