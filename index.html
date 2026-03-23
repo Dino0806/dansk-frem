@@ -58,6 +58,7 @@
       if (d.apiKey)    { window._danskApiKey  = d.apiKey;    window.appSettings = {...(window.appSettings||{}), apiKey: d.apiKey}; localStorage.setItem('danskFrem_settings', JSON.stringify(window.appSettings)); const el = document.getElementById('apiKeyInput'); if(el) el.value = d.apiKey; }
       if (typeof window.updateUI === 'function') window.updateUI();
       if (typeof window.renderNotes === 'function') window.renderNotes();
+      if (typeof window.renderOeList === 'function') window.renderOeList();
     } catch(e) { console.warn('Firestore pull failed:', e); }
   }
 
@@ -73,6 +74,7 @@
       if (d.oeer)      { window.sprogOeer   = d.oeer; localStorage.setItem('danskFrem_oeer', JSON.stringify(d.oeer)); }
       // phrases removed
       if (typeof window.updateUI === 'function') window.updateUI();
+      if (typeof window.renderOeList === 'function') window.renderOeList();
     });
   }
 
@@ -1647,7 +1649,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.8.0";
+const APP_VERSION = "3.8.1";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
@@ -4829,21 +4831,21 @@ function toggleFaq(id) {
 // ═══════════════════════════════════════════════════════════
 // SPROGØER
 // ═══════════════════════════════════════════════════════════
-let sprogOeer = []; // saved islands
+window.sprogOeer = window.sprogOeer || []; // saved islands – use window so Firebase can update it
 let activeOe = null; // { topic, desc, phrases[], history[] }
 
 function loadOeer() {
-  try { const r = localStorage.getItem('danskFrem_oeer'); if(r) sprogOeer = JSON.parse(r); } catch(e){}
+  try { const r = localStorage.getItem('danskFrem_oeer'); if(r) window.sprogOeer = JSON.parse(r); } catch(e){}
 }
 function saveOeer() {
-  try { localStorage.setItem('danskFrem_oeer', JSON.stringify(sprogOeer)); } catch(e){}
-  if (window._fbSave) window._fbSave({ oeer: sprogOeer });
+  try { localStorage.setItem('danskFrem_oeer', JSON.stringify(window.sprogOeer)); } catch(e){}
+  if (window._fbSave) window._fbSave({ oeer: window.sprogOeer });
 }
 
 function renderOeList() {
   const list = document.getElementById('oeList');
   if (!list) return;
-  if (!sprogOeer.length) {
+  if (!window.sprogOeer.length) {
     list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
       <div style="font-size:2rem;margin-bottom:12px;">🗺️</div>
       <div style="font-size:0.95rem;margin-bottom:6px;">Endnu ingen sprogøer</div>
@@ -4851,7 +4853,7 @@ function renderOeList() {
     </div>`;
     return;
   }
-  list.innerHTML = sprogOeer.map((oe, i) => `
+  list.innerHTML = window.sprogOeer.map((oe, i) => `
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:18px 20px;margin-bottom:14px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
         <div>
@@ -5018,7 +5020,7 @@ async function sendOeMessage() {
 
 function finishOeInterview() {
   if (!activeOe || !activeOe.phrases.length) { cancelOeInterview(); return; }
-  sprogOeer.unshift({ ...activeOe, date: new Date().toLocaleDateString('da-DK') });
+  window.sprogOeer.unshift({ ...activeOe, date: new Date().toLocaleDateString('da-DK') });
   saveOeer();
   activeOe = null;
   document.getElementById('oeInterview').style.display = 'none';
@@ -5030,7 +5032,7 @@ function cancelOeInterview() {
 }
 
 function startOeUebung(i) {
-  const oe = sprogOeer[i];
+  const oe = window.sprogOeer[i];
   if (!oe.phrases.length) return;
   // Hide other panels
   document.getElementById('oeList').style.display = 'none';
@@ -5162,8 +5164,8 @@ function closeOePractice() {
 }
 
 function continueOe(i) {
-  activeOe = { ...sprogOeer[i], history: sprogOeer[i].history || [] };
-  sprogOeer.splice(i, 1); // remove from saved, will re-save on finish
+  activeOe = { ...window.sprogOeer[i], history: window.sprogOeer[i].history || [] };
+  window.sprogOeer.splice(i, 1); // remove from saved, will re-save on finish
   saveOeer();
   document.getElementById('oeInterviewTitle').textContent = '🗺️ ' + activeOe.topic;
   document.getElementById('oeInterview').style.display = 'block';
@@ -5171,11 +5173,11 @@ function continueOe(i) {
   renderOePhrases();
 }
 function deleteOe(i) {
-  if (confirm('Ø "' + sprogOeer[i].topic + '" löschen?')) { sprogOeer.splice(i, 1); saveOeer(); renderOeList(); }
+  if (confirm('Ø "' + window.sprogOeer[i].topic + '" löschen?')) { window.sprogOeer.splice(i, 1); saveOeer(); renderOeList(); }
 }
 
 function exportOeCSV(i) {
-  const oe = sprogOeer[i];
+  const oe = window.sprogOeer[i];
   if (!oe.phrases.length) return;
   const rows = [['Dansk','Deutsch']].concat(oe.phrases.map(p => ['"'+p.da.replace(/"/g,'""')+'"', '"'+p.de.replace(/"/g,'""')+'"']));
   const csv = '\ufeff' + rows.map(r => r.join(',')).join('\n');
@@ -5191,7 +5193,7 @@ function exportOeCSV(i) {
 }
 
 async function exportOeAnki(i) {
-  const oe = sprogOeer[i];
+  const oe = window.sprogOeer[i];
   if (!oe.phrases.length) return;
   // Simple sentence cards: front = DA sentence, back = DE translation
   const cards = oe.phrases.map((p, j) => ({
