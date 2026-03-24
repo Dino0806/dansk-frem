@@ -768,9 +768,9 @@
     <hr class="settings-divider">
 
     <div class="settings-section">
-      <div class="settings-label">🔑 API-nøgle</div>
+      <div class="settings-label">🔑 API Key</div>
       <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;" id="apiKeyStatusText">Key saved in your browser</div>
-      <button class="btn btn-ghost btn-sm" onclick="showApiKeyModal()">Skift API-nøgle</button>
+      <button class="btn btn-ghost btn-sm" onclick="showApiKeyModal()">Change API key</button>
     </div>
 
     <hr class="settings-divider">
@@ -915,7 +915,7 @@
         <div style="font-size:1.6rem;line-height:1;">🎭</div>
         <div>
           <div style="font-weight:600;font-size:0.9rem;">Fri situation</div>
-          <div style="font-size:0.75rem;color:var(--muted);">Eget thema</div>
+          <div style="font-size:0.75rem;color:var(--muted);">Custom topic</div>
         </div>
       </div>
     </div>
@@ -1141,16 +1141,16 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select class="sort-select" id="sortSelect" onchange="renderErrors()">
-            <option value="newest">↓ Neueste zuerst</option>
+            <option value="newest">↓ Newest first</option>
             <option value="oldest">↑ Älteste zuerst</option>
           </select>
-          <button class="btn btn-ghost btn-sm" onclick="clearAllErrors()">Ryd alt ×</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearAllErrors()">Clear all ×</button>
         </div>
       </div>
     </div>
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
       <div class="tag-filter-section">
-        <span class="tag-filter-label">Fejltype</span>
+        <span class="tag-filter-label">Error type</span>
         <button class="tag-filter-btn tag-grammatik" onclick="toggleTagFilter('grammatik',this)">grammatik</button>
         <button class="tag-filter-btn tag-ordstilling" onclick="toggleTagFilter('ordstilling',this)">ordstilling</button>
         <button class="tag-filter-btn tag-ordvalg" onclick="toggleTagFilter('ordvalg',this)">ordvalg</button>
@@ -1176,7 +1176,6 @@
       <span id="filteredCount" style="font-size:0.82rem;color:var(--muted);"></span>
       <div class="export-btns">
         <button class="btn-export csv" onclick="exportCSV()">⬇ CSV</button>
-        <button class="btn-export json" onclick="exportTXT()">⬇ TXT Lernkarten</button>
         <button class="btn-export" style="background:rgba(26,26,46,0.7);border-color:rgba(100,100,180,0.4);color:#a0a8e0;" onclick="openAnkiExport()">🃏 → Anki</button>
       </div>
     </div>
@@ -1208,7 +1207,7 @@
     <div id="ankiFromFejlBanner" style="display:none;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;">
       <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">📋 Aus Fejllog → Anki</div>
       <div id="ankiFejlInfo" style="font-size:0.9rem;margin-bottom:4px;"></div>
-      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Claude erstellt Kontext-Karten mit den <strong>korrekten</strong> Sätzen – inklusive Eselsbrücke und Grammatikhinweis aus deinem Fehler-Tip.</div>
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Claude creates context cards with the <strong>correct</strong> sentences – including mnemonic and grammar note from your error tip.</div>
       <div id="ankiFejlProgress" style="display:none;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
           <span id="ankiFejlProgressLabel">Genererer …</span>
@@ -1332,7 +1331,7 @@
       <div id="ankiSavedList"><div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;font-style:italic;" data-i18n="ankiNoCards">Ingen kort gemt endnu.</div></div>
       <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
         <button class="btn btn-primary" data-i18n="ankiExportApkg" onclick="exportAnkiApkg()">⬇ Eksportér som .apkg</button>
-        <button class="btn btn-ghost" style="color:var(--red);" data-i18n="ankiDeleteAll" onclick="clearAnkiCards()">Slet alle</button>
+        <button class="btn btn-ghost" style="color:var(--red);" data-i18n="ankiDeleteAll" onclick="clearAnkiCards()">Delete all</button>
       </div>
     </div>
   </div>
@@ -1418,7 +1417,7 @@
   <div id="apiKeyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--dark);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;max-width:420px;width:100%;">
       <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">🔑 API Key Required</div>
-      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:20px;line-height:1.6;">To use Dansk Frem skal du indtaste din Anthropic API-nøgle. Den gemmes kun i din browser og bruges aldrig andetsteds.</p>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:20px;line-height:1.6;">To use Dansk Frem, please enter your Anthropic API key. It is stored only in your browser and never shared.</p>
       <div style="margin-bottom:8px;">
         <input type="password" id="apiKeyModalInput" placeholder="sk-ant-api03-…"
           style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box;"
@@ -1435,7 +1434,7 @@
   <!-- ANKI EXPORT MODAL -->
   <div id="ankiExportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#1e1a16;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;max-width:420px;width:100%;">
-      <div style="font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:6px;">📦 Export fertig</div>
+      <div style="font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:6px;">📦 Export ready</div>
       <div id="ankiModalInfo" style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;"></div>
       <a id="ankiDownloadLink" style="display:block;padding:12px;background:var(--red);color:white;border-radius:8px;text-align:center;text-decoration:none;font-weight:600;margin-bottom:12px;"id="ankiDownloadLinkText">⬇ Download fil</a>
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;text-align:center;"><span data-i18n="ankiInstructions" id="ankiInstructionsEl">I Anki: <strong>Fil → Importér</strong> → vælg .apkg</span></div>
@@ -1677,7 +1676,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.9.3";
+const APP_VERSION = "3.9.4";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
@@ -2212,23 +2211,6 @@ function exportCSV() {
   downloadFile('dansk-frem-errors.csv', 'text/csv;charset=utf-8;', '\uFEFF' + [header.join(','), ...rows].join('\n'));
 }
 
-function exportTXT() {
-  const data = getFilteredErrors();
-  if (!data.length) { alert(t('noExportData')); return; }
-  const now = new Date().toLocaleDateString('da-DK', {day:'numeric', month:'long', year:'numeric'});
-  const lines = [
-    'Dansk Frem – Correct words and sentences',
-    now,
-    `${data.length} corrections`,
-    '',
-    '─────────────────────────────────────',
-    ''
-  ];
-  data.forEach((e) => {
-    lines.push(e.ret);
-  });
-  downloadFile('dansk-frem-corrections.txt', 'text/plain;charset=utf-8;', lines.join('\n'));
-}
 
 function downloadFile(filename, mime, content) {
   const blob = new Blob([content], {type: mime});
@@ -4595,62 +4577,7 @@ async function getNoteFeedback(text) {
 
 
 const FAQ_ANSWERS = {
-  da: {
-    faq1: `<p>En API-nøgle giver appen adgang til Claude AI. Sådan får du en:</p>
-      <ol>
-        <li>Gå til <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></li>
-        <li>Opret en konto og klik på <strong>API Keys</strong></li>
-        <li>Klik <strong>Create Key</strong>, kopiér nøglen</li>
-        <li>Indsæt den i Settings → API-nøgle og klik Gem</li>
-      </ol>
-      <div class="faq-tip">💡 Nøglen starter med <code>sk-ant-</code>. Nye brugere får gratis startcredits.</div>`,
-    faq2: `<p><strong>Samtale</strong> er dit daglige samtalerum med en AI-persona på dansk.</p>
-      <ul>
-        <li><strong>Lars</strong> – uformel kollega, hverdagsdansk</li>
-        <li><strong>Maja</strong> – veninde, naturlig samtale</li>
-        <li><strong>Fri situation</strong> – du vælger konteksten selv (tandlæge, jobsamtale ...)</li>
-      </ul>
-      <p style="margin-top:8px;">Efter hver besked får du automatisk en korrektion med fejl, rettelse og tip – som gemmes i din Fejllog.</p>
-      <div class="faq-tip">💡 Skriv på dansk – fejl er velkomne! Det er sådan du lærer.</div>`,
-    faq3: `<p><strong>Sprogøer</strong> er personlige ordforrådsøer inden for emner du kender godt.</p>
-      <ol>
-        <li>Opret en ny ø med et emne (f.eks. "Arkitektur" eller "Madlavning")</li>
-        <li>Claude interviewer dig på dansk om emnet og samler nyttige sætninger</li>
-        <li>Du kan fortsætte interviewet når som helst og tilføje flere sætninger</li>
-        <li>Øv sætningerne med <strong>🎯 Practice</strong> – oversæt fra tysk til dansk</li>
-        <li>Eksportér som CSV eller Anki-kort</li>
-      </ol>
-      <div class="faq-tip">💡 Du kan svare på dansk eller tysk – Claude samler sætningerne uanset hvad.</div>`,
-    faq4: `<p>Streaken tæller dage i træk hvor du når dit daglige skrivemål.</p>
-      <ul>
-        <li>Standard: <strong>100 ord</strong> om dagen – kan ændres i Settings</li>
-        <li>Når du når målet, tæller dagen med i din streak 🔥</li>
-        <li>Springer du en dag over, nulstilles streaken</li>
-        <li>Stats show your words today, longest text and conversations</li>
-      </ul>
-      <div class="faq-tip">💡 Konsistens er vigtigere end mængde – 100 ord tager kun 5-10 minutter!</div>`,
-    faq5: `<p>Anki er et gratis flashcard-program med <strong>spaced repetition</strong>.</p>
-      <ul>
-        <li><strong>Fra Fejllog:</strong> Eksportér dine fejl som Lückentext-kort – sætning med lücke på forsiden, korrekt svar + grammatikforklaring på bagsiden</li>
-        <li><strong>Enkelt ord:</strong> Skriv et ord → Claude genererer en kontekstsætning med oversættelse og huskeregel</li>
-        <li><strong>Grammatik-batch:</strong> Angiv en regel (f.eks. "Datid") → Claude laver 5/10/20 øvelseskort automatisk</li>
-        <li><strong>Sprogøer:</strong> Eksportér alle sætninger fra en ø som Anki-kort</li>
-      </ul>
-      <ol style="margin-top:8px;">
-        <li>Download Anki på <a href="https://apps.ankiweb.net" target="_blank">apps.ankiweb.net</a></li>
-        <li>Eksportér .apkg fra Log → Anki</li>
-        <li>Åbn Anki → Fil → Importér → vælg filen</li>
-      </ol>
-      <div class="faq-tip">💡 10 minutter Anki om dagen er mere effektivt end en times intensiv læsning.</div>`,
-    faq6: `<p>Dansk Frem er designet med privatlivet i fokus:</p>
-      <ul>
-        <li><strong>API-nøglen</strong> gemmes kun lokalt i din browser og sendes direkte til Anthropic</li>
-        <li><strong>Fejllog, noter og sprogøer</strong> gemmes lokalt (localStorage)</li>
-        <li>Med <strong>Cloud-Sync</strong> gemmes data krypteret i Firebase knyttet til din Google-konto</li>
-        <li>Ingen reklamer, ingen tracking, ingen tredjeparts analytics</li>
-      </ul>
-      <div class="faq-tip">💡 Appen virker offline – kun AI-funktioner kræver internet.</div>`
-  },
+  
   en: {
     faq1: `<p>An API key gives the app access to Claude AI. Here's how to get one:</p>
       <ol>
@@ -5384,7 +5311,7 @@ loadDailyContent();
     <span class="nav-icon">🏠</span><span>Hjem</span>
   </button>
   <button class="bottom-nav-item" onclick="showTab('chat')" data-tab="chat">
-    <span class="nav-icon">💬</span><span>Samtale</span>
+    <span class="nav-icon">💬</span><span>Chat</span>
   </button>
   <button class="bottom-nav-item" onclick="showTab('oev')" data-tab="oev">
     <span class="nav-icon">✍️</span><span>Øv</span>
