@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dansk Frem – Lær dansk til job og liv</title>
+<title>Dansk Frem – Learn Danish</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -69,14 +69,16 @@
     syncUnsubscribe = onSnapshot(doc(db, 'users', uid), (snap) => {
       if (!snap.exists()) return;
       const d = snap.data();
-      if (d.errorLog)   window.errorLog   = d.errorLog;
-      if (d.stats)      window.stats      = d.stats;
-      if (d.notes)      window.notes      = d.notes;
+      if (d.errorLog)   { window.errorLog   = d.errorLog;   localStorage.setItem('danskFrem_errorLog',   JSON.stringify(d.errorLog)); }
+      if (d.stats)      { window.stats      = d.stats;      localStorage.setItem('danskFrem_stats',      JSON.stringify(d.stats)); }
+      if (d.notes)      { window.notes      = d.notes;      localStorage.setItem('danskFrem_notes',      JSON.stringify(d.notes)); }
       if (d.archiveLog) { window.archiveLog = d.archiveLog; localStorage.setItem('danskFrem_archiveLog', JSON.stringify(d.archiveLog)); }
-      if (d.oeer)       { window.sprogOeer  = d.oeer; localStorage.setItem('danskFrem_oeer', JSON.stringify(d.oeer)); }
-      // phrases removed
-      if (typeof window.updateUI === 'function') window.updateUI();
-      if (typeof window.renderOeList === 'function') window.renderOeList();
+      if (d.oeer)       { window.sprogOeer  = d.oeer;       localStorage.setItem('danskFrem_oeer',       JSON.stringify(d.oeer)); }
+      if (typeof window.updateUI === 'function')      window.updateUI();
+      if (typeof window.renderErrors === 'function')  window.renderErrors();
+      if (typeof window.renderNotes === 'function')   window.renderNotes();
+      if (typeof window.renderOeList === 'function')  window.renderOeList();
+      if (typeof window.renderArchive === 'function') window.renderArchive();
     });
   }
 
@@ -321,10 +323,10 @@
   .loading-dots span { width:6px; height:6px; background:var(--muted); border-radius:50%; animation:bounce 1.2s infinite; }
   .loading-dots span:nth-child(2){animation-delay:0.2s} .loading-dots span:nth-child(3){animation-delay:0.4s}
   @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-5px);opacity:1}}
-  .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:32px; }
-  .stat-card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:12px; padding:18px; text-align:center; }
-  .stat-num { font-family:'Fraunces',serif; font-size:2rem; font-weight:700; color:var(--white); line-height:1; margin-bottom:4px; }
-  .stat-label { font-size:0.78rem; color:var(--muted); font-weight:500; }
+  .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:28px; }
+  .stat-card { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); border-radius:12px; padding:16px; text-align:center; }
+  .stat-num { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:700; color:var(--white); line-height:1; margin-bottom:4px; }
+  .stat-label { font-size:0.75rem; color:var(--muted); font-weight:500; line-height:1.3; }
   .level-bar-wrap { background:rgba(255,255,255,0.08); border-radius:8px; height:8px; overflow:hidden; margin:8px 0 4px; }
   .level-bar { height:100%; background:linear-gradient(90deg,var(--red),var(--accent)); border-radius:8px; transition:width 1s ease; }
   .section-title { font-family:'Fraunces',serif; font-size:1.4rem; margin-bottom:18px; color:var(--white); }
@@ -719,7 +721,7 @@
   <div style="display:flex;align-items:center;gap:12px;">
     <div class="streak-badge">🔥 <span id="streakCount">0</span> dage</div>
     <div id="rateLimitBadge" style="font-size:0.72rem;color:var(--muted);padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);display:none;">⚡ <span id="rateLimitCount">20</span> tilbage</div>
-    <button class="gear-btn" onclick="openSettings()" title="Indstillinger">⚙️</button>
+    <button class="gear-btn" onclick="openSettings()" title="Settings">⚙️</button>
   </div>
 </header>
 
@@ -727,10 +729,10 @@
 <div class="settings-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
   <div class="settings-sheet">
     <div class="settings-handle"></div>
-    <div class="settings-title">Indstillinger</div>
+    <div class="settings-title">Settings</div>
 
     <div class="settings-section">
-      <div class="settings-label">Udseende</div>
+      <div class="settings-label">Appearance</div>
       <div class="settings-btn-group">
         <button class="settings-btn active" id="themeLight" onclick="setTheme('light')">☀️ Lys</button>
         <button class="settings-btn" id="themeDark" onclick="setTheme('dark')">🌙 Mørk</button>
@@ -752,14 +754,6 @@
 
     <hr class="settings-divider">
 
-    <div class="settings-section">
-      <div class="settings-label" data-i18n="settingsLang">🌐 Sprog</div>
-      <div class="settings-btn-group">
-        <button class="settings-btn active" id="langBtn_da" onclick="setLang('da')">🇩🇰 Dansk</button>
-        <button class="settings-btn" id="langBtn_en" onclick="setLang('en')">🇬🇧 English</button>
-      </div>
-    </div>
-
     <hr class="settings-divider">
 
     <div class="settings-section">
@@ -775,7 +769,7 @@
 
     <div class="settings-section">
       <div class="settings-label">🔑 API-nøgle</div>
-      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;" id="apiKeyStatusText">Nøgle gemt i din browser</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;" id="apiKeyStatusText">Key saved in your browser</div>
       <button class="btn btn-ghost btn-sm" onclick="showApiKeyModal()">Skift API-nøgle</button>
     </div>
 
@@ -799,49 +793,49 @@
 
       <div class="faq-item" id="faq1">
         <button class="faq-question" onclick="toggleFaq('faq1')">
-          <span id="faq1-q">Hvad er en API-nøgle?</span><span class="faq-icon">+</span>
+          <span id="faq1-q">What is an API key?</span><span class="faq-icon">+</span>
         </button>
         <div class="faq-answer" id="faq1-a"></div>
       </div>
       <div class="faq-item" id="faq2">
         <button class="faq-question" onclick="toggleFaq('faq2')">
-          <span id="faq2-q">Hvad er Samtale-fanen til?</span><span class="faq-icon">+</span>
+          <span id="faq2-q">What is the Chat tab for?</span><span class="faq-icon">+</span>
         </button>
         <div class="faq-answer" id="faq2-a"></div>
       </div>
       <div class="faq-item" id="faq3">
         <button class="faq-question" onclick="toggleFaq('faq3')">
-          <span id="faq3-q">Hvad er Sprogøer?</span><span class="faq-icon">+</span>
+          <span id="faq3-q">What are Language Islands?</span><span class="faq-icon">+</span>
         </button>
         <div class="faq-answer" id="faq3-a"></div>
       </div>
       <div class="faq-item" id="faq4">
         <button class="faq-question" onclick="toggleFaq('faq4')">
-          <span id="faq4-q">Hvordan fungerer streak og dagligt mål?</span><span class="faq-icon">+</span>
+          <span id="faq4-q">How does the streak & daily goal work?</span><span class="faq-icon">+</span>
         </button>
         <div class="faq-answer" id="faq4-a"></div>
       </div>
       <div class="faq-item" id="faq5">
         <button class="faq-question" onclick="toggleFaq('faq5')">
-          <span id="faq5-q">Hvordan bruger jeg Anki-eksporten?</span><span class="faq-icon">+</span>
+          <span id="faq5-q">How do I use the Anki export?</span><span class="faq-icon">+</span>
         </button>
         <div class="faq-answer" id="faq5-a"></div>
       </div>
       <div class="faq-item" id="faq6">
         <button class="faq-question" onclick="toggleFaq('faq6')">
-          <span id="faq6-q">Gemmes mine data?</span><span class="faq-icon">+</span>
+          <span id="faq6-q">Is my data saved?</span><span class="faq-icon">+</span>
         </button>
         <div class="faq-answer" id="faq6-a"></div>
       </div>
 
     </div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="closeSettings()" id="settingsCloseBtn">Luk</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:8px;" onclick="closeSettings()" id="settingsCloseBtn">Close</button>
   </div>
 </div>
 
 <nav class="top-nav">
   <button class="tab active" onclick="showTab('hjem')">🏠 Hjem</button>
-  <button class="tab" onclick="showTab('chat')">💬 Samtale</button>
+  <button class="tab" onclick="showTab('chat')">💬 Chat</button>
   <button class="tab" onclick="showTab('oev')">✍️ Øv</button>
   <button class="tab" onclick="showTab('oer')">🗺️ Øer</button>
   <button class="tab" id="logTabBtn" onclick="showTab('log')">📋 Log<span class="err-badge" id="errBadge" style="display:none">0</span></button>
@@ -853,24 +847,25 @@
   <!-- HOME -->
   <div id="hjem" class="section active">
     <div style="margin-bottom:28px;">
-      <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;" data-i18n="yourLevel">Dit niveau</div>
+      <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;" data-i18n="yourLevel">Your level</div>
       <div style="font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:4px;" id="levelLabel">A1</div>
-      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;" id="levelDetail">Skriv og øv dig – niveauet beregnes automatisk</div>
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;" id="levelDetail">Write and practice – level is calculated automatically</div>
       <div class="level-bar-wrap"><div class="level-bar" id="levelBar" style="width:0%"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.72rem;color:var(--muted);">
         <span>A1</span><span>A2</span><span>B1</span><span>B2</span><span>C1</span>
       </div>
     </div>
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-num" id="statSentences">0</div><div class="stat-label">Længste tekst (ord)</div></div>
-      <div class="stat-card"><div class="stat-num" id="statChats">0</div><div class="stat-label" data-i18n="statChats">Samtaler</div></div>
-      <div class="stat-card"><div class="stat-num" id="statDailyWords">0</div><div class="stat-label" id="statDailyLabel">Ord i dag / 100</div></div>
+      <div class="stat-card"><div class="stat-num" id="statSentences">0</div><div class="stat-label">Longest text (words)</div></div>
+      <div class="stat-card"><div class="stat-num" id="statChats">0</div><div class="stat-label" data-i18n="statChats">Conversations</div></div>
+      <div class="stat-card"><div class="stat-num" id="statDailyWords">0</div><div class="stat-label" id="statDailyLabel">Words today / 100</div></div>
+      <div class="stat-card"><div class="stat-num" id="statStreakHome">0</div><div class="stat-label">🔥 Day streak</div></div>
     </div>
 
     <!-- ACTIVITY CHART -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:20px;margin-bottom:28px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);" data-i18n="chartTitle">Aktivitet</div>
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);" data-i18n="chartTitle">Activity</div>
         <div style="display:flex;gap:4px;">
           <button id="chartBtn7"  onclick="setChartPeriod(7)"  class="chart-period-btn active">7d</button>
           <button id="chartBtn30" onclick="setChartPeriod(30)" class="chart-period-btn">30d</button>
@@ -882,15 +877,15 @@
       <div id="activityDays" style="display:flex;gap:3px;margin-top:6px;"></div>
     </div>
     <div class="challenge-card">
-      <div class="challenge-label" data-i18n="challengeLabel">🎯 Dagens udfordring</div>
-      <div class="challenge-title" id="dailyChallengeTitle">Beskriv din arbejdsdag</div>
-      <div class="challenge-desc" id="dailyChallengeDesc">Skriv 4–6 sætninger om, hvad du lavede på arbejde i går. Brug fortid (datid). Eksempel: "Jeg havde et møde med..."</div>
+      <div class="challenge-label" data-i18n="challengeLabel">🎯 Daily challenge</div>
+      <div class="challenge-title" id="dailyChallengeTitle">Describe your workday</div>
+      <div class="challenge-desc" id="dailyChallengeDesc">Write 4–6 sentences about what you did at work yesterday. Use past tense.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-primary" data-i18n="startChallenge" onclick="goToChallenge()">Start udfordring →</button>
-        <button class="btn btn-ghost" data-i18n="practiceInChat" onclick="showTab('chat')">Øv i samtale</button>
+        <button class="btn btn-primary" data-i18n="startChallenge" onclick="goToChallenge()">Start challenge →</button>
+        <button class="btn btn-ghost" data-i18n="practiceInChat" onclick="showTab('chat')">Practice in chat</button>
       </div>
     </div>
-    <div class="section-title" data-i18n="tipsTitle">Danske tips til dig</div>
+    <div class="section-title" data-i18n="tipsTitle">Tips for you</div>
     <div id="dailyTipsContainer"></div>
   </div>
 
@@ -912,7 +907,7 @@
         <div style="font-size:1.6rem;line-height:1;">👩‍🦰</div>
         <div>
           <div style="font-weight:600;font-size:0.9rem;">Maja</div>
-          <div style="font-size:0.75rem;color:var(--muted);">Veninde · hverdagsdansk</div>
+          <div style="font-size:0.75rem;color:var(--muted);">Friend · everyday language</div>
         </div>
       </div>
       <div id="personaFri" onclick="openFreePersona()"
@@ -926,7 +921,7 @@
     </div>
     <!-- Free situation input (hidden until clicked) -->
     <div id="freePersonaBox" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Beskriv situationen kort – på dansk eller tysk:</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Describe the situation briefly:</div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="freePersonaInput" class="anki-input" style="flex:1;margin:0;"
           placeholder="z.B. hos tandlægen, i supermarkedet, på jobsamtale …"
@@ -943,7 +938,7 @@
           <div class="chat-persona-name" id="chatName">Lars</div>
           <div class="chat-persona-role" id="chatRole">Din kollega · Taler dansk med dig</div>
         </div>
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearChat()">Ny samtale</button>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="clearChat()">New conversation</button>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="message ai">
@@ -960,7 +955,7 @@
         <input type="file" id="chatFileInput" accept="image/jpeg,image/png,application/pdf"
           style="display:none;" onchange="handleChatFileSelect(this)">
         <button class="chat-attach-btn" id="chatAttachBtn" onclick="document.getElementById('chatFileInput').click()" title="Vedhæft fil (jpg/png/pdf)">📎</button>
-        <textarea id="chatInput" placeholder="Skriv på dansk... (Enter for at sende)" rows="1"
+        <textarea id="chatInput" placeholder="Write in Danish… (Enter to send)" rows="1"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
         <button class="btn btn-primary" id="chatSendBtn" onclick="sendChat()">Send</button>
@@ -973,21 +968,21 @@
 
     <!-- TOP MODE SWITCHER -->
     <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
-      <button class="chat-mode-btn active" id="oevModeSkrivBtn" onclick="setOevMode('skriv')">✍️ Skriv</button>
+      <button class="chat-mode-btn active" id="oevModeSkrivBtn" onclick="setOevMode('skriv')">✍️ Write</button>
       <button class="chat-mode-btn" id="oevModeSprogBtn" onclick="setOevMode('sprog')" data-i18n="oevModeSprog">📖 Grammatik</button>
     </div>
 
     <!-- SKRIV PANE -->
     <div id="oevPaneskriv">
     <div class="tabs-writing">
-      <button class="tab-write active" onclick="switchWriteMode('tekst',this)">⌨️ Skriv tekst</button>
-      <button class="tab-write" onclick="switchWriteMode('billede',this)">📷 Håndskrift</button>
+      <button class="tab-write active" onclick="switchWriteMode('tekst',this)">⌨️ Write text</button>
+      <button class="tab-write" onclick="switchWriteMode('billede',this)">📷 Handwriting</button>
     </div>
 
     <!-- TEXT -->
     <div id="writeModeTekst" class="write-mode active">
       <div id="writingChallengeBanner" style="display:none;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.3);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
-        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;" id="writingChallengeBannerTitle">📝 Dagens udfordring</div>
+        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;" id="writingChallengeBannerTitle">📝 Daily challenge</div>
         <div id="writingChallengeLabel" style="font-size:0.9rem;white-space:pre-line;"></div>
         <button onclick="clearWritingChallenge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;margin-top:6px;">✕ Skriv frit i stedet</button>
       </div>
@@ -1000,7 +995,7 @@
       <div class="writing-actions">
         <input type="file" id="writingFileInput" accept="image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleWritingFileSelect(this)">
         <button class="chat-attach-btn" id="writingAttachBtn" onclick="document.getElementById('writingFileInput').click()" title="Vedhæft fil (jpg/png/pdf)">📎</button>
-        <button class="btn btn-primary" id="writingSubmitBtn" onclick="submitWriting()">Ret min tekst ✓</button>
+        <button class="btn btn-primary" id="writingSubmitBtn" onclick="submitWriting()">Check my text ✓</button>
       </div>
     </div>
 
@@ -1020,7 +1015,7 @@
         <input type="text" class="context-input" id="imageContextInput" placeholder="Emne / opgave (valgfrit): f.eks. 'Beskrivelse af min arbejdsdag'">
         <div class="writing-actions">
           <button class="btn btn-primary" id="imageSubmitBtn" onclick="submitImageWriting()">📖 Læs og ret min tekst</button>
-          <button class="btn btn-ghost" onclick="clearImageUpload()">Slet billede ×</button>
+          <button class="btn btn-ghost" onclick="clearImageUpload()">Delete image ×</button>
         </div>
       </div>
     </div>
@@ -1046,7 +1041,7 @@
 
       <!-- SEARCH + COUNT -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <input type="text" id="gramSearch" class="error-search-input" placeholder="🔍 Søg i regler..." oninput="renderGramRules()" style="flex:1;">
+        <input type="text" id="gramSearch" class="error-search-input" placeholder="🔍 Search rules..." oninput="renderGramRules()" style="flex:1;">
         <span id="gramRuleCount" style="font-size:0.78rem;color:var(--muted);white-space:nowrap;"></span>
       </div>
 
@@ -1060,14 +1055,14 @@
 
       <!-- EXERCISES -->
       <div>
-        <div style="font-size:0.8rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;" data-i18n="gramExercisesLabel">Øvelser</div>
+        <div style="font-size:0.8rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;" data-i18n="gramExercisesLabel">Exercises</div>
         <div id="gramExercises" class="scenarios-grid" style="margin-bottom:20px;"></div>
         <div id="gramExerciseArea" style="display:none;">
           <div class="writing-prompt-card" style="margin-bottom:16px;">
             <div class="writing-prompt-label" id="gramExLabel">Øvelse</div>
             <div class="writing-prompt-text" id="gramExPrompt"></div>
           </div>
-          <textarea class="writing-editor" id="gramExEditor" placeholder="Skriv din tekst her..."></textarea>
+          <textarea class="writing-editor" id="gramExEditor" placeholder="Write your text here..."></textarea>
           <div id="gramExFilePreview" class="chat-file-preview" style="display:none;margin:0 0 8px 0;">
             <div id="gramExFileThumb"></div>
             <span class="file-name" id="gramExFileName"></span>
@@ -1076,8 +1071,8 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
             <input type="file" id="gramExFileInput" accept="image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleGramExFileSelect(this)">
             <button class="chat-attach-btn" id="gramExAttachBtn" onclick="document.getElementById('gramExFileInput').click()" title="Vedhæft fil (jpg/png/pdf)">📎</button>
-            <button class="btn btn-primary" id="gramExSubmitBtn" onclick="submitGramExercise()">Ret min tekst ✓</button>
-            <button class="btn btn-ghost" onclick="document.getElementById('gramExerciseArea').style.display='none'">← Tilbage</button>
+            <button class="btn btn-primary" id="gramExSubmitBtn" onclick="submitGramExercise()">Check my text ✓</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('gramExerciseArea').style.display='none'">← Back</button>
           </div>
           <div id="gramExFeedback"></div>
         </div>
@@ -1089,10 +1084,10 @@
         <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:20px;margin-bottom:16px;">
           <!-- Rule selector -->
           <div style="margin-bottom:16px;">
-            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;" data-i18n="luckeSelectLabel">Welche Regel möchtest du üben?</div>
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;" data-i18n="luckeSelectLabel">Which rule do you want to practice?</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
               <select id="luckeRuleSelect" class="sort-select" style="flex:1;min-width:200px;" onchange="onLuckeRuleChange()"></select>
-              <button class="btn btn-primary btn-sm" onclick="startLuckeByRule()" data-i18n="luckeStartBtn">Üben →</button>
+              <button class="btn btn-primary btn-sm" onclick="startLuckeByRule()" data-i18n="luckeStartBtn">Practice →</button>
             </div>
           </div>
           <!-- Exercises area (hidden until started) -->
@@ -1106,7 +1101,7 @@
               <div class="lucke-score-bar"><div class="lucke-score-fill" id="luckeScoreFill" style="width:0%"></div></div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:var(--muted);margin-top:6px;">
                 <span id="luckeScoreText"></span>
-                <button class="btn btn-ghost btn-sm" onclick="startLuckeByRule()" data-i18n="luckeRetryBtn">↺ Nochmal</button>
+                <button class="btn btn-ghost btn-sm" onclick="startLuckeByRule()" data-i18n="luckeRetryBtn">↺ Again</button>
               </div>
             </div>
           </div>
@@ -1133,16 +1128,16 @@
   <div id="fejl_inner">
     <div class="error-log-controls">
       <div>
-        <div class="section-title" style="margin-bottom:4px;">Dine fejl</div>
-        <span class="error-count-badge" id="errorCountBadge">0 fejl registreret</span>
+        <div class="section-title" style="margin-bottom:4px;">Your errors</div>
+        <span class="error-count-badge" id="errorCountBadge">0 errors logged</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
         <div class="filter-btns">
           <button class="filter-btn active" onclick="setSourceFilter('alle',this)">Alle</button>
-          <button class="filter-btn" onclick="setSourceFilter('chat',this)">💬 Samtale</button>
-          <button class="filter-btn" onclick="setSourceFilter('skriv',this)">✍️ Skriv</button>
+          <button class="filter-btn" onclick="setSourceFilter('chat',this)">💬 Chat</button>
+          <button class="filter-btn" onclick="setSourceFilter('skriv',this)">✍️ Writing</button>
           <button class="filter-btn" onclick="setSourceFilter('job',this)">💼 Job</button>
-          <button class="filter-btn" onclick="setSourceFilter('billede',this)">📷 Håndskrift</button>
+          <button class="filter-btn" onclick="setSourceFilter('billede',this)">📷 Handwriting</button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select class="sort-select" id="sortSelect" onchange="renderErrors()">
@@ -1175,7 +1170,7 @@
       </div>
     </div>
     <div class="error-search-bar">
-      <input type="text" class="error-search-input" id="errorSearchInput" placeholder="🔍  Søg efter fejl, rettelse eller tip..." oninput="renderErrors()">
+      <input type="text" class="error-search-input" id="errorSearchInput" placeholder="🔍  Search errors, corrections or tips..." oninput="renderErrors()">
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
       <span id="filteredCount" style="font-size:0.82rem;color:var(--muted);"></span>
@@ -1191,12 +1186,12 @@
     <div style="margin-top:32px;">
       <button onclick="toggleArchive()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.82rem;font-family:'DM Sans',sans-serif;padding:0;margin-bottom:12px;">
         <span id="archiveChevron" style="transition:transform 0.2s;display:inline-block;">▶</span>
-        <span>📦 Arkiv (<span id="archiveCount">0</span>)</span>
+        <span>📦 Archive (<span id="archiveCount">0</span>)</span>
       </button>
       <div id="archivePanel" style="display:none;">
-        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Arkiverede fejl – lært og gemt til reference.</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Archived errors – saved for referenceence.</div>
         <div id="archiveList"></div>
-        <button onclick="clearArchive()" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;">Slet arkiv</button>
+        <button onclick="clearArchive()" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;">Delete archive</button>
       </div>
     </div>
   </div>
@@ -1295,7 +1290,7 @@
 
         <!-- Grammar rule mode -->
         <div id="luckePaneGrammar">
-          <div class="anki-label">Grammatikregel oder Thema</div>
+          <div class="anki-label">Grammar rule or topic</div>
           <input class="anki-input" type="text" id="luckeGrammarRule" placeholder="z.B. Datid (Vergangenheit), bestimmter Artikel, Modalverben …">
           <div class="anki-label" style="margin-top:10px;">Anzahl Karten</div>
           <div style="display:flex;gap:8px;margin-bottom:14px;">
@@ -1308,7 +1303,7 @@
 
         <!-- Own sentences mode -->
         <div id="luckePaneSatz" style="display:none;">
-          <div class="anki-label">Eigene dänische Sätze (ein Satz pro Zeile)</div>
+          <div class="anki-label">Enter sentences (one per line)</div>
           <textarea class="anki-input" id="luckeSatzText" rows="5" placeholder="Jeg gik til møde i går.&#10;Hun har arbejdet her i tre år.&#10;Det er et stort hus.&#10;…"></textarea>
           <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;margin-bottom:12px;">Claude wählt automatisch das grammatisch interessanteste Wort als Lücke.</div>
           <button class="btn btn-primary" id="luckeSatzBtn" onclick="startLuckeBatch('satz')">Karten generieren →</button>
@@ -1351,7 +1346,7 @@
       <!-- Mode selection -->
       <div id="testModeSelect">
         <div class="section-title" style="margin-bottom:6px;">🎯 Recall-Test</div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Teste hvad du har lært – Claude stiller spørgsmål baseret på din aktivitet.</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Test what you've learned – Claude asks questions based on your activity.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div onclick="startTest('dag')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
             <div style="font-size:1.6rem;margin-bottom:8px;">☀️</div>
@@ -1370,7 +1365,7 @@
       <div id="testActive" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
           <div style="font-family:'Fraunces',serif;font-size:1.05rem;" id="testTitle"></div>
-          <button class="btn btn-ghost btn-sm" onclick="cancelTest()">✕ Abbrechen</button>
+          <button class="btn btn-ghost btn-sm" onclick="cancelTest()">✕ Cancel</button>
         </div>
 
         <!-- Progress -->
@@ -1387,7 +1382,7 @@
         <!-- Loading -->
         <div id="testLoading" style="display:none;text-align:center;padding:30px;color:var(--muted);">
           <div class="loading-dots" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>
-          Claude genererer spørgsmål…
+          Claude is generating questions…
         </div>
 
         <!-- Question card -->
@@ -1402,7 +1397,7 @@
 
         <!-- Feedback -->
         <div id="testFeedback" style="display:none;border-radius:12px;padding:16px;margin-bottom:14px;font-size:0.88rem;line-height:1.6;"></div>
-        <button id="testNextBtn" style="display:none;" class="btn btn-primary" onclick="nextTestQuestion()">Næste spørgsmål →</button>
+        <button id="testNextBtn" style="display:none;" class="btn btn-primary" onclick="nextTestQuestion()">Next question →</button>
       </div>
 
       <!-- Done screen -->
@@ -1422,15 +1417,15 @@
   <!-- API KEY MODAL (first run) -->
   <div id="apiKeyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--dark);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;max-width:420px;width:100%;">
-      <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">🔑 API-nøgle påkrævet</div>
-      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:20px;line-height:1.6;">For at bruge Dansk Frem skal du indtaste din Anthropic API-nøgle. Den gemmes kun i din browser og bruges aldrig andetsteds.</p>
+      <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">🔑 API Key Required</div>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:20px;line-height:1.6;">To use Dansk Frem skal du indtaste din Anthropic API-nøgle. Den gemmes kun i din browser og bruges aldrig andetsteds.</p>
       <div style="margin-bottom:8px;">
         <input type="password" id="apiKeyModalInput" placeholder="sk-ant-api03-…"
           style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box;"
           onkeydown="if(event.key==='Enter')saveApiKeyModal()">
       </div>
-      <div id="apiKeyModalError" style="font-size:0.8rem;color:#F07070;margin-bottom:12px;display:none;">Nøglen skal starte med sk-ant-</div>
-      <button class="btn btn-primary" style="width:100%;" onclick="saveApiKeyModal()">Gem og start →</button>
+      <div id="apiKeyModalError" style="font-size:0.8rem;color:#F07070;margin-bottom:12px;display:none;">Key must start with sk-ant-</div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveApiKeyModal()">Save and start →</button>
       <p style="font-size:0.75rem;color:var(--muted);margin-top:12px;text-align:center;">
         Få en gratis nøgle på <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a>
       </p>
@@ -1444,7 +1439,7 @@
       <div id="ankiModalInfo" style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;"></div>
       <a id="ankiDownloadLink" style="display:block;padding:12px;background:var(--red);color:white;border-radius:8px;text-align:center;text-decoration:none;font-weight:600;margin-bottom:12px;"id="ankiDownloadLinkText">⬇ Download fil</a>
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;text-align:center;"><span data-i18n="ankiInstructions" id="ankiInstructionsEl">I Anki: <strong>Fil → Importér</strong> → vælg .apkg</span></div>
-      <button class="btn btn-ghost" style="width:100%;" data-i18n="ankiClose" onclick="closeAnkiModal()">Luk</button>
+      <button class="btn btn-ghost" style="width:100%;" data-i18n="ankiClose" onclick="closeAnkiModal()">Close</button>
     </div>
   </div>
 
@@ -1453,19 +1448,19 @@
   <div id="noter" class="section">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
       <div>
-        <div class="section-title" style="margin-bottom:4px;">Mine noter</div>
-        <div style="font-size:0.82rem;color:var(--muted);" data-i18n="notesSubtitle">Tanker, ord, refleksioner – på dansk eller engelsk</div>
+        <div class="section-title" style="margin-bottom:4px;">My Notes</div>
+        <div style="font-size:0.82rem;color:var(--muted);" data-i18n="notesSubtitle">Thoughts, words, reflections</div>
       </div>
-      <button class="btn btn-primary btn-sm" data-i18n="newNote" onclick="openNewNote()">+ Ny note</button>
+      <button class="btn btn-primary btn-sm" data-i18n="newNote" onclick="openNewNote()">+ New note</button>
     </div>
 
     <!-- NEW NOTE EDITOR -->
     <div id="noteEditor" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;margin-bottom:20px;">
       <textarea id="noteText" class="writing-editor" placeholder="Skriv din note her... (dansk eller tysk)" style="min-height:120px;margin-bottom:12px;"></textarea>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-primary" data-i18n="saveNote" onclick="saveNote()">Gem note 💾</button>
-        <button class="btn btn-ghost" id="noteCorrectBtn" data-i18n="correctNote" onclick="correctCurrentNote()">KI ret mit dansk ✓</button>
-        <button class="btn btn-ghost" data-i18n="cancel" onclick="closeNoteEditor()">Annuller</button>
+        <button class="btn btn-primary" data-i18n="saveNote" onclick="saveNote()">Save note 💾</button>
+        <button class="btn btn-ghost" id="noteCorrectBtn" data-i18n="correctNote" onclick="correctCurrentNote()">AI check my text ✓</button>
+        <button class="btn btn-ghost" data-i18n="cancel" onclick="closeNoteEditor()">Cancel</button>
       </div>
       <div id="noteCorrectionBox" style="display:none;margin-top:14px;background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.6;"></div>
     </div>
@@ -1477,21 +1472,21 @@
   <div id="oer" class="section">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
       <div>
-        <div class="section-title" style="margin-bottom:4px;">🗺️ Mine sprogøer</div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Byg dit personlige ordforråd inden for emner du kender godt – via en samtale med Claude.</div>
+        <div class="section-title" style="margin-bottom:4px;">🗺️ My Language Islands</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Build your personal vocabulary for topics you know well – via a conversation with Claude.</div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="openNewOe()">+ Ny ø</button>
-      <button class="btn btn-ghost btn-sm" onclick="openCsvImport()">⬆ CSV importeren</button>
+      <button class="btn btn-ghost btn-sm" onclick="openCsvImport()">⬆ Import CSV</button>
     </div>
 
     <!-- CSV Import panel -->
     <div id="oeCSVImport" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">⬆ CSV importeren</div>
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">⬆ Import CSV</div>
       <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
         CSV-Datei mit zwei Spalten: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">Zielsprache,Deutsch</code> – mit oder ohne Kopfzeile.
       </div>
       <div style="margin-bottom:12px;">
-        <div class="anki-label">Thema / Inselname</div>
+        <div class="anki-label">Topic / Island name</div>
         <input class="anki-input" type="text" id="csvImportTopic" placeholder="z.B. Arkitektur, Kochen …" style="margin-bottom:0;">
       </div>
       <div style="margin-bottom:14px;">
@@ -1505,12 +1500,12 @@
       </div>
       <!-- Preview -->
       <div id="csvPreview" style="display:none;margin-bottom:14px;">
-        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;">Vorschau (<span id="csvRowCount">0</span> Sätze)</div>
+        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;">Preview (<span id="csvRowCount">0</span> sentences)</div>
         <div id="csvPreviewList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" id="csvImportBtn" onclick="importCsvAsOe()" style="display:none;">✓ Als Insel importieren</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeCsvImport()">Abbrechen</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeCsvImport()">Cancel</button>
       </div>
     </div>
 
@@ -1519,9 +1514,9 @@
 
     <!-- New island creator -->
     <div id="oeCreator" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">Ny sprogø</div>
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">New Island</div>
       <div style="margin-bottom:12px;">
-        <div class="anki-label">Emne / Thema</div>
+        <div class="anki-label">Topic</div>
         <input class="anki-input" type="text" id="oeTopicInput" placeholder="z.B. Arkitektur, Kochen, Medizin, IT, Sport …" style="margin-bottom:0;">
       </div>
       <div style="margin-bottom:16px;">
@@ -1530,7 +1525,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="startOeInterview()">Interview starten →</button>
-        <button class="btn btn-ghost" onclick="closeOeCreator()">Annuller</button>
+        <button class="btn btn-ghost" onclick="closeOeCreator()">Cancel</button>
       </div>
     </div>
 
@@ -1538,12 +1533,12 @@
     <div id="oeInterview" style="display:none;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
         <div style="font-family:'Fraunces',serif;font-size:1.1rem;" id="oeInterviewTitle"></div>
-        <span style="font-size:0.72rem;background:rgba(200,16,46,0.15);color:var(--red);padding:2px 8px;border-radius:20px;font-weight:600;">Interview aktiv</span>
+        <span style="font-size:0.72rem;background:rgba(200,16,46,0.15);color:var(--red);padding:2px 8px;border-radius:20px;font-weight:600;">Interview active</span>
       </div>
 
       <!-- Collected phrases -->
       <div id="oePhraseBox" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:16px;min-height:60px;">
-        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Gesammelte Sätze (<span id="oePhraseCount">0</span>)</div>
+        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Collected sentences (<span id="oePhraseCount">0</span>)</div>
         <div id="oePhraseList" style="display:flex;flex-direction:column;gap:6px;"></div>
       </div>
 
@@ -1551,15 +1546,15 @@
       <div id="oeChat" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:12px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;"></div>
 
       <div style="display:flex;gap:8px;align-items:flex-end;">
-        <textarea id="oeChatInput" class="anki-input" rows="1" placeholder="Svar på dansk eller tysk …"
+        <textarea id="oeChatInput" class="anki-input" rows="1" placeholder="Reply in your target language…"
           style="flex:1;resize:none;"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendOeMessage()}"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
         <button class="btn btn-primary" onclick="sendOeMessage()">Send</button>
       </div>
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="finishOeInterview()">✓ Interview abschließen</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="cancelOeInterview()">Abbrechen</button>
+        <button class="btn btn-ghost btn-sm" onclick="finishOeInterview()">✓ Finish interview</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="cancelOeInterview()">Cancel</button>
       </div>
     </div>
 
@@ -1568,7 +1563,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
         <div>
           <div style="font-family:'Fraunces',serif;font-size:1.1rem;" id="oePracticeTitle"></div>
-          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Übersetze ins Dänische</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Translate to Danish</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="closeOePractice()">✕ Beenden</button>
       </div>
@@ -1587,13 +1582,13 @@
       <!-- Current card -->
       <div id="oePracticeCard" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin-bottom:16px;">
         <!-- German sentence to translate -->
-        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Übersetze ins Dänische</div>
+        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Translate to Danish</div>
         <div id="oePracticeDE" style="font-size:1.1rem;line-height:1.6;margin-bottom:20px;font-style:italic;"></div>
 
         <!-- Input -->
         <div id="oePracticeInputArea">
           <textarea id="oePracticeInput" class="anki-input" rows="2"
-            placeholder="Schreib den dänischen Satz …"
+            placeholder="Write the sentence…"
             style="margin-bottom:10px;resize:none;"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();checkOePractice()}"></textarea>
           <button class="btn btn-primary" onclick="checkOePractice()">Prüfen ✓</button>
@@ -1607,7 +1602,7 @@
             <div id="oePracticeCorrect" style="font-size:1rem;"></div>
           </div>
           <div id="oePracticeFeedback" style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5;"></div>
-          <button class="btn btn-primary" onclick="nextOePractice()">Næste →</button>
+          <button class="btn btn-primary" onclick="nextOePractice()">Next →</button>
         </div>
       </div>
 
@@ -1617,8 +1612,8 @@
         <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Færdig!</div>
         <div id="oePracticeFinalScore" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="restartOePractice()">↺ Nochmal</button>
-          <button class="btn btn-ghost" onclick="closeOePractice()">Fertig</button>
+          <button class="btn btn-primary" onclick="restartOePractice()">↺ Again</button>
+          <button class="btn btn-ghost" onclick="closeOePractice()">Done</button>
         </div>
       </div>
     </div>
@@ -1682,13 +1677,13 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.8.3";
+const APP_VERSION = "3.9.3";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
 
-let errorLog = [];
-let stats = { sentences: 0, chats: 0, streak: 0, lastActiveDate: null };
+window.errorLog = window.errorLog || [];
+window.stats = window.stats || { sentences: 0, chats: 0, streak: 0, lastActiveDate: null };
 let currentFilter = 'alle';
 let activeTagFilters = new Set();
 let uploadedImageBase64 = null;
@@ -1704,39 +1699,39 @@ function trackActivity(text) {
 
   // Count words
   const words = text.trim().split(/\s+/).filter(Boolean).length;
-  stats.sentences = (stats.sentences || 0) + words; // reuse sentences field as total words
-  if (!stats.totalWords) stats.totalWords = 0;
-  stats.totalWords += words;
+  window.stats.sentences = (window.stats.sentences || 0) + words; // reuse sentences field as total words
+  if (!window.stats.totalWords) window.stats.totalWords = 0;
+  window.stats.totalWords += words;
 
   // Track longest single text
-  if (words > (stats.longestText || 0)) stats.longestText = words;
+  if (words > (window.stats.longestText || 0)) window.stats.longestText = words;
   const today = todayStr();
-  if (!stats.dailyActivity) stats.dailyActivity = {};
-  stats.dailyActivity[today] = (stats.dailyActivity[today] || 0) + words;
+  if (!window.stats.dailyActivity) window.stats.dailyActivity = {};
+  window.stats.dailyActivity[today] = (window.stats.dailyActivity[today] || 0) + words;
   // Keep only last 30 days
   const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().slice(0,10);
-  Object.keys(stats.dailyActivity).forEach(k => { if (k < cutoff) delete stats.dailyActivity[k]; });
+  Object.keys(window.stats.dailyActivity).forEach(k => { if (k < cutoff) delete window.stats.dailyActivity[k]; });
 
   // Streak: only count day if daily goal reached
   const goal = (appSettings && appSettings.dailyGoal) || 100;
-  const wordsToday = stats.dailyActivity[today] || 0;
+  const wordsToday = window.stats.dailyActivity[today] || 0;
   if (wordsToday >= goal) {
-    const last = stats.lastActiveDate;
+    const last = window.stats.lastActiveDate;
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
     if (last === today) {
       // already counted today
     } else if (last === yesterday) {
-      stats.streak = (stats.streak || 0) + 1;
-      stats.lastActiveDate = today;
-      showStreakCelebration(stats.streak);
+      window.stats.streak = (window.stats.streak || 0) + 1;
+      window.stats.lastActiveDate = today;
+      showStreakCelebration(window.stats.streak);
     } else if (!last) {
-      stats.streak = 1;
-      stats.lastActiveDate = today;
+      window.stats.streak = 1;
+      window.stats.lastActiveDate = today;
       showStreakCelebration(1);
     } else {
       // gap → reset
-      stats.streak = 1;
-      stats.lastActiveDate = today;
+      window.stats.streak = 1;
+      window.stats.lastActiveDate = today;
       showStreakCelebration(1);
     }
   }
@@ -1765,34 +1760,34 @@ function showStreakCelebration(streak) {
   }
 }
 function saveData() {
-  try { localStorage.setItem('danskFrem_errorLog', JSON.stringify(errorLog)); } catch(e){}
-  try { localStorage.setItem('danskFrem_stats', JSON.stringify(stats)); } catch(e){}
-  try { localStorage.setItem('danskFrem_archiveLog', JSON.stringify(archiveLog)); } catch(e){}
+  try { localStorage.setItem('danskFrem_errorLog', JSON.stringify(window.errorLog)); } catch(e){}
+  try { localStorage.setItem('danskFrem_stats', JSON.stringify(window.stats)); } catch(e){}
+  try { localStorage.setItem('danskFrem_archiveLog', JSON.stringify(window.archiveLog)); } catch(e){}
   // Cloud sync
-  if (window._fbSave) window._fbSave({ errorLog, stats, archiveLog });
+  if (window._fbSave) window._fbSave({ errorLog: window.errorLog, stats: window.stats, archiveLog: window.archiveLog });
   updateUI();
 }
 function loadData() {
-  try { const r = localStorage.getItem('danskFrem_errorLog'); if(r) errorLog = JSON.parse(r); } catch(e){ errorLog=[]; }
-  try { const r = localStorage.getItem('danskFrem_stats'); if(r) stats = JSON.parse(r); } catch(e){}
-  try { const r = localStorage.getItem('danskFrem_archiveLog'); if(r) archiveLog = JSON.parse(r); } catch(e){}
+  try { const r = localStorage.getItem('danskFrem_errorLog'); if(r) window.errorLog = JSON.parse(r); } catch(e){ window.errorLog=[]; }
+  try { const r = localStorage.getItem('danskFrem_stats'); if(r) window.stats = JSON.parse(r); } catch(e){}
+  try { const r = localStorage.getItem('danskFrem_archiveLog'); if(r) window.archiveLog = JSON.parse(r); } catch(e){}
   // Reset streak if last activity was more than 1 day ago
-  if (stats.lastActiveDate) {
+  if (window.stats.lastActiveDate) {
     const today = todayStr();
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-    if (stats.lastActiveDate !== today && stats.lastActiveDate !== yesterday) {
-      stats.streak = 0;
+    if (window.stats.lastActiveDate !== today && window.stats.lastActiveDate !== yesterday) {
+      window.stats.streak = 0;
       saveData();
     }
   }
   updateUI();
   // Update archive count display
   const countEl = document.getElementById('archiveCount');
-  if (countEl) countEl.textContent = archiveLog.length;
+  if (countEl) countEl.textContent = window.archiveLog.length;
 }
-function updateUI() {
-  const n = errorLog.length;
-  document.getElementById('errorCountBadge').textContent = `${n} fejl registreret`;
+window.updateUI = function updateUI() {
+  const n = window.errorLog.length;
+  document.getElementById('errorCountBadge').textContent = `${n} errors logged`;
   const b = document.getElementById('errBadge');
   if(b){b.style.display = n > 0 ? 'flex' : 'none'; b.textContent = n > 99 ? '99+' : n;}
   const b2 = document.getElementById('errBadgeLog');
@@ -1800,15 +1795,17 @@ function updateUI() {
   // Bottom nav badge
   const bnb = document.getElementById('bottomNavBadge');
   if(bnb){bnb.style.display = n > 0 ? 'flex' : 'none'; bnb.textContent = n > 99 ? '99+' : n;}
-  document.getElementById('statSentences').textContent = stats.longestText || 0;
+  document.getElementById('statSentences').textContent = window.stats.longestText || 0;
   const errEl = document.getElementById('statErrors'); if(errEl) errEl.textContent = n;
-  document.getElementById('statChats').textContent = stats.chats||0;
+  document.getElementById('statChats').textContent = window.stats.chats||0;
   const goal = (appSettings && appSettings.dailyGoal) || 100;
-  const wordsToday = (stats.dailyActivity && stats.dailyActivity[todayStr()]) || 0;
+  const wordsToday = (window.stats.dailyActivity && window.stats.dailyActivity[todayStr()]) || 0;
   document.getElementById('statDailyWords').textContent = wordsToday;
-  document.getElementById('statDailyLabel').textContent = `Ord i dag / ${goal}`;
+  document.getElementById('statDailyLabel').textContent = `Words today / ${goal}`;
+  const streakHome = document.getElementById('statStreakHome');
+  if (streakHome) streakHome.textContent = window.stats.streak || 0;
   // streak badge
-  const streak = stats.streak || 0;
+  const streak = window.stats.streak || 0;
   const streakEl = document.getElementById('streakCount');
   streakEl.textContent = streak;
   // hide badge if never used
@@ -1864,15 +1861,15 @@ function renderActivityChart() {
   // Count activity per day
   const dayCounts = {};
   days.forEach(d => dayCounts[d] = 0);
-  if (stats.dailyActivity) {
+  if (window.stats.dailyActivity) {
     days.forEach(d => {
-      if (stats.dailyActivity[d]) dayCounts[d] = stats.dailyActivity[d];
+      if (window.stats.dailyActivity[d]) dayCounts[d] = window.stats.dailyActivity[d];
     });
   }
-  errorLog.forEach(e => {
+  window.errorLog.forEach(e => {
     if (e.isoDate) {
       const key = e.isoDate.slice(0, 10);
-      if (dayCounts[key] !== undefined && !stats.dailyActivity?.[key]) dayCounts[key]++;
+      if (dayCounts[key] !== undefined && !window.stats.dailyActivity?.[key]) dayCounts[key]++;
     }
   });
 
@@ -1937,7 +1934,7 @@ async function autoTagError(errorEntry) {
           `Analyser denne dansklæringsfejl og returner KUN et JSON-objekt med tags. Ingen forklaring, ingen markdown.
 
 Fejl: "${errorEntry.fejl}"
-Rettelse: "${errorEntry.ret}"
+Correction: "${errorEntry.ret}"
 Tip: "${errorEntry.tip}"
 
 Returner PRÆCIS dette format:
@@ -1957,25 +1954,25 @@ Returner PRÆCIS dette format:
 async function saveError(fejl, ret, tip, source) {
   if (!fejl || !ret) return;
   const fLow = (fejl+ret).toLowerCase();
-  if (fLow.includes('ingen fejl') || fLow.includes('flot') || fLow.includes('✓') || fLow.includes('👏') || fLow.length < 4) return;
+  if (fLow.includes('no errors') || fLow.includes('flot') || fLow.includes('✓') || fLow.includes('👏') || fLow.length < 4) return;
   const entry = {
     id: Date.now() + Math.random(),
     source, fejl: fejl.trim(), ret: ret.trim(), tip: (tip||'').trim(),
     date: new Date().toLocaleDateString('da-DK', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),
     tags: null // will be filled async
   };
-  errorLog.unshift(entry);
+  window.errorLog.unshift(entry);
   saveData();
   // Tag async in background
   const tags = await autoTagError(entry);
-  const idx = errorLog.findIndex(e => e.id === entry.id);
-  if (idx !== -1) { errorLog[idx].tags = tags; saveData(); }
+  const idx = window.errorLog.findIndex(e => e.id === entry.id);
+  if (idx !== -1) { window.errorLog[idx].tags = tags; saveData(); }
 }
 
 function parseCorrection(corrText, source) {
   if (!corrText) return;
   const low = corrText.toLowerCase();
-  if (low.includes('ingen fejl') || low.includes('flot dansk') || low.includes('perfekt') || low.includes('udmærket')) return;
+  if (low.includes('no errors') || low.includes('flot dansk') || low.includes('perfekt') || low.includes('udmærket')) return;
   const lines = corrText.split('\n').map(l=>l.trim()).filter(Boolean);
   let fejl='', ret='', tip='';
   for (const l of lines) {
@@ -2053,7 +2050,7 @@ function toggleTagFilter(tag, btn) {
 function getFilteredErrors() {
   const searchTerm = (document.getElementById('errorSearchInput')?.value || '').toLowerCase().trim();
   const sort = document.getElementById('sortSelect')?.value || 'newest';
-  let list = currentFilter==='alle' ? [...errorLog] : errorLog.filter(e=>e.source===currentFilter);
+  let list = currentFilter==='alle' ? [...errorLog] : window.errorLog.filter(e=>e.source===currentFilter);
   if (activeTagFilters.size > 0) {
     list = list.filter(e => e.tags && [...activeTagFilters].every(tag => e.tags.includes(tag)));
   }
@@ -2069,12 +2066,12 @@ function getFilteredErrors() {
   return list;
 }
 
-function renderErrors() {
+window.renderErrors = function renderErrors() {
   const list = document.getElementById('errorList');
   if (!list) return;
   const filtered = getFilteredErrors();
   const searchTerm = (document.getElementById('errorSearchInput')?.value || '').trim();
-  const total = currentFilter==='alle' ? errorLog.length : errorLog.filter(e=>e.source===currentFilter).length;
+  const total = currentFilter==='alle' ? window.errorLog.length : window.errorLog.filter(e=>e.source===currentFilter).length;
   const countEl = document.getElementById('filteredCount');
   if (countEl) countEl.textContent = (searchTerm || activeTagFilters.size > 0 || filtered.length !== total) ? t('filteredOf', filtered.length, total) : '';
 
@@ -2091,7 +2088,7 @@ function renderErrors() {
   }
 
   const tagClass = { grammatik:'tag-grammatik', ordstilling:'tag-ordstilling', ordvalg:'tag-ordvalg', udtale:'tag-udtale', let:'tag-let', middel:'tag-middel', 'svær':'tag-svaer', arbejde:'tag-arbejde', hverdagen:'tag-hverdagen', formelt:'tag-formelt' };
-  const sourceLabel = {chat:'💬 Samtale',skriv:'✍️ Skriveøvelse',job:'💼 Job',billede:'📷 Håndskrift'};
+  const sourceLabel = {chat:'💬 Chat', skriv:'✍️ Writing', job:'💼 Job', billede:'📷 Handwriting', test:'🎯 Test', oe:'🗺️ Islands'};
 
   list.innerHTML = filtered.map(e => {
     const tagsHTML = e.tags === null
@@ -2108,8 +2105,8 @@ function renderErrors() {
         <button class="del-btn" onclick="deleteError(${e.id})">×</button>
       </div>
       <div class="error-row">
-        <div class="error-col"><label>Fejl</label><div class="error-wrong">${highlight(e.fejl, searchTerm)}</div></div>
-        <div class="error-col"><label>Rettelse</label><div class="error-right">${highlight(e.ret, searchTerm)}</div></div>
+        <div class="error-col"><label>Error</label><div class="error-wrong">${highlight(e.fejl, searchTerm)}</div></div>
+        <div class="error-col"><label>Correction</label><div class="error-right">${highlight(e.ret, searchTerm)}</div></div>
       </div>
       ${e.tip ? `<div class="error-tip">💡 ${highlight(e.tip, searchTerm)}</div>` : ''}
       ${tagsHTML}
@@ -2130,17 +2127,17 @@ function quickTagFilter(tag) {
 }
 
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function deleteError(id){ errorLog=errorLog.filter(e=>e.id!==id); saveData(); updateUI(); }
-function clearAllErrors(){ if(confirm('Slet alle fejl i loggen?')){ errorLog=[]; saveData(); updateUI(); } }
+function deleteError(id){ window.errorLog=window.errorLog.filter(e=>e.id!==id); saveData(); updateUI(); }
+function clearAllErrors(){ if(confirm('Delete all errors from the log?')){ window.errorLog=[]; saveData(); updateUI(); } }
 
 // ── ARCHIVE ──────────────────────────────────────────────────────
-let archiveLog = [];
+window.archiveLog = window.archiveLog || [];
 
 function archiveError(id) {
-  const idx = errorLog.findIndex(e => e.id === id);
+  const idx = window.errorLog.findIndex(e => e.id === id);
   if (idx === -1) return;
-  archiveLog.unshift(errorLog[idx]);
-  errorLog.splice(idx, 1);
+  window.archiveLog.unshift(window.errorLog[idx]);
+  window.errorLog.splice(idx, 1);
   saveData();
   updateUI();
   renderArchive();
@@ -2148,8 +2145,8 @@ function archiveError(id) {
 
 function archiveErrors(ids) {
   ids.forEach(id => {
-    const idx = errorLog.findIndex(e => e.id === id);
-    if (idx !== -1) { archiveLog.unshift(errorLog[idx]); errorLog.splice(idx, 1); }
+    const idx = window.errorLog.findIndex(e => e.id === id);
+    if (idx !== -1) { window.archiveLog.unshift(window.errorLog[idx]); window.errorLog.splice(idx, 1); }
   });
   saveData(); updateUI(); renderArchive();
 }
@@ -2163,17 +2160,17 @@ function toggleArchive() {
   if (open) renderArchive();
 }
 
-function renderArchive() {
+window.renderArchive = function renderArchive() {
   const countEl = document.getElementById('archiveCount');
-  if (countEl) countEl.textContent = archiveLog.length;
+  if (countEl) countEl.textContent = window.archiveLog.length;
   const list = document.getElementById('archiveList');
   if (!list) return;
-  if (!archiveLog.length) {
+  if (!window.archiveLog.length) {
     list.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;font-style:italic;">Ingen arkiverede fejl endnu.</div>';
     return;
   }
-  const sourceLabel = {chat:'💬',skriv:'✍️',job:'💼',billede:'📷'};
-  list.innerHTML = archiveLog.map(e =>
+  const sourceLabel = {chat:'💬 Chat', skriv:'✍️ Writing', job:'💼 Job', billede:'📷 Handwriting', test:'🎯 Test', oe:'🗺️ Islands'};
+  list.innerHTML = window.archiveLog.map(e =>
     `<div style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;margin-bottom:6px;font-size:0.85rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <span style="color:var(--muted);font-size:0.75rem;">${sourceLabel[e.source]||''} ${e.date}</span>
@@ -2188,16 +2185,16 @@ function renderArchive() {
 }
 
 function unarchiveError(id) {
-  const idx = archiveLog.findIndex(e => e.id === id);
+  const idx = window.archiveLog.findIndex(e => e.id === id);
   if (idx === -1) return;
-  errorLog.unshift(archiveLog[idx]);
-  archiveLog.splice(idx, 1);
+  window.errorLog.unshift(window.archiveLog[idx]);
+  window.archiveLog.splice(idx, 1);
   saveData(); updateUI(); renderArchive();
 }
 
 function clearArchive() {
-  if (archiveLog.length && confirm('Slet hele arkivet permanent?')) {
-    archiveLog = []; saveData(); renderArchive();
+  if (window.archiveLog.length && confirm('Delete entire archive permanently?')) {
+    window.archiveLog = []; saveData(); renderArchive();
   }
 }
 
@@ -2206,13 +2203,13 @@ function exportCSV() {
   const data = getFilteredErrors();
   if (!data.length) { alert(t('noExportData')); return; }
   const header = t('csvHeader');
-  const sourceLabel = {chat:'Samtale',skriv:'Skriveøvelse',job:'Job',billede:'Håndskrift'};
+  const sourceLabel = {chat:'💬 Chat', skriv:'✍️ Writing', job:'💼 Job', billede:'📷 Handwriting', test:'🎯 Test', oe:'🗺️ Islands'};
   const rows = data.map(e => [
     `"${e.date}"`, `"${sourceLabel[e.source]||e.source}"`,
     `"${(e.fejl||'').replace(/"/g,'""')}"`, `"${(e.ret||'').replace(/"/g,'""')}"`,
     `"${(e.tip||'').replace(/"/g,'""')}"`, `"${(e.tags||[]).join(', ')}"`
   ].join(','));
-  downloadFile('dansk-frem-fejl.csv', 'text/csv;charset=utf-8;', '\uFEFF' + [header.join(','), ...rows].join('\n'));
+  downloadFile('dansk-frem-errors.csv', 'text/csv;charset=utf-8;', '\uFEFF' + [header.join(','), ...rows].join('\n'));
 }
 
 function exportTXT() {
@@ -2220,9 +2217,9 @@ function exportTXT() {
   if (!data.length) { alert(t('noExportData')); return; }
   const now = new Date().toLocaleDateString('da-DK', {day:'numeric', month:'long', year:'numeric'});
   const lines = [
-    'Dansk Frem – Korrekte ord og sætninger',
+    'Dansk Frem – Correct words and sentences',
     now,
-    `${data.length} rettelser`,
+    `${data.length} corrections`,
     '',
     '─────────────────────────────────────',
     ''
@@ -2230,7 +2227,7 @@ function exportTXT() {
   data.forEach((e) => {
     lines.push(e.ret);
   });
-  downloadFile('dansk-frem-rettelser.txt', 'text/plain;charset=utf-8;', lines.join('\n'));
+  downloadFile('dansk-frem-corrections.txt', 'text/plain;charset=utf-8;', lines.join('\n'));
 }
 
 function downloadFile(filename, mime, content) {
@@ -2320,12 +2317,12 @@ async function submitImageWriting() {
 const personas = {
   lars: {
     icon: '👨‍💼', name: 'Lars', role: 'Din kollega · Uformelt dansk',
-    system: `Du er Lars, en venlig dansk kollega (35 år). Uformelt hverdagsdansk. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "Ingen fejl"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
+    system: `Du er Lars, en venlig dansk kollega (35 år). Uformelt hverdagsdansk. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
     greeting: 'Hej! Hvad sker der? Har du haft en god dag? ☕'
   },
   maja: {
     icon: '👩‍🦰', name: 'Maja', role: 'Din veninde · Hverdagsdansk',
-    system: `Du er Maja, en venlig dansk kvinde (32 år). Naturligt hverdagsdansk, varm og imødekommende tone. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "Ingen fejl"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
+    system: `Du er Maja, en venlig dansk kvinde (32 år). Naturligt hverdagsdansk, varm og imødekommende tone. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
     greeting: 'Hej! Hvordan går det? Har du lavet noget sjovt i dag? 😊'
   }
 };
@@ -2372,7 +2369,7 @@ function startFreePersona() {
     name: situation.charAt(0).toUpperCase() + situation.slice(1),
     role: 'Fri situation · naturligt dansk',
     greeting: 'Goddag! Hvad kan jeg hjælpe dig med?',
-    system: `Du spiller en person i følgende situation: "${situation}". Tal naturligt dansk passende til situationen. SVAR KUN PÅ DANSK. Korte naturlige svar (2-3 sætn). Stil ét opfølgningsspørgsmål.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "Ingen fejl"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`
+    system: `Du spiller en person i følgende situation: "${situation}". Tal naturligt dansk passende til situationen. SVAR KUN PÅ DANSK. Korte naturlige svar (2-3 sætn). Stil ét opfølgningsspørgsmål.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`
   };
   document.getElementById('freePersonaBox').style.display = 'none';
   document.getElementById('freePersonaInput').value = '';
@@ -2554,7 +2551,7 @@ async function sendChat() {
     appendMsg('chatMessages',personas[currentPersona].icon,reply,corr);
     if(corr) parseCorrection(corr,'chat');
     trackActivity(text);
-    stats.chats=(stats.chats||0)+1; saveData();
+    window.stats.chats=(window.stats.chats||0)+1; saveData();
   } catch(e){ document.getElementById('loadingMsg')?.remove(); appendMsg('chatMessages','⚠️','Ups – fejl. Prøv igen 🙏',null); }
   document.getElementById('chatSendBtn').disabled=false;
 }
@@ -2574,7 +2571,7 @@ async function submitWriting(){
       // Island translation exercise
       context = `En elev oversætter en sætning til dansk som en del af sprogøen "${oeTopic}".`;
       sysPrompt = `Du er en venlig dansk sproglærer. ${context}
-Opgave: Oversæt til dansk: "${challengePrompt ? challengePrompt.split('\n')[0].replace('Übersetze diesen Satz ins Dänische:','').replace(/[„"]/g,'').trim() : ''}"
+Task: Translate to Danish: "${challengePrompt ? challengePrompt.split('\n')[0].replace('Translate to Danish:','').replace(/[„"]/g,'').trim() : ''}"
 Korrekt dansk: "${correctDa}"
 
 Giv feedback PÅ DANSK:
@@ -2583,7 +2580,7 @@ Giv feedback PÅ DANSK:
 3. Ét tip om denne sætningstype
 4. Afslut opmuntrende
 
-Skriv derefter:
+Then write:
 ---KORRIGERET TEKST---
 ${correctDa}
 
@@ -2600,7 +2597,7 @@ Giv feedback PÅ DANSK i følgende format:
 3. Ét praktisk tip
 4. Afslut opmuntrende
 
-Skriv derefter:
+Then write:
 ---KORRIGERET TEKST---
 [Hele teksten omskrevet korrekt uden fejl]
 
@@ -2677,16 +2674,16 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Score is 0–100, mapped to A1→C1
 // Based on: total sentences written, error rate, streak, tag distribution
 function calcLevel() {
-  const totalWords = stats.totalWords || stats.sentences || 0;
-  const totalErrors = errorLog.length;
-  const totalChats = stats.chats || 0;
-  const totalTexts = (stats.textCount || 0) + totalChats;
+  const totalWords = window.stats.totalWords || window.stats.sentences || 0;
+  const totalErrors = window.errorLog.length;
+  const totalChats = window.stats.chats || 0;
+  const totalTexts = (window.stats.textCount || 0) + totalChats;
 
   // Not enough data – need at least 200 words written
   if (totalWords < 200) {
     const remaining = 200 - totalWords;
     return { score: 0, level: '?', next: null, pct: 0,
-      detail: `Skriv ${remaining} ord mere for at beregne dit niveau` };
+      detail: `Write ${remaining} more words to calculate your level` };
   }
 
   // Activity score: based on total words written (maxes out at 5000 words = 40pts)
@@ -2701,11 +2698,11 @@ function calcLevel() {
     : 15; // neutral if not enough data
 
   // Variety: different sources show broader practice (max 15pts)
-  const sources = new Set(errorLog.map(e => e.source));
+  const sources = new Set(window.errorLog.map(e => e.source));
   const varietyBonus = Math.min(15, sources.size * 4);
 
   // Difficulty bonus: hard errors show ambition (max 15pts)
-  const hardErrors = errorLog.filter(e => e.tags && e.tags.includes('svær')).length;
+  const hardErrors = window.errorLog.filter(e => e.tags && e.tags.includes('svær')).length;
   const difficultyBonus = Math.min(15, hardErrors * 1.5);
 
   const raw = activityScore + accuracyScore + varietyBonus + difficultyBonus;
@@ -3157,51 +3154,24 @@ const gramCatLabel = { artikler:'🏷️ Artikler & køn', verber:'🔧 Verber',
   pronominer:'👤 Pronominer', ordvalg:'💬 Ordvalg', udtale:'🔊 Udtale', flertal:'📚 Flertal & genitiv' };
 
 const gramExercises = [
-  {id:'ex_hvis_naar',icon:'🔀',title:'hvis og når',desc:'Skriv 6 sætninger: 3× hvis og 3× når',rule:'hvis_naar',
-    prompt:'Skriv 6 sætninger om din hverdag eller arbejde. Brug præcis 3 sætninger med "hvis" og 3 med "når". Marker gerne ordene med store bogstaver.',
-    check:'Tjek at eleven bruger HVIS ved usikre og NÅR ved sikre/gentagne situationer.'},
-  {id:'ex_v2',icon:'🔄',title:'V2-ordstilling',desc:'Start 5 sætninger med et adverbium',rule:'ordstilling',
-    prompt:'Skriv 5 sætninger om din uge. Hver sætning skal starte med: "I går", "I morgen", "Normalt", "Derfor", "Alligevel". Husk invertering!',
-    check:'Tjek at verbet er på anden plads efter adverbiet (V2-regel).'},
-  {id:'ex_datid',icon:'⏮️',title:'Datid (fortid)',desc:'Beskriv din gårsdags dag kun i datid',rule:'datid',
-    prompt:'Beskriv hvad du lavede i går fra morgen til aften. KUN datid. Brug mindst 6 verber – både regelmæssige og uregelmæssige.',
-    check:'Tjek alle verber er i korrekt datid. Markér stærke og svage verber.'},
-  {id:'ex_kendeord',icon:'🏷️',title:'Kendeord en/et',desc:'Beskriv dit kontor med 8 substantiver',rule:'kendeord',
-    prompt:'Beskriv dit arbejdssted. Brug mindst 8 substantiver med korrekt kendeord (en/et og bestemt form). F.eks: "Der er en computer. Computeren er..."',
-    check:'Tjek en/et og bestemt form (-en/-et/-erne/-ene).'},
-  {id:'ex_ikke',icon:'🚫',title:'Negation',desc:'5 hoved- og 5 bisætninger med ikke',rule:'negation',
-    prompt:'Skriv 5 hovedsætninger og 5 bisætninger (med "fordi", "at", "selvom") – alle med "ikke".',
-    check:'Tjek placering af "ikke": efter verbum i hovedsætning, før verbum i bisætning.'},
-  {id:'ex_meget_mange',icon:'🔢',title:'meget vs. mange',desc:'8 sætninger med korrekt brug',rule:'meget_mange',
-    prompt:'Skriv 8 sætninger om arbejde eller hverdag. Brug "meget" 4 gange og "mange" 4 gange korrekt.',
-    check:'meget ved ikke-tællelige, mange ved tælle-ord i flertal.'},
-  {id:'ex_perfektum',icon:'🔙',title:'Perfektum',desc:'Beskriv 3 ting du har gjort i dag',rule:'perfektum',
-    prompt:'Skriv 6 sætninger om hvad du har lavet i dag. Brug perfektum (har + -et / er + -et). Brug mindst 2 bevægelsesverber med "er".',
-    check:'Tjek har/er + participium. Bevægelsesverber skal bruge "er", ikke "har".'},
-  {id:'ex_fremtid',icon:'🔜',title:'Fremtid',desc:'Planlæg din næste uge',rule:'fremtid',
-    prompt:'Beskriv din plan for de næste 7 dage. Brug "skal", "vil" og "kommer til at" korrekt mindst 2 gange hver.',
-    check:'Tjek brugen af skal/vil/kommer til at og at de følges af infinitiv uden "at".'},
-  {id:'ex_bisaetning',icon:'🔗',title:'Bisætninger',desc:'Skriv 6 bisætninger med konjunktioner',rule:'bisaetning',
-    prompt:'Skriv 6 sammensatte sætninger. Brug disse konjunktioner: fordi, selvom, at, når, hvis, mens. Husk komma og korrekt ordstilling.',
-    check:'Tjek konjunktion + korrekt bisætningsordstilling (ikke inverteret, ikke-placering).'},
-  {id:'ex_synes_tror',icon:'💭',title:'synes / tror / mener',desc:'Giv din mening om 6 emner',rule:'synes_tror',
-    prompt:'Skriv 6 sætninger om din mening. Brug "synes" (personlig smag) mindst 2 gange, "tror" (antagelse) mindst 2 gange, og "mener" (holdning) mindst 1 gang.',
-    check:'Tjek at synes/tror/mener bruges korrekt efter kontekst.'},
-  {id:'ex_possessiv',icon:'🔑',title:'sin / sit / sine',desc:'Skriv 6 sætninger med korrekt possessiv',rule:'possessiv',
-    prompt:'Skriv 6 sætninger. Brug "sin/sit/sine" når ejeren er sætningens subjekt, og "hans/hendes/deres" i de andre tilfælde. Brug mindst 3 af hvert.',
-    check:'Tjek at sin/sit/sine bruges når subjektet ejer objektet, og hans/hendes/deres om en tredjeparts ejerskab.'},
-  {id:'ex_passiv',icon:'🔄',title:'Passiv',desc:'Omskriv 5 aktive sætninger til passiv',rule:'passiv',
-    prompt:'Skriv 5 sætninger om dit arbejde i passiv. Brug s-passiv (nutid) til generelle udsagn og blive-passiv til konkrete handlinger. Eksempel: "Rapporten skrives hver uge" / "Filen blev sendt af Anna".',
-    check:'Tjek s-passiv (stamme + -s) og blive-passiv (blive + participium). Datid: "blev + participium".'},
-  {id:'ex_relativpronomen',icon:'🔗',title:'Relativpronomen',desc:'Skriv 6 sætninger med som og der',rule:'relativpronomen',
-    prompt:'Beskriv 3 kolleger og 3 arbejdsopgaver med relativsætninger. Brug "der" (subjekt) og "som" (objekt) mindst 3 gange hver. Husk komma!',
-    check:'Tjek "der" ved subjekt og "som" ved objekt i relativsætningen. Komma korrekt?'},
-  {id:'ex_adverbier',icon:'📍',title:'Sted vs. retning',desc:'8 sætninger med stedsadverbier',rule:'adverbier',
-    prompt:'Skriv 8 sætninger om bevægelse og position. Brug mindst: hjemme/hjem, inde/ind, ude/ud, oppe/op, nede/ned – begge varianter af hvert par.',
-    check:'Tjek at sted (ro) og retning (bevægelse) er korrekt adskilt. hjemme = ro, hjem = bevægelse mod hjem.'},
-  {id:'ex_free',icon:'🎯',title:'Fri øvelse',desc:'Vælg selv emne, få grammatikfeedback',rule:null,
-    prompt:'Skriv en tekst på mindst 8 sætninger om et emne du selv vælger. Fokus på korrekt dansk grammatik.',
-    check:'Giv generel grammatikfeedback: ordstilling, kendeord, datid, negation, meget/mange, bisætninger.'},
+  {id:'ex_ordstilling',icon:'📐',title:'Word order',desc:'Write 5 sentences starting with a time expression',rule:'ordstilling',
+    prompt:'Write 5 sentences about your week, each starting with a time expression like "Yesterday", "Tomorrow", "Usually", "Therefore", "Nevertheless". Focus on correct word order after inversion.'},
+  {id:'ex_datid',icon:'⏮️',title:'Past tense',desc:'Describe your day yesterday using only past tense',rule:'datid',
+    prompt:'Describe what you did yesterday from morning to evening. Use only past tense. Include at least 6 verbs – both regular and irregular.'},
+  {id:'ex_artikel',icon:'🏷️',title:'Articles',desc:'Describe your workplace using 8 nouns with correct articles',rule:'kendeord',
+    prompt:'Describe your workplace. Use at least 8 nouns with correct articles (indefinite and definite forms).'},
+  {id:'ex_negation',icon:'🚫',title:'Negation',desc:'Write sentences using negation correctly',rule:'negation',
+    prompt:'Write 5 main clauses and 5 subordinate clauses (using "because", "that", "although") – all with correct negation placement.'},
+  {id:'ex_perfektum',icon:'🔙',title:'Present perfect',desc:'Describe 3 things you have done today',rule:'perfektum',
+    prompt:'Write 6 sentences about what you have done today. Use present perfect. Include at least 2 motion verbs.'},
+  {id:'ex_fremtid',icon:'🔜',title:'Future tense',desc:'Describe your plans for the next 7 days',rule:'fremtid',
+    prompt:'Describe your plan for the next 7 days. Use different ways to express the future at least 2 times each.'},
+  {id:'ex_bisaetning',icon:'🔗',title:'Subordinate clauses',desc:'Write 6 subordinate clauses with conjunctions',rule:'bisaetning',
+    prompt:'Write 6 compound sentences using these conjunctions: because, although, that, when, if, while. Remember correct word order in subordinate clauses.'},
+  {id:'ex_mening',icon:'💭',title:'Expressing opinions',desc:'Express your opinions using different verbs',rule:'mening',
+    prompt:'Write 6 sentences expressing your opinion. Use "think" (personal taste) at least 2 times, "believe" (assumption) at least 2 times, and "consider" (stance) at least 1 time.'},
+  {id:'ex_fri',icon:'✍️',title:'Free writing',desc:'Write freely on any topic',rule:'fri',
+    prompt:'Write a text of at least 8 sentences on a topic of your choice. Focus on correct grammar.'},
 ];
 
 
@@ -3473,9 +3443,9 @@ function setGramCat(catId) {
 function renderGramPersonalized() {
   const el = document.getElementById('gramPersonalized');
   const textEl = document.getElementById('gramPersonalizedText');
-  if (!errorLog.length) { el.style.display='none'; return; }
+  if (!window.errorLog.length) { el.style.display='none'; return; }
   const tagCount = {};
-  errorLog.forEach(e => (e.tags||[]).forEach(t => { tagCount[t]=(tagCount[t]||0)+1; }));
+  window.errorLog.forEach(e => (e.tags||[]).forEach(t => { tagCount[t]=(tagCount[t]||0)+1; }));
   const topTags = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
   if (!topTags.length) { el.style.display='none'; return; }
   const lines = topTags.map(([tag,count]) => {
@@ -3550,7 +3520,7 @@ function renderGramRuleCard(rule) {
 
 function renderGramExercises() {
   const tagCount = {};
-  errorLog.forEach(e=>(e.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1;}));
+  window.errorLog.forEach(e=>(e.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1;}));
   const topTag = Object.entries(tagCount).sort((a,b)=>b[1]-a[1])[0]?.[0];
   const container = document.getElementById('gramExercises');
   container.innerHTML = gramExercises.map(ex => {
@@ -3622,7 +3592,7 @@ async function submitGramExercise() {
 }
 
 const allChallenges = [
-  { title: 'Beskriv din arbejdsdag', desc: 'Skriv 4–6 sætninger om, hvad du lavede på arbejde i går. Brug fortid. Eksempel: "Jeg havde et møde med..."' },
+  { title: 'Describe your workday', desc: 'Write 4–6 sentences about what you did at work yesterday. Use past tense.' },
   { title: 'Skriv en besked til en kollega', desc: 'Din kollega var syg i går. Skriv en kort besked og spørg, hvordan det går. Brug "håber" og "det går bedre".' },
   { title: 'Beskriv din morgenrutine', desc: 'Skriv 5 sætninger om, hvad du gør om morgenen. Brug nutid: "Jeg vågner...", "Jeg spiser..."' },
   { title: 'Hvad laver du i weekenden?', desc: 'Skriv om dine planer for weekenden – eller hvad du gjorde i den forrige. Brug "jeg skal" eller "jeg lavede".' },
@@ -3727,7 +3697,7 @@ function clearWritingChallenge() {
   banner.dataset.oeTopic = '';
   document.getElementById('writingChallengeLabel').textContent = '';
   const titleEl = document.getElementById('writingChallengeBannerTitle');
-  if (titleEl) titleEl.textContent = '📝 Dagens udfordring';
+  if (titleEl) titleEl.textContent = '📝 Daily challenge';
 }
 
 // ---- ANKI ----
@@ -3853,7 +3823,7 @@ function ankiLuckeGrammarPrompt(rule, count) {
 }
 
 function ankiLuckeSatzPrompt(sentence) {
-  return 'Du bist ein Dänisch-Lernassistent. Erstelle eine Lückentext-Anki-Karte für diesen dänischen Satz: "' + sentence + '"\n' +
+  return 'Du bist ein Dänisch-Lernassistent. Erstelle eine Lückentext-Anki-Karte für diesen target-language sentence: "' + sentence + '"\n' +
     'Wähle das grammatisch interessanteste Wort als Lücke (Verbform, Artikel, Pronomen etc.).\n' +
     'hint_de = nur die deutsche Übersetzung der Antwort (kein Dänisch), z.B. "geht (Präsens)".\n' +
     'Antworte NUR mit validem JSON ohne Markdown:\n' +
@@ -3893,7 +3863,7 @@ async function startLuckeBatch(mode) {
       item.textContent = '✓ ' + cards.length + ' Karten für "' + rule + '"';
       bar.style.width = '100%';
       frac.textContent = cards.length + ' / ' + luckeCount;
-      label.textContent = '✓ Fertig!';
+      label.textContent = '✓ Done!';
     } catch(e) {
       item.style.color = '#F07070';
       item.textContent = '✗ Fejl – prøv igen';
@@ -3933,7 +3903,7 @@ async function startLuckeBatch(mode) {
     }
     bar.style.width = '100%';
     frac.textContent = sentences.length + ' / ' + sentences.length;
-    label.textContent = '✓ Fertig!';
+    label.textContent = '✓ Done!';
     btn.disabled = false;
   }
 }
@@ -3974,7 +3944,7 @@ async function startAnkiBatch() {
   }
   bar.style.width = '100%';
   frac.textContent = words.length + ' / ' + words.length;
-  label.textContent = '✓ Fertig! ' + words.length + ' Karten generiert.';
+  label.textContent = '✓ Done! ' + words.length + ' Karten generiert.';
   btn.disabled = false;
 }
 
@@ -3998,7 +3968,7 @@ function clearAnkiCards() { if(ankiCards.length && confirm(t('ankiConfirmDelete'
 
 function openAnkiExport() {
   const data = getFilteredErrors();
-  if (!data.length) { alert('Ingen fejl at eksportere.'); return; }
+  if (!data.length) { alert('No errors at eksportere.'); return; }
   const banner = document.getElementById('ankiFromFejlBanner');
   document.getElementById('ankiFejlInfo').textContent = t('ankiExportFrom', data.length);
   banner.style.display = 'block';
@@ -4095,7 +4065,7 @@ async function buildAndDownloadApkg(cards, filename) {
   try {
     const SQL = await initSqlJs({ locateFile: f => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/' + f });
     const db = new SQL.Database();
-    db.run('CREATE TABLE notes (id INTEGER PRIMARY KEY, guid TEXT, mid INTEGER, mod INTEGER, usn INTEGER, tags TEXT, flds TEXT, sfld TEXT, csum INTEGER, flags INTEGER, data TEXT);');
+    db.run('CREATE TABLE window.notes (id INTEGER PRIMARY KEY, guid TEXT, mid INTEGER, mod INTEGER, usn INTEGER, tags TEXT, flds TEXT, sfld TEXT, csum INTEGER, flags INTEGER, data TEXT);');
     db.run('CREATE TABLE cards (id INTEGER PRIMARY KEY, nid INTEGER, did INTEGER, ord INTEGER, mod INTEGER, usn INTEGER, type INTEGER, queue INTEGER, due INTEGER, ivl INTEGER, factor INTEGER, reps INTEGER, lapses INTEGER, left INTEGER, odue INTEGER, odid INTEGER, flags INTEGER, data TEXT);');
     db.run('CREATE TABLE col (id INTEGER PRIMARY KEY, crt INTEGER, mod INTEGER, scm INTEGER, ver INTEGER, dty INTEGER, usn INTEGER, ls INTEGER, conf TEXT, models TEXT, decks TEXT, dconf TEXT, tags TEXT);');
     db.run('CREATE TABLE graves (usn INTEGER, oid INTEGER, type INTEGER);');
@@ -4190,7 +4160,7 @@ async function buildAndDownloadApkg(cards, filename) {
       }
 
       const csum = sfld.replace(/<[^>]+>/g,'').split('').reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)>>>0;
-      db.run('INSERT INTO notes VALUES (?,?,?,?,?,?,?,?,?,?,?)', [noteId,'guid'+noteId,mid,now,-1,'',flds,sfld,csum,0,'']);
+      db.run('INSERT INTO window.notes VALUES (?,?,?,?,?,?,?,?,?,?,?)', [noteId,'guid'+noteId,mid,now,-1,'',flds,sfld,csum,0,'']);
       db.run('INSERT INTO cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [cardId,noteId,deckId,0,now,-1,0,0,i,0,0,0,0,0,0,0,0,'']);
     });
 
@@ -4271,148 +4241,43 @@ function ankiCardToHtmlBack(c) {
 
 
 // ---- SETTINGS ----
-let appSettings = { theme: 'light', apiKey: '', lang: 'da', dailyGoal: 100 };
+let appSettings = { theme: 'light', apiKey: '', lang: 'en', dailyGoal: 100 };
 
 // ── TRANSLATIONS ──────────────────────────────────────────────────────────────
 const I18N = {
-  da: {
-    streakDays: n => `${n} dag${n===1?'':'e'}`,
-    streakTitle0: 'Brug appen i dag for at starte din streak!',
-    streakTitleN: n => `${n} dag${n===1?'':'e'} i træk 🔥`,
-    tabHjem: '🏠 Hjem', tabChat: '💬 Samtale', tabOev: '✍️ Øv',
-    oevModeSprog: '📖 Grammatik',
-    tabLog: '📋 Log', tabOer: '🗺️ Øer', tabNoter: '📓 Noter',
-    settingsTitle: 'Indstillinger',
-    settingsAppearance: 'Udseende',
-    themeDark: '🌙 Mørk', themeLight: '☀️ Lys',
-    settingsLang: '🌐 Sprog',
-    langDa: '🇩🇰 Dansk', langEn: '🇬🇧 English',
-    settingsApiLabel: 'API-nøgle',
-    settingsApiHint: 'Gemmes kun lokalt i din browser og sendes direkte til Anthropic.',
-    saveApiKey: 'Gem nøgle',
-    settingsSync: '☁️ Cloud-Sync',
-    syncNotLoggedIn: 'Ikke logget ind – data gemmes kun lokalt',
-    syncLoginBtn: 'Log ind med Google',
-    syncLogoutBtn: 'Log ud',
-    syncHint: 'Fejllog, noter, fraser og statistik synkroniseres automatisk på tværs af alle enheder.',
-    settingsAbout: 'Om appen',
-    settingsClose: 'Luk',
-    yourLevel: 'Dit niveau',
-    levelDetail: 'Skriv og øv dig – niveauet beregnes automatisk',
-    statSentences: 'Sætninger skrevet',
-    statErrors: 'Fejl registreret',
-    statChats: 'Samtaler',
-    chartTitle: 'Aktivitet – sidste 7 dage',
-    chartNoActivity: 'Ingen aktivitet endnu',
-    chartActions: n => `${n} aktive handlinger`,
-    dayNames: ['Søn','Man','Tir','Ons','Tor','Fre','Lør'],
-    challengeLabel: '🎯 Dagens udfordring',
-    startChallenge: 'Start udfordring →',
-    practiceInChat: 'Øv i samtale',
-    tipsTitle: 'Danske tips til dig',
-    streakStart: '🔥 Streak startet! Kom igen i morgen!',
-    streakContinue: n => `🔥 ${n} dage i træk – fantastisk!`,
-    apiKeyRemoved: 'Nøgle fjernet',
-    apiKeyInvalid: '⚠️ Ugyldig nøgle – skal starte med sk-ant-',
-    apiKeySaved: '✓ API-nøgle gemt',
-    noErrors: 'Ingen fejl endnu!',
-    noErrorsHere: 'Ingen fejl her',
-    noSearchResults: 'Ingen resultater',
-    tryOtherFilters: 'Prøv andre filtre.',
-    practiceAndCollect: 'Øv dig, og fejl samles her automatisk.',
-    filteredOf: (f,t) => `${f} af ${t} fejl`,
-    tagsLoading: '⏳ Tags tilføjes...',
-    noExportData: 'Ingen fejl at eksportere.',
-    csvHeader: ['Dato','Kilde','Fejl','Rettelse','Tip','Tags'],
-    notesSubtitle: 'Tanker, ord, refleksioner – på dansk eller engelsk',
-    newNote: '+ Ny note',
-    saveNote: 'Gem note 💾',
-    correctNote: 'KI ret mit dansk ✓',
-    cancel: 'Annuller',
-    noNotes: 'Ingen noter endnu.\nSkriv dine tanker, nye ord eller refleksioner.',
-    ankiNoCards: 'Ingen kort gemt endnu.',
-    ankiGenerating: 'Genererer …',
-    ankiSavedCards: 'Gemte kort',
-    ankiExportApkg: 'Eksportér som .apkg',
-    ankiDeleteAll: 'Slet alle',
-    ankiDone: n => `✓ Færdig! ${n} kort genereret.`,
-    ankiConfirmDelete: 'Slet alle Anki-kort?',
-    ankiExportFrom: n => `${n} fejl fra fejlloggen eksporteres som Anki-kort`,
-    ankiNoExport: 'Ingen kort at eksportere.',
-    ankiModalCards: n => `${n} kort · Anki-format`,
-    ankiExportError: 'Fejl ved eksport:',
-    ankiDownload: '⬇ Download fil',
-    ankiInstructions: 'I Anki: <strong>Fil → Importér</strong> → vælg .apkg',
-    ankiClose: 'Luk',
-    newConversation: 'Ny samtale',
-    otherSituation: '← Anden situation',
-    luckeTitle: 'Lückentext',
-    luckeSelectLabel: 'Hvilken regel vil du øve?',
-    luckeStartBtn: 'Start →',
-    luckeRetryBtn: '↺ Prøv igen',
-    luckeAllRules: 'Alle regler (blandet)',
-    luckeCatAll: 'Alle kategorier',
-    gramCatAlle: 'Alle regler',
-    gramCatArtikler: '🏷️ Artikler & køn',
-    gramCatVerber: '🔧 Verber',
-    gramCatOrdstilling: '📐 Ordstilling',
-    gramCatPronom: '👤 Pronominer',
-    gramCatOrdvalg: '💬 Ordvalg',
-    gramCatUdtale: '🔊 Udtale',
-    gramCatFlertal: '📚 Flertal & genitiv',
-    gramSearchPlaceholder: '🔍 Søg i regler...',
-    gramRulesSingular: 'regel',
-    gramRulesPlural: 'regler',
-    gramExercisesLabel: 'Øvelser',
-    gramPracticeRule: 'Øv denne regel →',
-    gramPersonalizedLabel: '📊 Baseret på dine fejl',
-    gramPersonalizedIntro: 'Dine hyppigste fejltyper:',
-
-    faqTitle: '❓ Hjælp & FAQ',
-    faqQ: [
-      'Hvad er en API-nøgle?',
-      'Hvad er Samtale-fanen til?',
-      'Hvad er Sprogøer?',
-      'Hvordan fungerer streak og dagligt mål?',
-      'Hvordan bruger jeg Anki-eksporten?',
-      'Gemmes mine data?',
-    ],
-  },
   en: {
     streakDays: n => `${n} day${n===1?'':'s'}`,
     streakTitle0: 'Use the app today to start your streak!',
     streakTitleN: n => `${n} day${n===1?'':'s'} in a row 🔥`,
     tabHjem: '🏠 Home', tabChat: '💬 Chat', tabOev: '✍️ Practice',
     oevModeSprog: '📖 Grammar',
-    tabLog: '📋 Log', tabOer: '🗺️ Øer', tabNoter: '📓 Notes',
+    tabLog: '📋 Log', tabOer: '🗺️ Islands', tabNoter: '📓 Notes',
     settingsTitle: 'Settings',
     settingsAppearance: 'Appearance',
     themeDark: '🌙 Dark', themeLight: '☀️ Light',
-    settingsLang: '🌐 Language',
-    langDa: '🇩🇰 Dansk', langEn: '🇬🇧 English',
     settingsApiLabel: 'API Key',
     settingsApiHint: 'Stored only locally in your browser and sent directly to Anthropic.',
     saveApiKey: 'Save Key',
     settingsSync: '☁️ Cloud Sync',
-    syncNotLoggedIn: 'Not logged in – data saved locally only',
+    syncNotLoggedIn: 'Not signed in – data saved locally only',
     syncLoginBtn: 'Sign in with Google',
     syncLogoutBtn: 'Sign out',
-    syncHint: 'Error log, notes, phrases and stats sync automatically across all devices.',
+    syncHint: 'Error log, notes and stats sync automatically across all devices.',
     settingsAbout: 'About',
     settingsClose: 'Close',
     yourLevel: 'Your level',
     levelDetail: 'Write and practice – level is calculated automatically',
-    statSentences: 'Sentences written',
+    statSentences: 'Longest text (words)',
     statErrors: 'Errors logged',
     statChats: 'Conversations',
-    chartTitle: 'Activity – last 7 days',
+    chartTitle: 'Activity',
     chartNoActivity: 'No activity yet',
     chartActions: n => `${n} actions`,
     dayNames: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
     challengeLabel: '🎯 Daily challenge',
     startChallenge: 'Start challenge →',
     practiceInChat: 'Practice in chat',
-    tipsTitle: 'Danish tips for you',
+    tipsTitle: 'Tips for you',
     streakStart: '🔥 Streak started! Come back tomorrow!',
     streakContinue: n => `🔥 ${n} days in a row – amazing!`,
     apiKeyRemoved: 'Key removed',
@@ -4427,10 +4292,10 @@ const I18N = {
     tagsLoading: '⏳ Adding tags...',
     noExportData: 'No errors to export.',
     csvHeader: ['Date','Source','Error','Correction','Tip','Tags'],
-    notesSubtitle: 'Thoughts, words, reflections – in Danish or English',
+    notesSubtitle: 'Thoughts, words, reflections',
     newNote: '+ New note',
     saveNote: 'Save note 💾',
-    correctNote: 'AI correct my Danish ✓',
+    correctNote: 'AI check my text ✓',
     cancel: 'Cancel',
     noNotes: 'No notes yet.\nWrite your thoughts, new words or reflections.',
     ankiNoCards: 'No cards saved yet.',
@@ -4470,23 +4335,22 @@ const I18N = {
     gramPracticeRule: 'Practice this rule →',
     gramPersonalizedLabel: '📊 Based on your errors',
     gramPersonalizedIntro: 'Your most frequent error types:',
-
     faqTitle: '❓ Help & FAQ',
     faqQ: [
       'What is an API key?',
-      'What is the Samtale tab for?',
-      'What are Sprogøer?',
-      'How does the streak and daily goal work?',
+      'What is the Chat tab for?',
+      'What are Language Islands?',
+      'How does the streak & daily goal work?',
       'How do I use the Anki export?',
       'Is my data saved?',
     ],
   }
 };
 
+
 function t(key, ...args) {
-  const lang = appSettings.lang || 'da';
-  const val = (I18N[lang] || I18N.da)[key];
-  if (val === undefined) return (I18N.da)[key] || key;
+  const val = I18N.en[key];
+  if (val === undefined) return key;
   return typeof val === 'function' ? val(...args) : val;
 }
 
@@ -4499,7 +4363,7 @@ function applyLang() {
   const sak = document.getElementById('saveApiKeyBtn'); if(sak) sak.textContent = t('saveApiKey');
   const slb = document.getElementById('syncLoginBtn'); if(slb) slb.textContent = t('syncLoginBtn');
   const slo = document.getElementById('syncLogoutBtn'); if(slo) slo.textContent = t('syncLogoutBtn');
-  ['da','en'].forEach(l => {
+  ['en'].forEach(l => {
     const btn = document.getElementById('langBtn_'+l);
     if (btn) btn.classList.toggle('active', l === (appSettings.lang||'da'));
   });
@@ -4632,7 +4496,7 @@ function saveApiKeyModal() {
 // ---- PHRASEBOOK ----
 
 // ---- NOTER ----
-let notes = JSON.parse(localStorage.getItem('danskFrem_notes')||'[]');
+window.notes = window.notes || JSON.parse(localStorage.getItem('danskFrem_notes')||'[]');
 let editingNoteId = null;
 
 function openNewNote() {
@@ -4650,18 +4514,18 @@ function saveNote() {
   const text = document.getElementById('noteText').value.trim();
   if (!text) return;
   if (editingNoteId) {
-    const note = notes.find(n=>n.id===editingNoteId);
+    const note = window.notes.find(n=>n.id===editingNoteId);
     if (note) { note.text = text; note.edited = new Date().toISOString(); }
   } else {
-    notes.unshift({id:'n'+Date.now(), text, date:new Date().toISOString()});
+    window.notes.unshift({id:'n'+Date.now(), text, date:new Date().toISOString()});
   }
-  localStorage.setItem('danskFrem_notes', JSON.stringify(notes));
-  if (window._fbSave) window._fbSave({ notes });
+  localStorage.setItem('danskFrem_notes', JSON.stringify(window.notes));
+  if (window._fbSave) window._fbSave({ notes: window.notes });
   closeNoteEditor();
   renderNotes();
 }
 function editNote(id) {
-  const note = notes.find(n=>n.id===id);
+  const note = window.notes.find(n=>n.id===id);
   if (!note) return;
   editingNoteId = id;
   document.getElementById('noteText').value = note.text;
@@ -4670,20 +4534,20 @@ function editNote(id) {
   document.getElementById('noteText').focus();
 }
 function deleteNote(id) {
-  notes = notes.filter(n=>n.id!==id);
-  localStorage.setItem('danskFrem_notes', JSON.stringify(notes));
-  if (window._fbSave) window._fbSave({ notes });
+  window.notes = window.notes.filter(n=>n.id!==id);
+  localStorage.setItem('danskFrem_notes', JSON.stringify(window.notes));
+  if (window._fbSave) window._fbSave({ notes: window.notes });
   renderNotes();
 }
-function renderNotes() {
+window.renderNotes = function renderNotes() {
   const container = document.getElementById('noteList');
-  if (!notes.length) {
+  if (!window.notes.length) {
     container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
       <div style="font-size:2rem;margin-bottom:12px;">📓</div>
       <div style="font-size:0.9rem;">${t('noNotes').replace('\n','<br>')}</div></div>`;
     return;
   }
-  container.innerHTML = notes.map(note => {
+  container.innerHTML = window.notes.map(note => {
     const d = new Date(note.date);
     const dateStr = d.toLocaleDateString('de-DE',{day:'2-digit',month:'short',year:'numeric'});
     const timeStr = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
@@ -4711,7 +4575,7 @@ async function correctCurrentNote() {
   box.innerHTML = await getNoteFeedback(text);
 }
 async function correctNote(id) {
-  const note = notes.find(n=>n.id===id);
+  const note = window.notes.find(n=>n.id===id);
   if (!note) return;
   const box = document.getElementById('noteCorr-'+id);
   box.style.display = 'block';
@@ -4722,7 +4586,7 @@ async function getNoteFeedback(text) {
   try {
     const res = await apiFetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:MODEL,max_tokens:800,
-        messages:[{role:'user',content:`Du er en venlig dansk sproglærer. Ret eventuelle fejl i denne tekst.\n\nTekst: "${text}"\n\nHvis der er danske fejl:\n- Vis: Fejl: [forkert] → Ret: [korrekt]\n- Giv ét kort tip\nHvis teksten er korrekt dansk: Skriv bare "✓ Ingen fejl – godt skrevet!"\nVær kort og præcis.`}]})});
+        messages:[{role:'user',content:`Du er en venlig dansk sproglærer. Ret eventuelle fejl i denne tekst.\n\nTekst: "${text}"\n\nHvis der er danske fejl:\n- Vis: Fejl: [forkert] → Ret: [korrekt]\n- Giv ét kort tip\nHvis teksten er korrekt dansk: Skriv bare "✓ No errors – godt skrevet!"\nVær kort og præcis.`}]})});
     if (!res) return;
     const data = await res.json();
     return data.content[0].text.replace(/\n/g,'<br>');
@@ -4737,7 +4601,7 @@ const FAQ_ANSWERS = {
         <li>Gå til <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></li>
         <li>Opret en konto og klik på <strong>API Keys</strong></li>
         <li>Klik <strong>Create Key</strong>, kopiér nøglen</li>
-        <li>Indsæt den i Indstillinger → API-nøgle og klik Gem</li>
+        <li>Indsæt den i Settings → API-nøgle og klik Gem</li>
       </ol>
       <div class="faq-tip">💡 Nøglen starter med <code>sk-ant-</code>. Nye brugere får gratis startcredits.</div>`,
     faq2: `<p><strong>Samtale</strong> er dit daglige samtalerum med en AI-persona på dansk.</p>
@@ -4753,16 +4617,16 @@ const FAQ_ANSWERS = {
         <li>Opret en ny ø med et emne (f.eks. "Arkitektur" eller "Madlavning")</li>
         <li>Claude interviewer dig på dansk om emnet og samler nyttige sætninger</li>
         <li>Du kan fortsætte interviewet når som helst og tilføje flere sætninger</li>
-        <li>Øv sætningerne med <strong>🎯 Üben</strong> – oversæt fra tysk til dansk</li>
+        <li>Øv sætningerne med <strong>🎯 Practice</strong> – oversæt fra tysk til dansk</li>
         <li>Eksportér som CSV eller Anki-kort</li>
       </ol>
       <div class="faq-tip">💡 Du kan svare på dansk eller tysk – Claude samler sætningerne uanset hvad.</div>`,
     faq4: `<p>Streaken tæller dage i træk hvor du når dit daglige skrivemål.</p>
       <ul>
-        <li>Standard: <strong>100 ord</strong> om dagen – kan ændres i Indstillinger</li>
+        <li>Standard: <strong>100 ord</strong> om dagen – kan ændres i Settings</li>
         <li>Når du når målet, tæller dagen med i din streak 🔥</li>
         <li>Springer du en dag over, nulstilles streaken</li>
-        <li>Statistikken viser dine ord i dag, Längste tekst og samtaler</li>
+        <li>Stats show your words today, longest text and conversations</li>
       </ul>
       <div class="faq-tip">💡 Konsistens er vigtigere end mængde – 100 ord tager kun 5-10 minutter!</div>`,
     faq5: `<p>Anki er et gratis flashcard-program med <strong>spaced repetition</strong>.</p>
@@ -4809,7 +4673,7 @@ const FAQ_ANSWERS = {
         <li>Create a new island with a topic (e.g. "Architecture" or "Cooking")</li>
         <li>Claude interviews you in Danish about the topic and collects useful sentences</li>
         <li>Continue the interview anytime and add more sentences</li>
-        <li>Practice with <strong>🎯 Üben</strong> – translate from German to Danish</li>
+        <li>Practice with <strong>🎯 Practice</strong> – translate from German to Danish</li>
         <li>Export as CSV or Anki cards</li>
       </ol>
       <div class="faq-tip">💡 You can answer in Danish or German – Claude collects the sentences either way.</div>`,
@@ -4837,7 +4701,7 @@ const FAQ_ANSWERS = {
     faq6: `<p>Dansk Frem is designed with privacy in mind:</p>
       <ul>
         <li><strong>API key</strong> stored locally in your browser, sent directly to Anthropic</li>
-        <li><strong>Error log, notes and islands</strong> stored locally (localStorage)</li>
+        <li><strong>Error log, window.notes and islands</strong> stored locally (localStorage)</li>
         <li>With <strong>Cloud-Sync</strong>, data is stored encrypted in Firebase linked to your Google account</li>
         <li>No ads, no tracking, no third-party analytics</li>
       </ul>
@@ -4889,7 +4753,7 @@ window.renderOeList = function renderOeList() {
     list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
       <div style="font-size:2rem;margin-bottom:12px;">🗺️</div>
       <div style="font-size:0.95rem;margin-bottom:6px;">Endnu ingen sprogøer</div>
-      <div style="font-size:0.82rem;">Opret din første ø og byg dit fagspecifikke ordforråd.</div>
+      <div style="font-size:0.82rem;">Create your first island and build your domain-specific vocabulary.</div>
     </div>`;
     return;
   }
@@ -4904,7 +4768,7 @@ window.renderOeList = function renderOeList() {
           <button class="btn btn-ghost btn-sm" onclick="deleteOe(${i})" style="color:var(--red);">×</button>
         </div>
       </div>
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">${oe.phrases.length} Sätze gesammelt</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;">${oe.phrases.length} sentences collected</div>
       <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
         ${oe.phrases.slice(0,3).map(p => `
           <div style="font-size:0.85rem;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:6px;">
@@ -4914,8 +4778,8 @@ window.renderOeList = function renderOeList() {
         ${oe.phrases.length > 3 ? `<div style="font-size:0.78rem;color:var(--muted);padding:4px 10px;">+ ${oe.phrases.length - 3} mere …</div>` : ''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="startOeUebung(${i})">🎯 Üben</button>
-        <button class="btn btn-ghost btn-sm" onclick="continueOe(${i})">💬 Interview fortführen</button>
+        <button class="btn btn-primary btn-sm" onclick="startOeUebung(${i})">🎯 Practice</button>
+        <button class="btn btn-ghost btn-sm" onclick="continueOe(${i})">💬 Continue interview</button>
         <button class="btn btn-ghost btn-sm" onclick="exportOeCSV(${i})">⬇ CSV</button>
         <button class="btn btn-ghost btn-sm" onclick="exportOeAnki(${i})">🃏 Anki</button>
       </div>
@@ -4978,7 +4842,7 @@ function importCsvAsOe() {
   const topic = document.getElementById('csvImportTopic').value.trim() || 'CSV Import';
   const newOe = {
     topic,
-    desc: `Importiert aus CSV – ${csvParsedPhrases.length} Sätze`,
+    desc: `Imported from CSV – ${csvParsedPhrases.length} sentences`,
     phrases: csvParsedPhrases,
     date: new Date().toLocaleDateString('da-DK'),
     history: []
@@ -5039,7 +4903,7 @@ Der Nutzer kann auf Dänisch ODER Deutsch antworten – beides ist willkommen. F
 
 Nach jeder Antwort:
 1. Kurzes freundliches Feedback (1 Satz auf Dänisch)
-2. Formuliere 2-4 nützliche dänische Sätze aus dem Thema der Antwort
+2. Formulate 2-4 useful sentences in the target language based on the topic of the answer
 3. Nächste Frage
 
 WICHTIG: Gib am Ende jeder Antwort immer einen Block mit neuen Sätzen in diesem Format:
@@ -5218,7 +5082,7 @@ async function checkOePractice() {
       const res = await apiFetch(API_URL, { method:'POST',
         headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
         body: JSON.stringify({ model:MODEL, max_tokens:300,
-          messages:[{role:'user', content:`Bewerte diese dänische Übersetzung kurz auf Dänisch (max 2 Sätze).\nOriginal (DE): "${p.de}"\nKorrekt (DA): "${p.da}"\nAntwort des Lernenden: "${answer}"\nIst es richtig, fast richtig oder falsch? Was ist der Unterschied?`}]
+          messages:[{role:'user', content:`Briefly evaluate this translation in German (max 2 sentences).\nOriginal (DE): "${p.de}"\nKorrekt (DA): "${p.da}"\nAntwort des Lernenden: "${answer}"\nIs it correct, almost correct, or wrong? What is the difference?`}]
         })
       });
     if (!res) return;
@@ -5231,11 +5095,13 @@ async function checkOePractice() {
       const pct = overlap / words_correct.length;
       if (pct > 0.8) {
         s.correct++;
-        document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:#5CC488;font-weight:600;">✓ Næsten perfekt!</span>';
+        document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:#5CC488;font-weight:600;">✓ Almost perfect!</span>';
       } else if (pct > 0.5) {
         document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:var(--accent);font-weight:600;">~ Tæt på</span>';
+        saveError(answer, p.da, p.de, 'oe');
       } else {
         document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:#F07070;font-weight:600;">✗ Ikke helt rigtigt</span>';
+        saveError(answer, p.da, p.de, 'oe');
       }
       document.getElementById('oePracticeFeedback').textContent = fb;
     } catch(e) {
@@ -5261,7 +5127,7 @@ function showOePracticeDone() {
   const pct = Math.round((s.correct / s.total) * 100);
   const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
   document.getElementById('oePracticeFinalScore').textContent =
-    s.correct + ' / ' + s.total + ' richtig (' + pct + '%) ' + emoji;
+    s.correct + ' / ' + s.total + ' correct (' + pct + '%) ' + emoji;
   document.getElementById('oePracticeBar').style.width = '100%';
   document.getElementById('oePracticeProgress').textContent = s.total + ' / ' + s.total;
   document.getElementById('oePracticeScore').textContent = s.correct + ' ✓';
@@ -5294,7 +5160,7 @@ function continueOe(i) {
   renderOePhrases();
 }
 function deleteOe(i) {
-  if (confirm('Ø "' + window.sprogOeer[i].topic + '" löschen?')) { window.sprogOeer.splice(i, 1); saveOeer(); renderOeList(); }
+  if (confirm('Ø "' + window.sprogOeer[i].topic + '" delete?')) { window.sprogOeer.splice(i, 1); saveOeer(); renderOeList(); }
 }
 
 function exportOeCSV(i) {
@@ -5334,14 +5200,14 @@ let testState = null;
 
 function buildTestPrompt(type) {
   const today = todayStr();
-  const todayErrors = errorLog.filter(e => e.isoDate && e.isoDate.slice(0,10) === today);
-  const recentErrors = errorLog.slice(0, 20);
+  const todayErrors = window.errorLog.filter(e => e.isoDate && e.isoDate.slice(0,10) === today);
+  const recentErrors = window.errorLog.slice(0, 20);
 
   if (type === 'dag') {
-    const wordsToday = stats.dailyActivity?.[today] || 0;
+    const wordsToday = window.stats.dailyActivity?.[today] || 0;
     const errSample = todayErrors.slice(0,5).map(e => `Fejl: "${e.fejl}" → Ret: "${e.ret}"${e.tip?' ('+e.tip+')':''}`).join('\n');
     return `Du er en dansk sproglærer. En elev har øvet sig i dag (${wordsToday} ord skrevet).
-${errSample ? 'Dagens fejl:\n' + errSample : 'Ingen fejl logget i dag.'}
+${errSample ? 'Dagens fejl:\n' + errSample : 'No errors logget i dag.'}
 
 Lav 10 korte testspørgsmål PÅ DANSK til eleven baseret på dagens øvelse.
 Bland: oversættelse (DE→DA), udfyld tomrum, multiple choice, grammatikspørgsmål.
@@ -5359,7 +5225,7 @@ Svar KUN med JSON array:
     const topTags = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([t])=>t);
     const errSample = recentErrors.slice(0,8).map(e => `"${e.fejl}" → "${e.ret}"${e.tip?' ('+e.tip+')':''}`).join('\n');
     return `Du er en dansk sproglærer. En elev har følgende tilbagevendende fejl:
-${errSample || 'Ingen fejl endnu.'}
+${errSample || 'No errors endnu.'}
 ${topTags.length ? 'Fejlmønstre: ' + topTags.join(', ') : ''}
 
 Lav 10 målrettede testspørgsmål PÅ DANSK som adresserer disse specifikke fejlmønstre.
@@ -5451,6 +5317,8 @@ async function submitTestAnswer() {
   const overlap = words_a.filter(w => words_q.includes(w)).length / Math.max(words_q.length,1);
   const counted = isCorrect || overlap > 0.75;
   if (counted) testState.correct++;
+  // Save wrong answers to error log
+  if (!counted) saveError(answer, q.answer, q.question, 'test');
   testState.results.push({ q: q.question, correct: q.answer, given: answer, ok: counted, feedback });
 
   const fb = document.getElementById('testFeedback');
@@ -5461,7 +5329,7 @@ async function submitTestAnswer() {
 
   document.getElementById('testQuestionCard').style.display = 'none';
   document.getElementById('testNextBtn').style.display = 'block';
-  document.getElementById('testNextBtn').textContent = s.current + 1 < s.questions.length ? 'Næste spørgsmål →' : 'Se resultat →';
+  document.getElementById('testNextBtn').textContent = s.current + 1 < s.questions.length ? 'Next question →' : 'Se resultat →';
 }
 
 function nextTestQuestion() {
@@ -5481,12 +5349,12 @@ function showTestDone() {
   document.getElementById('testActive').style.display = 'none';
   document.getElementById('testDone').style.display = 'block';
   document.getElementById('testDoneEmoji').textContent = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
-  document.getElementById('testDoneScore').textContent = s.correct + ' / ' + s.questions.length + ' richtig (' + pct + '%)';
+  document.getElementById('testDoneScore').textContent = s.correct + ' / ' + s.questions.length + ' correct (' + pct + '%)';
   // Summary of wrong answers
   const wrong = s.results.filter(r => !r.ok);
   document.getElementById('testDoneSummary').innerHTML = wrong.length === 0
-    ? '<span style="color:#5CC488;">✓ Alle Antworten richtig – ausgezeichnet!</span>'
-    : '<strong style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">Zu wiederholen:</strong><br>' +
+    ? '<span style="color:#5CC488;">✓ Alle Antworten correct – ausgezeichnet!</span>'
+    : '<strong style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">To review:</strong><br>' +
       wrong.map(r => `<div style="margin-top:8px;padding:8px;background:rgba(200,16,46,0.06);border-radius:8px;">
         <div style="font-size:0.82rem;color:var(--muted);">${esc(r.q)}</div>
         <div style="color:#5CC488;font-size:0.88rem;margin-top:2px;">→ ${esc(r.correct)}</div>
