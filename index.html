@@ -4291,7 +4291,7 @@ async function buildAndDownloadApkg(cards, filename) {
   try {
     const SQL = await initSqlJs({ locateFile: f => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/' + f });
     const db = new SQL.Database();
-    db.run('CREATE TABLE window.notes (id INTEGER PRIMARY KEY, guid TEXT, mid INTEGER, mod INTEGER, usn INTEGER, tags TEXT, flds TEXT, sfld TEXT, csum INTEGER, flags INTEGER, data TEXT);');
+    db.run('CREATE TABLE notes (id INTEGER PRIMARY KEY, guid TEXT, mid INTEGER, mod INTEGER, usn INTEGER, tags TEXT, flds TEXT, sfld TEXT, csum INTEGER, flags INTEGER, data TEXT);');
     db.run('CREATE TABLE cards (id INTEGER PRIMARY KEY, nid INTEGER, did INTEGER, ord INTEGER, mod INTEGER, usn INTEGER, type INTEGER, queue INTEGER, due INTEGER, ivl INTEGER, factor INTEGER, reps INTEGER, lapses INTEGER, left INTEGER, odue INTEGER, odid INTEGER, flags INTEGER, data TEXT);');
     db.run('CREATE TABLE col (id INTEGER PRIMARY KEY, crt INTEGER, mod INTEGER, scm INTEGER, ver INTEGER, dty INTEGER, usn INTEGER, ls INTEGER, conf TEXT, models TEXT, decks TEXT, dconf TEXT, tags TEXT);');
     db.run('CREATE TABLE graves (usn INTEGER, oid INTEGER, type INTEGER);');
@@ -4386,7 +4386,7 @@ async function buildAndDownloadApkg(cards, filename) {
       }
 
       const csum = sfld.replace(/<[^>]+>/g,'').split('').reduce((a,c)=>((a<<5)-a+c.charCodeAt(0))|0,0)>>>0;
-      db.run('INSERT INTO window.notes VALUES (?,?,?,?,?,?,?,?,?,?,?)', [noteId,'guid'+noteId,mid,now,-1,'',flds,sfld,csum,0,'']);
+      db.run('INSERT INTO notes VALUES (?,?,?,?,?,?,?,?,?,?,?)', [noteId,'guid'+noteId,mid,now,-1,'',flds,sfld,csum,0,'']);
       db.run('INSERT INTO cards VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [cardId,noteId,deckId,0,now,-1,0,0,i,0,0,0,0,0,0,0,0,'']);
     });
 
