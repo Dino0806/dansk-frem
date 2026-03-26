@@ -785,8 +785,6 @@
 
     <hr class="settings-divider">
 
-    <hr class="settings-divider">
-
     <div class="settings-section">
       <div class="settings-label" data-i18n="settingsSync">☁️ Cloud-Sync</div>
       <div id="syncStatus" style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">Ikke logget ind – data gemmes kun lokalt</div>
@@ -869,8 +867,8 @@
   <button class="tab" onclick="showTab('chat')">💬 Chat</button>
   <button class="tab" onclick="showTab('oev')">✍️ Øv</button>
   <button class="tab" onclick="showTab('oer')">🗺️ Øer</button>
+  <button class="tab" onclick="showTab('test')">🎯 Test</button>
   <button class="tab" id="logTabBtn" onclick="showTab('log')">📋 Log<span class="err-badge" id="errBadge" style="display:none">0</span></button>
-  <button class="tab" onclick="showTab('noter')">📓 Noter</button>
 </nav>
 
 <main>
@@ -1173,8 +1171,9 @@
     <!-- LOG MODE SWITCHER -->
     <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
       <button class="chat-mode-btn active" id="logModeFejlBtn" onclick="setLogMode('fejl')">📋 Fejllog<span class="err-badge" id="errBadgeLog" style="display:none;margin-left:4px;"></span></button>
+      <button class="chat-mode-btn" id="logModeArchivBtn" onclick="setLogMode('archiv')">📦 Archiv</button>
+      <button class="chat-mode-btn" id="logModeNoterBtn" onclick="setLogMode('noter')">📓 Notizen</button>
       <button class="chat-mode-btn" id="logModeAnkiBtn" onclick="setLogMode('anki')">🃏 Anki</button>
-      <button class="chat-mode-btn" id="logModeTestBtn" onclick="setLogMode('test')">🎯 Test</button>
     </div>
 
     <!-- FEJL PANE -->
@@ -1235,22 +1234,39 @@
     </div>
     <div id="errorList"></div>
 
-    <!-- ARCHIVE -->
-    <div style="margin-top:32px;">
-      <button onclick="toggleArchive()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.82rem;font-family:'DM Sans',sans-serif;padding:0;margin-bottom:12px;">
-        <span id="archiveChevron" style="transition:transform 0.2s;display:inline-block;">▶</span>
-        <span>📦 Archive (<span id="archiveCount">0</span>)</span>
-      </button>
-      <div id="archivePanel" style="display:none;">
-        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Archived errors – saved for referenceence.</div>
-        <div id="archiveList"></div>
-        <button onclick="clearArchive()" style="margin-top:12px;background:none;border:none;color:var(--muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;">Delete archive</button>
-      </div>
-    </div>
   </div>
 
   </div><!-- /fejl_inner -->
     </div><!-- /logPanefejl -->
+
+    <!-- ARCHIV PANE -->
+    <div id="logPanearchiv" style="display:none;">
+      <div class="section-title" style="margin-bottom:4px;">📦 Archiv</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;">Archived errors – saved for reference.</div>
+      <div id="archiveList"></div>
+      <button onclick="clearArchive()" style="margin-top:16px;background:none;border:none;color:var(--muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;">Delete archive</button>
+    </div><!-- /logPanearchiv -->
+
+    <!-- NOTER PANE (moved from own tab) -->
+    <div id="logPanenote" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;">My Notes</div>
+          <div style="font-size:0.82rem;color:var(--muted);">Thoughts, words, reflections</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openNewNote()">+ New note</button>
+      </div>
+      <div id="noteEditorLog" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;margin-bottom:20px;">
+        <textarea id="noteTextLog" class="writing-editor" placeholder="Skriv din note her... (dansk eller tysk)" style="min-height:120px;margin-bottom:12px;"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-primary" onclick="saveNoteLog()">Save note 💾</button>
+          <button class="btn btn-ghost" onclick="correctCurrentNoteLog()">AI check my text ✓</button>
+          <button class="btn btn-ghost" onclick="closeNoteEditorLog()">Cancel</button>
+        </div>
+        <div id="noteCorrectionBoxLog" style="display:none;margin-top:14px;background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.6;"></div>
+      </div>
+      <div id="noteListLog"></div>
+    </div><!-- /logPanenote -->
 
     <!-- ANKI PANE -->
     <div id="logPaneanki" style="display:none;">
@@ -1464,8 +1480,72 @@
           <button class="btn btn-ghost" onclick="setLogMode('fejl')">To Error Log</button>
         </div>
       </div>
-    </div><!-- /logPanetest -->
+    </div><!-- /logPanetest (kept for compat) -->
   </div><!-- /log section -->
+
+  <!-- TEST (standalone tab) -->
+  <div id="test" class="section">
+    <!-- Mode selection -->
+    <div id="testModeSelect2">
+      <div class="section-title" style="margin-bottom:6px;">🎯 Recall-Test</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Test what you've learned – Claude asks questions based on your activity.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div onclick="startTest('dag')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <div style="font-size:1.6rem;margin-bottom:8px;">☀️</div>
+          <div style="font-weight:600;margin-bottom:4px;">Daily Test</div>
+          <div style="font-size:0.78rem;color:var(--muted);">10 questions based on what you practised today</div>
+        </div>
+        <div onclick="startTest('svagheder')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <div style="font-size:1.6rem;margin-bottom:8px;">🔍</div>
+          <div style="font-weight:600;margin-bottom:4px;">Weakness Test</div>
+          <div style="font-size:0.78rem;color:var(--muted);">Targeted questions from your most common error patterns</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active test -->
+    <div id="testActive2" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div style="font-family:'Fraunces',serif;font-size:1.05rem;" id="testTitle2"></div>
+        <button class="btn btn-ghost btn-sm" onclick="cancelTest2()">✕ Cancel</button>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
+          <span id="testProgress2">Question 1 / 10</span>
+          <span id="testScore2" style="color:#5CC488;"></span>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:5px;overflow:hidden;">
+          <div id="testBar2" style="height:100%;background:linear-gradient(90deg,var(--red),var(--accent));border-radius:8px;transition:width 0.4s;width:0%;"></div>
+        </div>
+      </div>
+      <div id="testLoading2" style="display:none;text-align:center;padding:30px;color:var(--muted);">
+        <div class="loading-dots" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>
+        Claude is generating questions…
+      </div>
+      <div id="testQuestionCard2" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:22px;margin-bottom:16px;">
+        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px;" id="testQType2"></div>
+        <div style="font-size:1rem;line-height:1.6;margin-bottom:18px;" id="testQText2"></div>
+        <textarea id="testAnswer2" class="anki-input" rows="2" placeholder="Skriv dit svar på dansk …"
+          style="resize:none;"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitTestAnswer2()}"></textarea>
+        <button class="btn btn-primary" style="margin-top:10px;" onclick="submitTestAnswer2()">Svar ✓</button>
+      </div>
+      <div id="testFeedback2" style="display:none;border-radius:12px;padding:16px;margin-bottom:14px;font-size:0.88rem;line-height:1.6;"></div>
+      <button id="testNextBtn2" style="display:none;" class="btn btn-secondary" onclick="nextTestQuestion2()">Next question →</button>
+    </div>
+
+    <!-- Done screen -->
+    <div id="testDone2" style="display:none;text-align:center;padding:30px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;" id="testDoneEmoji2">🎉</div>
+      <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Test complete!</div>
+      <div id="testDoneScore2" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
+      <div id="testDoneSummary2" style="text-align:left;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin-bottom:20px;font-size:0.85rem;line-height:1.7;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="cancelTest2()">New test</button>
+        <button class="btn btn-ghost" onclick="showTab('log')">To Error Log</button>
+      </div>
+    </div>
+  </div><!-- /test section -->
 
   <!-- API KEY MODAL (first run) -->
   <div id="apiKeyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;padding:20px;">
@@ -1837,6 +1917,11 @@ function loadData() {
   // Update archive count display
   const countEl = document.getElementById('archiveCount');
   if (countEl) countEl.textContent = window.archiveLog.length;
+  // Also update archiv tab badge in Log mode switcher
+  const archivBtn = document.getElementById('logModeArchivBtn');
+  if (archivBtn && window.archiveLog.length > 0) {
+    archivBtn.textContent = '📦 Archiv (' + window.archiveLog.length + ')';
+  }
 }
 window.updateUI = function updateUI() {
   const n = window.errorLog.length;
@@ -2395,17 +2480,14 @@ function archiveErrors(ids) {
 }
 
 function toggleArchive() {
-  const panel = document.getElementById('archivePanel');
-  const chev  = document.getElementById('archiveChevron');
-  const open  = panel.style.display === 'none';
-  panel.style.display = open ? '' : 'none';
-  chev.style.transform = open ? 'rotate(90deg)' : '';
-  if (open) renderArchive();
+  // Archiv is now a dedicated tab in Log
+  setLogMode('archiv');
+  showTab('log');
 }
 
 window.renderArchive = function renderArchive() {
-  const countEl = document.getElementById('archiveCount');
-  if (countEl) countEl.textContent = window.archiveLog.length;
+  const archivBtn = document.getElementById('logModeArchivBtn');
+  if (archivBtn) archivBtn.textContent = '📦 Archiv' + (window.archiveLog.length ? ' (' + window.archiveLog.length + ')' : '');
   const list = document.getElementById('archiveList');
   if (!list) return;
   if (!window.archiveLog.length) {
@@ -2873,12 +2955,16 @@ let logMode = 'fejl';
 function setLogMode(mode) {
   logMode = mode;
   document.getElementById('logModeFejlBtn').classList.toggle('active', mode==='fejl');
+  document.getElementById('logModeArchivBtn').classList.toggle('active', mode==='archiv');
+  document.getElementById('logModeNoterBtn').classList.toggle('active', mode==='noter');
   document.getElementById('logModeAnkiBtn').classList.toggle('active', mode==='anki');
-  document.getElementById('logModeTestBtn').classList.toggle('active', mode==='test');
-  document.getElementById('logPanefejl').style.display = mode==='fejl' ? '' : 'none';
-  document.getElementById('logPaneanki').style.display = mode==='anki' ? '' : 'none';
-  document.getElementById('logPanetest').style.display = mode==='test' ? '' : 'none';
-  if (mode === 'fejl') renderErrors();
+  document.getElementById('logPanefejl').style.display   = mode==='fejl'   ? '' : 'none';
+  document.getElementById('logPanearchiv').style.display = mode==='archiv' ? '' : 'none';
+  document.getElementById('logPanenote').style.display   = mode==='noter'  ? '' : 'none';
+  document.getElementById('logPaneanki').style.display   = mode==='anki'   ? '' : 'none';
+  if (mode === 'fejl')   renderErrors();
+  if (mode === 'archiv') renderArchive();
+  if (mode === 'noter')  renderNotesLog();
 }
 
 // ---- CHAT MODE SWITCHER ----
@@ -4477,7 +4563,7 @@ const I18N = {
     streakTitleN: n => `${n} day${n===1?'':'s'} in a row 🔥`,
     tabHjem: '🏠 Home', tabChat: '💬 Chat', tabOev: '✍️ Practice',
     oevModeSprog: '📖 Grammar',
-    tabLog: '📋 Log', tabOer: '🗺️ Islands', tabNoter: '📓 Notes',
+    tabLog: '📋 Log', tabOer: '🗺️ Islands', tabTest: '🎯 Test',
     settingsTitle: 'Settings',
     settingsAppearance: 'Appearance',
     themeDark: '🌙 Dark', themeLight: '☀️ Light',
@@ -4594,8 +4680,8 @@ function applyLang() {
     if (btn) btn.classList.toggle('active', l === (appSettings.lang||'da'));
   });
   // Nav tabs (top)
-  const tabIds = ['hjem','chat','oev','oer','log','noter'];
-  const tabKeys = ['tabHjem','tabChat','tabOev','tabOer','tabLog','tabNoter'];
+  const tabIds = ['hjem','chat','oev','oer','test','log'];
+  const tabKeys = ['tabHjem','tabChat','tabOev','tabOer','tabTest','tabLog'];
   tabIds.forEach((id, i) => {
     const tab = document.querySelector(`nav.top-nav button[onclick*="'${id}'"]`);
     if (!tab) return;
@@ -5414,15 +5500,16 @@ Exactly 10 questions.`;
 }
 
 async function startTest(type) {
-  document.getElementById('testModeSelect').style.display = 'none';
-  document.getElementById('testDone').style.display = 'none';
-  document.getElementById('testActive').style.display = 'block';
-  document.getElementById('testLoading').style.display = 'block';
-  document.getElementById('testQuestionCard').style.display = 'none';
-  document.getElementById('testFeedback').style.display = 'none';
-  document.getElementById('testNextBtn').style.display = 'none';
-  document.getElementById('testTitle').textContent = type === 'dag' ? '☀️ Daily Test' : '🔍 Weakness Test';
-  document.getElementById('testScore').textContent = '';
+  // Works on the standalone #test section
+  document.getElementById('testModeSelect2').style.display = 'none';
+  document.getElementById('testDone2').style.display = 'none';
+  document.getElementById('testActive2').style.display = 'block';
+  document.getElementById('testLoading2').style.display = 'block';
+  document.getElementById('testQuestionCard2').style.display = 'none';
+  document.getElementById('testFeedback2').style.display = 'none';
+  document.getElementById('testNextBtn2').style.display = 'none';
+  document.getElementById('testTitle2').textContent = type === 'dag' ? '☀️ Daily Test' : '🔍 Weakness Test';
+  document.getElementById('testScore2').textContent = '';
 
   try {
     const res = await apiFetch(API_URL, { method:'POST',
@@ -5434,10 +5521,10 @@ async function startTest(type) {
     let text = data.content[0].text.replace(/```json|```/g,'').trim();
     const questions = JSON.parse(text);
     testState = { questions, current:0, correct:0, results:[] };
-    document.getElementById('testLoading').style.display = 'none';
+    document.getElementById('testLoading2').style.display = 'none';
     showTestQuestion();
   } catch(e) {
-    document.getElementById('testLoading').innerHTML = '<div style="color:#F07070;">Error – please try again.</div>';
+    document.getElementById('testLoading2').innerHTML = '<div style="color:#F07070;">Error – please try again.</div>';
   }
 }
 
@@ -5445,30 +5532,28 @@ function showTestQuestion() {
   const s = testState;
   const q = s.questions[s.current];
   const total = s.questions.length;
-  document.getElementById('testProgress').textContent = 'Question ' + (s.current+1) + ' / ' + total;
-  document.getElementById('testBar').style.width = Math.round((s.current/total)*100) + '%';
-  document.getElementById('testScore').textContent = s.correct + ' ✓';
-  document.getElementById('testQType').textContent = q.type || 'Spørgsmål';
-  document.getElementById('testQText').textContent = q.question;
-  document.getElementById('testAnswer').value = '';
-  document.getElementById('testQuestionCard').style.display = 'block';
-  document.getElementById('testFeedback').style.display = 'none';
-  document.getElementById('testNextBtn').style.display = 'none';
-  setTimeout(() => document.getElementById('testAnswer').focus(), 100);
+  document.getElementById('testProgress2').textContent = 'Question ' + (s.current+1) + ' / ' + total;
+  document.getElementById('testBar2').style.width = Math.round((s.current/total)*100) + '%';
+  document.getElementById('testScore2').textContent = s.correct + ' ✓';
+  document.getElementById('testQType2').textContent = q.type || 'Spørgsmål';
+  document.getElementById('testQText2').textContent = q.question;
+  document.getElementById('testAnswer2').value = '';
+  document.getElementById('testQuestionCard2').style.display = 'block';
+  document.getElementById('testFeedback2').style.display = 'none';
+  document.getElementById('testNextBtn2').style.display = 'none';
+  setTimeout(() => document.getElementById('testAnswer2').focus(), 100);
 }
 
-async function submitTestAnswer() {
+async function submitTestAnswer2() {
   const s = testState;
   const q = s.questions[s.current];
-  const answer = document.getElementById('testAnswer').value.trim();
+  const answer = document.getElementById('testAnswer2').value.trim();
   if (!answer) return;
-  document.getElementById('testQuestionCard').querySelector('button').disabled = true;
+  document.getElementById('testQuestionCard2').querySelector('button').disabled = true;
 
-  // Quick check
   const norm = t => t.toLowerCase().replace(/[.,!?;:]/g,'').trim();
   const isCorrect = norm(answer) === norm(q.answer);
 
-  // Ask Claude for evaluation
   let feedback = '';
   try {
     const res = await apiFetch(API_URL, { method:'POST',
@@ -5484,62 +5569,137 @@ async function submitTestAnswer() {
     feedback = `Correct answer: ${q.answer}`;
   }
 
-  // Score
   const words_q = norm(q.answer).split(' ');
   const words_a = norm(answer).split(' ');
   const overlap = words_a.filter(w => words_q.includes(w)).length / Math.max(words_q.length,1);
   const counted = isCorrect || overlap > 0.75;
   if (counted) testState.correct++;
-  // Save wrong answers to error log
   if (!counted) saveError(answer, q.answer, q.question, 'test');
   testState.results.push({ q: q.question, correct: q.answer, given: answer, ok: counted, feedback });
 
-  const fb = document.getElementById('testFeedback');
+  const fb = document.getElementById('testFeedback2');
   fb.style.display = 'block';
   fb.style.background = counted ? 'rgba(92,196,136,0.1)' : 'rgba(200,16,46,0.08)';
   fb.style.border = '1px solid ' + (counted ? 'rgba(92,196,136,0.3)' : 'rgba(200,16,46,0.2)');
   fb.innerHTML = '<strong>' + (counted ? '✓ Correct!' : '✗ Not quite') + '</strong><br>' + feedback.replace(/\n/g,'<br>');
 
-  document.getElementById('testQuestionCard').style.display = 'none';
-  document.getElementById('testNextBtn').style.display = 'block';
-  document.getElementById('testNextBtn').textContent = s.current + 1 < s.questions.length ? 'Next question →' : 'See result →';
+  document.getElementById('testQuestionCard2').style.display = 'none';
+  document.getElementById('testNextBtn2').style.display = 'block';
+  document.getElementById('testNextBtn2').textContent = s.current + 1 < s.questions.length ? 'Next question →' : 'See result →';
 }
 
-function nextTestQuestion() {
+function nextTestQuestion2() {
   testState.current++;
   if (testState.current >= testState.questions.length) {
-    showTestDone();
+    showTestDone2();
   } else {
-    document.getElementById('testFeedback').style.display = 'none';
-    document.getElementById('testNextBtn').style.display = 'none';
+    document.getElementById('testFeedback2').style.display = 'none';
+    document.getElementById('testNextBtn2').style.display = 'none';
     showTestQuestion();
   }
 }
 
-function showTestDone() {
+function showTestDone2() {
   const s = testState;
   const pct = Math.round((s.correct / s.questions.length) * 100);
-  document.getElementById('testActive').style.display = 'none';
-  document.getElementById('testDone').style.display = 'block';
-  document.getElementById('testDoneEmoji').textContent = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
-  document.getElementById('testDoneScore').textContent = s.correct + ' / ' + s.questions.length + ' correct (' + pct + '%)';
-  // Summary of wrong answers
+  document.getElementById('testActive2').style.display = 'none';
+  document.getElementById('testDone2').style.display = 'block';
+  document.getElementById('testDoneEmoji2').textContent = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
+  document.getElementById('testDoneScore2').textContent = s.correct + ' / ' + s.questions.length + ' correct (' + pct + '%)';
   const wrong = s.results.filter(r => !r.ok);
-  document.getElementById('testDoneSummary').innerHTML = wrong.length === 0
-    ? '<span style="color:#5CC488;">✓ Alle Antworten correct – ausgezeichnet!</span>'
+  document.getElementById('testDoneSummary2').innerHTML = wrong.length === 0
+    ? '<span style="color:#5CC488;">✓ Alle svar korrekte – ausgezeichnet!</span>'
     : '<strong style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">To review:</strong><br>' +
       wrong.map(r => `<div style="margin-top:8px;padding:8px;background:rgba(200,16,46,0.06);border-radius:8px;">
         <div style="font-size:0.82rem;color:var(--muted);">${esc(r.q)}</div>
         <div style="color:#5CC488;font-size:0.88rem;margin-top:2px;">→ ${esc(r.correct)}</div>
       </div>`).join('');
-  document.getElementById('testBar').style.width = '100%';
+  document.getElementById('testBar2').style.width = '100%';
 }
 
-function cancelTest() {
+function cancelTest2() {
   testState = null;
-  document.getElementById('testActive').style.display = 'none';
-  document.getElementById('testDone').style.display = 'none';
-  document.getElementById('testModeSelect').style.display = 'block';
+  document.getElementById('testActive2').style.display = 'none';
+  document.getElementById('testDone2').style.display = 'none';
+  document.getElementById('testModeSelect2').style.display = 'block';
+}
+
+// kept for backward compat (old log pane references)
+function cancelTest() { cancelTest2(); }
+
+// ── NOTES IN LOG ────────────────────────────────────────────
+let editingNoteIdLog = null;
+
+function openNewNote() {
+  editingNoteIdLog = null;
+  document.getElementById('noteTextLog').value = '';
+  document.getElementById('noteCorrectionBoxLog').style.display = 'none';
+  document.getElementById('noteEditorLog').style.display = 'block';
+  document.getElementById('noteTextLog').focus();
+}
+function closeNoteEditorLog() {
+  document.getElementById('noteEditorLog').style.display = 'none';
+  editingNoteIdLog = null;
+}
+function saveNoteLog() {
+  const text = document.getElementById('noteTextLog').value.trim();
+  if (!text) return;
+  if (editingNoteIdLog) {
+    const note = window.notes.find(n => n.id === editingNoteIdLog);
+    if (note) { note.text = text; note.edited = new Date().toISOString(); }
+  } else {
+    window.notes.unshift({ id: 'n' + Date.now(), text, date: new Date().toISOString() });
+  }
+  localStorage.setItem('danskFrem_notes', JSON.stringify(window.notes));
+  if (window._fbSave) window._fbSave({ notes: window.notes });
+  closeNoteEditorLog();
+  renderNotesLog();
+}
+async function correctCurrentNoteLog() {
+  const text = document.getElementById('noteTextLog').value.trim();
+  if (!text) return;
+  const box = document.getElementById('noteCorrectionBoxLog');
+  box.style.display = 'block';
+  box.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  box.innerHTML = await getNoteFeedback(text);
+}
+function editNoteLog(id) {
+  const note = window.notes.find(n => n.id === id);
+  if (!note) return;
+  editingNoteIdLog = id;
+  document.getElementById('noteTextLog').value = note.text;
+  document.getElementById('noteCorrectionBoxLog').style.display = 'none';
+  document.getElementById('noteEditorLog').style.display = 'block';
+  document.getElementById('noteTextLog').focus();
+}
+window.renderNotes = function renderNotes() { renderNotesLog(); }
+function renderNotesLog() {
+  const container = document.getElementById('noteListLog');
+  if (!container) return;
+  if (!window.notes || !window.notes.length) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:2rem;margin-bottom:12px;">📓</div>
+      <div style="font-size:0.9rem;">No notes yet – write your first!</div></div>`;
+    return;
+  }
+  container.innerHTML = window.notes.map(note => {
+    const d = new Date(note.date);
+    const dateStr = d.toLocaleDateString('de-DE', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' });
+    const preview = note.text.replace(/\n/g, '<br>');
+    return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:16px 18px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;">
+        <div style="font-size:0.75rem;color:var(--muted);">📅 ${dateStr} · ${timeStr}${note.edited ? '  ✏️' : ''}</div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button onclick="editNoteLog('${note.id}')" title="Edit" style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--muted);padding:4px;">✏️</button>
+          <button onclick="correctNote('${note.id}')" title="AI check" style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--muted);padding:4px;">✓</button>
+          <button onclick="deleteNote('${note.id}');renderNotesLog();" title="Delete" style="background:none;border:none;cursor:pointer;font-size:0.85rem;color:var(--muted);padding:4px;">🗑️</button>
+        </div>
+      </div>
+      <div style="font-size:0.9rem;line-height:1.65;color:var(--white);">${preview}</div>
+      <div id="noteCorr-${note.id}" style="display:none;margin-top:12px;background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:8px;padding:12px;font-size:0.85rem;line-height:1.6;"></div>
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -5565,12 +5725,12 @@ loadDailyContent();
   <button class="bottom-nav-item" onclick="showTab('oer')" data-tab="oer">
     <span class="nav-icon">🗺️</span><span>Øer</span>
   </button>
+  <button class="bottom-nav-item" onclick="showTab('test')" data-tab="test">
+    <span class="nav-icon">🎯</span><span>Test</span>
+  </button>
   <button class="bottom-nav-item" onclick="showTab('log')" data-tab="log">
     <span class="nav-icon">📋</span><span>Log</span>
     <span class="nav-dot" id="bottomNavBadge" style="display:none">0</span>
-  </button>
-  <button class="bottom-nav-item" onclick="showTab('noter')" data-tab="noter">
-    <span class="nav-icon">📓</span><span>Noter</span>
   </button>
 </nav>
 
