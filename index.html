@@ -903,7 +903,7 @@
 
       <!-- Hours Learned -->
       <div class="insight-card">
-        <div class="insight-card-title">📅 Activity (last 7 days)</div>
+        <div class="insight-card-title">🔥 Streak & Activity</div>
         <div id="hoursWidget">
           <div class="hours-big" id="hoursTotal">0 days</div>
           <div class="hours-sub" id="hoursSub">no activity yet</div>
@@ -1971,21 +1971,21 @@ function renderHoursLearned() {
   const minFromChat    = chatsLast7 * 2;
   const totalMin = minFromWriting + minFromErrors + minFromChat;
 
-  // Total: show active days this week
+  const streak = s.streak || 0;
   const activeDaysLast7 = Object.keys(s.dailyActivity || {})
     .filter(d => d >= cutoff && d <= today).length;
 
-  el.textContent = activeDaysLast7 + (activeDaysLast7 === 1 ? ' day' : ' days');
-
-  const streak = s.streak || 0;
-  if (streak >= 7) {
-    subEl.textContent = `${streak} day streak 🔥 – great consistency!`;
-  } else if (activeDaysLast7 >= 5) {
-    subEl.textContent = 'active this week – keep it up!';
-  } else if (activeDaysLast7 > 0) {
-    subEl.textContent = `active out of the last 7 days`;
+  // Show streak as primary number if available, else active days
+  if (streak > 0) {
+    el.textContent = streak + (streak === 1 ? ' day' : ' days');
+    subEl.textContent = streak >= 7
+      ? `🔥 ${streak} day streak – great consistency!`
+      : `🔥 ${streak} day streak – keep going!`;
   } else {
-    subEl.textContent = 'no activity in the last 7 days';
+    el.textContent = activeDaysLast7 + (activeDaysLast7 === 1 ? ' day' : ' days');
+    subEl.textContent = activeDaysLast7 > 0
+      ? 'active this week – build your streak!'
+      : 'no activity in the last 7 days';
   }
 
   // Breakdown – show actual counts, not fake time
