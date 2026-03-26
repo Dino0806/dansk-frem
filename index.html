@@ -3935,6 +3935,10 @@ async function startAnkiBatch() {
   btn.disabled = false;
 }
 
+function ankiEsc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function renderAnkiSavedList() {
   document.getElementById('ankiCardCount').textContent = ankiCards.length;
   const list = document.getElementById('ankiSavedList');
