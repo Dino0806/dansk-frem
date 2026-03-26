@@ -1192,6 +1192,7 @@
           <button class="filter-btn" onclick="setSourceFilter('skriv',this)">✍️ Writing</button>
           <button class="filter-btn" onclick="setSourceFilter('job',this)">💼 Job</button>
           <button class="filter-btn" onclick="setSourceFilter('billede',this)">📷 Handwriting</button>
+          <button class="filter-btn" onclick="setSourceFilter('test',this)">🎯 Test</button>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select class="sort-select" id="sortSelect" onchange="renderErrors()">
@@ -1885,106 +1886,123 @@ function renderStrengthsWeaknesses() {
   if (!el) return;
 
   const allErrors = [...(window.errorLog || []), ...(window.archiveLog || [])];
-  if (!allErrors.length) {
-    el.innerHTML = '<div class="sw-empty">Log some errors to see your pattern.</div>';
+  const s = window.stats || {};
+
+  // ── COLLECT ACTIVITY DATA ────────────────────────────────
+  const totalWords   = s.totalWords || s.sentences || 0;
+  const totalChats   = s.chats || 0;
+  const totalPhrases = (window.sprogOeer || []).reduce((sum, oe) => sum + (oe.phrases?.length || 0), 0);
+  const ankiCount    = (window.ankiCards || []).length;
+
+  // Count errors per area
+  const errBySource = {};
+  const errByTag    = {};
+  allErrors.forEach(e => {
+    const src = e.source || 'other';
+    errBySource[src] = (errBySource[src] || 0) + 1;
+    (e.tags || []).forEach(tag => { errByTag[tag] = (errByTag[tag] || 0) + 1; });
+  });
+
+  // ── SCORE EACH AREA (positive - negative, capped 0–100) ──
+  // Score formula: positive actions raise score, errors lower it.
+  // Each area normalized so 0 = never practiced, 100 = excellent ratio.
+
+  function score(positive, errors, weight) {
+    // positive = activity points, errors = mistake count, weight = scale factor
+    if (positive === 0 && errors === 0) return null; // never touched
+    const raw = (positive * weight) - (errors * 2);
+    const max = Math.max(positive * weight, 1);
+    return Math.max(0, Math.min(100, Math.round((raw / max) * 100)));
+  }
+
+  const areas = [
+    {
+      id: 'writing',
+      label: '✍️ Writing',
+      positiveVal: Math.round(totalWords / 50),   // 1 point per 50 words
+      errors: (errBySource.skriv || 0) + (errBySource.job || 0) + (errBySource.billede || 0),
+      weight: 3,
+      tip: `${totalWords} words written`,
+    },
+    {
+      id: 'chat',
+      label: '💬 Conversation',
+      positiveVal: totalChats,
+      errors: errBySource.chat || 0,
+      weight: 4,
+      tip: `${totalChats} conversations`,
+    },
+    {
+      id: 'grammar',
+      label: '📐 Grammar',
+      positiveVal: (errByTag.grammatik || 0) > 0 ? Math.max(0, 20 - (errByTag.grammatik || 0)) : 0,
+      errors: (errByTag.grammatik || 0) + (errByTag.ordstilling || 0),
+      weight: 5,
+      tip: `${(errByTag.grammatik || 0) + (errByTag.ordstilling || 0)} grammar errors`,
+    },
+    {
+      id: 'vocabulary',
+      label: '🗺️ Vocabulary',
+      positiveVal: totalPhrases + ankiCount,
+      errors: errByTag.ordvalg || 0,
+      weight: 3,
+      tip: `${totalPhrases} phrases · ${ankiCount} Anki cards`,
+    },
+    {
+      id: 'testing',
+      label: '🎯 Testing',
+      positiveVal: Math.round((s.testCorrect || 0)),
+      errors: errBySource.test || 0,
+      weight: 4,
+      tip: `${errBySource.test || 0} test errors logged`,
+    },
+  ];
+
+  // Compute scores
+  const scored = areas
+    .map(a => ({ ...a, sc: score(a.positiveVal, a.errors, a.weight) }))
+    .filter(a => a.sc !== null)
+    .sort((a, b) => a.sc - b.sc);
+
+  if (!scored.length) {
+    el.innerHTML = '<div class="sw-empty">Start practicing to build your profile!</div>';
     return;
   }
 
-  // Count tags
-  const tagCount = {};
-  allErrors.forEach(e => (e.tags || []).forEach(tag => {
-    tagCount[tag] = (tagCount[tag] || 0) + 1;
-  }));
+  // Split into needs work (< 50) and strong (>= 60)
+  const needsWork = scored.filter(a => a.sc < 50);
+  const strong    = scored.filter(a => a.sc >= 60);
+  const middle    = scored.filter(a => a.sc >= 50 && a.sc < 60);
 
-  // Count error sources (chat, skriv, job, test, etc.)
-  const sourceCount = {};
-  allErrors.forEach(e => {
-    const src = e.source || 'other';
-    sourceCount[src] = (sourceCount[src] || 0) + 1;
-  });
-
-  // Map tags to readable labels and categories
-  const tagMeta = {
-    grammatik:   { label: '📐 Grammar',       cat: 'weak' },
-    ordstilling: { label: '🔀 Word order',     cat: 'weak' },
-    ordvalg:     { label: '💬 Word choice',    cat: 'weak' },
-    udtale:      { label: '🔊 Pronunciation',  cat: 'weak' },
-    let:         { label: '✅ Easy errors',    cat: 'strong' },
-    middel:      { label: '🔶 Medium errors',  cat: 'neutral' },
-    'svær':      { label: '🔴 Hard errors',    cat: 'weak' },
-    arbejde:     { label: '💼 Work vocab',     cat: 'neutral' },
-    hverdagen:   { label: '🏠 Daily life',     cat: 'neutral' },
-    formelt:     { label: '📄 Formal',         cat: 'neutral' },
-  };
-
-  const sorted = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
-  const maxVal = sorted[0]?.[1] || 1;
-
-  // Identify top weaknesses (most errors) and strengths (fewest in common categories)
-  const weaknessTags = sorted.slice(0, 4);
-
-  // Strength = grammar-type tags with 0 or very low count
-  const gramTags = ['grammatik','ordstilling','ordvalg','udtale'];
-  const strengths = gramTags
-    .filter(t => !tagCount[t] || tagCount[t] < 2)
-    .slice(0, 2);
+  function bar(a) {
+    const color = a.sc >= 60 ? '#5CC488' : a.sc >= 40 ? 'var(--accent)' : '#F07070';
+    return `<div class="sw-row" title="${a.tip}">
+      <span class="sw-label">${a.label}</span>
+      <div class="sw-bar-wrap" style="width:90px;">
+        <div class="sw-bar" style="width:${a.sc}%;background:${color};"></div>
+      </div>
+      <span class="sw-count" style="color:${color};width:32px;">${a.sc}%</span>
+    </div>`;
+  }
 
   let html = '';
 
-  // Weaknesses section
-  if (weaknessTags.length) {
-    html += '<div class="sw-section-label" style="color:#F07070;">⚠ Areas to improve</div>';
-    html += weaknessTags.map(([tag, count]) => {
-      const meta = tagMeta[tag] || { label: tag };
-      const pct = Math.round((count / maxVal) * 100);
-      return `<div class="sw-row">
-        <span class="sw-label">${meta.label || tag}</span>
-        <div class="sw-bar-wrap">
-          <div class="sw-bar" style="width:${pct}%;background:#F07070;"></div>
-        </div>
-        <span class="sw-count">${count}</span>
-      </div>`;
-    }).join('');
+  if (needsWork.length) {
+    html += '<div class="sw-section-label" style="color:#F07070;">⚠ Needs practice</div>';
+    html += needsWork.map(bar).join('');
+  }
+  if (middle.length) {
+    html += '<div class="sw-section-label" style="color:var(--accent);">→ Developing</div>';
+    html += middle.map(bar).join('');
+  }
+  if (strong.length) {
+    html += '<div class="sw-section-label" style="color:#5CC488;">✓ Strong areas</div>';
+    html += strong.map(bar).join('');
   }
 
-  // Strengths section
-  if (strengths.length) {
-    html += '<div class="sw-section-label" style="color:#5CC488;">✓ Looking good</div>';
-    html += strengths.map(tag => {
-      const meta = tagMeta[tag] || { label: tag };
-      const count = tagCount[tag] || 0;
-      return `<div class="sw-row">
-        <span class="sw-label">${meta.label || tag}</span>
-        <div class="sw-bar-wrap">
-          <div class="sw-bar" style="width:${count === 0 ? 4 : 12}%;background:#5CC488;"></div>
-        </div>
-        <span class="sw-count" style="color:#5CC488;">${count === 0 ? '✓' : count}</span>
-      </div>`;
-    }).join('');
-  }
-
-  // Source breakdown
-  const srcLabels = { chat:'💬 Chat', skriv:'✍️ Writing', job:'💼 Job', test:'🎯 Test', billede:'📷 Handwriting', oe:'🗺️ Islands' };
-  const srcEntries = Object.entries(sourceCount).sort((a,b) => b[1]-a[1]).slice(0,3);
-  if (srcEntries.length) {
-    html += '<div class="sw-section-label">📊 Error sources</div>';
-    const srcMax = srcEntries[0][1];
-    html += srcEntries.map(([src, count]) => {
-      const label = srcLabels[src] || src;
-      const pct = Math.round((count / srcMax) * 100);
-      return `<div class="sw-row">
-        <span class="sw-label">${label}</span>
-        <div class="sw-bar-wrap">
-          <div class="sw-bar" style="width:${pct}%;background:var(--accent);"></div>
-        </div>
-        <span class="sw-count">${count}</span>
-      </div>`;
-    }).join('');
-  }
-
-  if (!html) {
-    html = '<div class="sw-empty">Add tags to your errors to see analysis.</div>';
-  }
+  html += `<div style="font-size:0.68rem;color:var(--muted);margin-top:10px;line-height:1.5;">
+    Score = activity vs. errors. More practice raises your score.
+  </div>`;
 
   el.innerHTML = html;
 }
@@ -3840,34 +3858,38 @@ const allChallenges = [
 ];
 
 const allTips = [
-  { label: 'Udtale-tip', text: 'Det bløde "d" (som i "mad", "glad") – læg tungen mod bagtænderne som et blødt "l". Helt anderledes end tysk!' },
-  { label: 'Job-dansk', text: '"Vil du ikke lige..." er en meget dansk og høflig måde at bede om noget. F.eks: "Vil du ikke lige kigge på det her?"' },
-  { label: 'Janteloven', text: 'Danskere roser ikke sig selv direkte. Brug hellere "Det gik okay" end "Jeg klarede det super godt" – det lyder mere naturligt.' },
-  { label: 'Udtale-tip', text: '"Rød grød med fløde" er det sværeste at udtale på dansk – prøv det! 🍓 Det træner de fleste svære lyde på én gang.' },
-  { label: 'Hverdagsdansk', text: '"Altså" bruges konstant af danskere – som pause, betoning eller som "you know". F.eks: "Altså, jeg ved ikke helt..."' },
-  { label: 'Grammatik', text: 'Husk forskel på "et" og "en": "et hus" men "en bil". Desværre er der ingen fast regel – man skal bare lære dem udenad.' },
-  { label: 'Job-dansk', text: '"Det lyder godt" er en meget brugt sætning til at bekræfte idéer i møder. Neutralt og professionelt.' },
-  { label: 'Udtale-tip', text: 'Mange bogstaver udtales ikke i dansk. F.eks. "hvad" lyder som "va", og "jeg" lyder næsten som "ja".' },
-  { label: 'Kultur-tip', text: 'Danskere er meget direkte – det er ikke uhøfligt, det er respekt for din tid. "Det virker ikke" er en normal tilbagemelding.' },
-  { label: 'Grammatik', text: 'Datid af uregelmæssige verber: "gå → gik", "se → så", "sige → sagde", "komme → kom". Øv dem som en sang!' },
-  { label: 'Job-dansk', text: '"Hvad tænker du?" og "Hvad synes du?" bruges til at invitere kolleger ind i diskussionen. Meget dansk og inkluderende.' },
-  { label: 'Hverdagsdansk', text: '"Nej" betyder ikke altid afvisning – "Nej, hvor sjovt!" er en positiv reaktion på dansk. Forvirrende, men sandt!' },
-  { label: 'Udtale-tip', text: 'Stød er den lille "knæk" i stemmen på ord som "hund" vs "hun". Det skelner betydninger – men mange udlændinge klarer sig fint uden.' },
-  { label: 'Kultur-tip', text: 'Danskere siger sjældent "De" (Sie på tysk) – "du" bruges til alle, også chefen. Det er ikke uhøfligt, det er normen.' },
-  { label: 'Grammatik', text: '"Kunne", "skulle", "ville", "måtte", "burde" – modalverberne bruges meget i dansk. "Jeg skulle have ringet" = jeg burde have ringet.' },
-  { label: 'Job-dansk', text: 'En god åbning til e-mails: "Kære [navn], Jeg håber, du har det godt." Simpelt og professionelt.' },
-  { label: 'Hverdagsdansk', text: '"Skål!" siger man når man drikker. Husk at kigge folk i øjnene – det er vigtigt i Danmark! 👀🥂' },
-  { label: 'Grammatik', text: 'Genitiv er nemt på dansk: bare tilføj "s" – "Larsens bil", "Danmarks flag". Ingen apostrof som på engelsk!' },
-  { label: 'Kultur-tip', text: 'Danskere taler meget om vejret – det er en ægte social ritual. "Sikke et vejr!" åbner enhver samtale.' },
-  { label: 'Udtale-tip', text: '"V" og "w" udtales ens på dansk – begge som et blødt "v". Wolfgang = Volfgang på dansk!' },
-  { label: 'Job-dansk', text: '"Jeg vender tilbage til dig" = "Ich melde mich". Meget brugt i professionelle sammenhænge.' },
-  { label: 'Hverdagsdansk', text: 'Danskere bruger tiltaleformen "du" + efternavn i jobsammenhænge: "Hvad tænker du, Hansen?" er helt normalt.' },
-  { label: 'Grammatik', text: '"Mange" = mange, "meget" = sehr/viel. "Mange tak" men "meget glad". Fejlen er hyppig – husk reglen!' },
-  { label: 'Kultur-tip', text: 'Fredag eftermiddag er hellig i Danmark – "fredagsslik" og tidlig fyraften er en national tradition 🍬' },
-  { label: 'Udtale-tip', text: 'Det danske "ø" (som i "grøn") – rund munden som til "o", men sig "e". Øv: øl, øje, grøn, søster.' },
-  { label: 'Job-dansk', text: '"Det er ikke en kritik, men..." – danskere indleder ofte feedback sådan. Lær at bruge det selv!' },
-  { label: 'Hverdagsdansk', text: '"Og så videre" forkortes "osv." på dansk – svarende til "etc." eller "usw." på tysk.' },
+  { label: 'Quick tip', text: 'The soft "d" in Danish (as in "mad", "glad") is very different from English – but don\'t worry too much about it. Danes will understand you either way.' },
+  { label: 'Workplace Danish', text: '"Vil du ikke lige..." is a very Danish, polite way to ask for something. E.g. "Vil du ikke lige kigge på det her?" (Could you take a look at this?)' },
+  { label: 'Culture tip', text: 'Danes don\'t brag directly. Say "Det gik okay" (It went okay) rather than "Jeg klarede det super godt" – the modest version sounds more natural.' },
+  { label: 'Quick tip', text: '"Rød grød med fløde" is famously the hardest phrase for non-Danes. Don\'t stress – Danes appreciate any attempt! 🍓' },
+  { label: 'Everyday Danish', text: '"Altså" is used constantly by Danes – as a filler, for emphasis, or like "you know". E.g. "Altså, jeg ved ikke helt..." (Well, I\'m not sure...)' },
+  { label: 'Grammar', text: 'Remember the difference between "et" and "en": "et hus" (a house) but "en bil" (a car). Unfortunately there\'s no fixed rule – you just have to learn them.' },
+  { label: 'Workplace Danish', text: '"Det lyder godt" (That sounds good) is widely used to confirm ideas in meetings. Neutral and professional.' },
+  { label: 'Quick tip', text: 'Many letters are silent in Danish – "hvad" sounds like "va", and "jeg" sounds almost like "yai". Don\'t try to pronounce every letter!' },
+  { label: 'Culture tip', text: 'Danes are very direct – it\'s not rude, it\'s respect for your time. "Det virker ikke" (That doesn\'t work) is perfectly normal feedback.' },
+  { label: 'Grammar', text: 'Irregular past tense: "gå → gik", "se → så", "sige → sagde", "komme → kom". Practise them like a little song!' },
+  { label: 'Workplace Danish', text: '"Hvad tænker du?" and "Hvad synes du?" are used to invite colleagues into a discussion. Very Danish and inclusive.' },
+  { label: 'Everyday Danish', text: '"Nej" doesn\'t always mean rejection – "Nej, hvor sjovt!" is a positive reaction meaning "Oh, how fun!" Confusing but true!' },
+  { label: 'Quick tip', text: 'The "stød" is a tiny vocal break that changes word meaning – "hund" vs "hun". Most learners communicate perfectly fine without ever mastering it.' },
+  { label: 'Culture tip', text: 'Danes rarely use formal address – "du" is used with everyone, including the boss. It\'s not rude, it\'s the norm.' },
+  { label: 'Grammar', text: '"Kunne", "skulle", "ville", "måtte", "burde" – modal verbs are very common in Danish. "Jeg skulle have ringet" = I should have called.' },
+  { label: 'Workplace Danish', text: 'A good email opening: "Kære [navn], Jeg håber, du har det godt." (Dear [name], I hope you\'re well.) Simple and professional.' },
+  { label: 'Everyday Danish', text: '"Skål!" is what you say when you toast. Remember to make eye contact – it\'s important in Denmark! 👀🥂' },
+  { label: 'Grammar', text: 'Genitive is easy in Danish: just add "s" – "Larsens bil" (Lars\'s car), "Danmarks flag" (Denmark\'s flag). No apostrophe needed!' },
+  { label: 'Culture tip', text: 'Danes talk a lot about the weather – it\'s a genuine social ritual. "Sikke et vejr!" (What weather!) opens any conversation.' },
+  { label: 'Quick tip', text: '"V" and "w" sound the same in Danish – both as a soft "v". And many consonants at the end of words are swallowed entirely.' },
+  { label: 'Workplace Danish', text: '"Jeg vender tilbage til dig" means "I\'ll get back to you". Very common in professional settings.' },
+  { label: 'Everyday Danish', text: 'Danes sometimes use first name + last name together at work: "Hvad tænker du, Hansen?" is completely normal and not rude.' },
+  { label: 'Grammar', text: '"Mange" = many (countable), "meget" = much/very (uncountable). "Mange tak" (many thanks) but "meget glad" (very happy).' },
+  { label: 'Culture tip', text: 'Friday afternoons are sacred in Denmark – "fredagsslik" (Friday sweets) and early finish are a national tradition. 🍬' },
+  { label: 'Grammar', text: 'Word order: the verb always comes second in a main clause. "I går spiste jeg frokost" – time expression first, then verb, then subject.' },
+  { label: 'Workplace Danish', text: '"Det er ikke en kritik, men..." (It\'s not a criticism, but...) – Danes often open feedback this way. A useful phrase to learn!' },
+  { label: 'Everyday Danish', text: '"Og så videre" is abbreviated "osv." in Danish – the equivalent of "etc." in English.' },
+  { label: 'Grammar', text: 'Negation placement: "ikke" goes after the verb in main clauses ("Jeg arbejder ikke") but before the verb in subordinate clauses ("...fordi jeg ikke arbejder").' },
+  { label: 'Culture tip', text: '"Hygge" has no direct English translation – it\'s a cosy atmosphere shared with others. Candles, good food and good company are key. 🕯️' },
+  { label: 'Everyday Danish', text: '"Det er fint" can mean "It\'s fine", "That\'s great" or just "okay" depending on tone. Context is everything in Danish!' },
 ];
+
 
 function getDayIndex() {
   const start = new Date('2024-01-01');
@@ -5507,6 +5529,9 @@ function nextTestQuestion2() {
 function showTestDone2() {
   const s = testState;
   const pct = Math.round((s.correct / s.questions.length) * 100);
+  // Track correct answers in stats
+  window.stats.testCorrect = (window.stats.testCorrect || 0) + s.correct;
+  saveData();
   document.getElementById('testActive2').style.display = 'none';
   document.getElementById('testDone2').style.display = 'block';
   document.getElementById('testDoneEmoji2').textContent = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '📚';
