@@ -1296,88 +1296,16 @@
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;" class="anki-grid">
-
-      <!-- LEFT: Generator -->
-      <div class="anki-panel">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Single card</div>
-        <div class="anki-label">Word in target language</div>
-        <input class="anki-input" type="text" id="ankiWort" placeholder="e.g. hund, løbe, smuk…" onkeydown="if(event.key==='Enter')generateAnkiSingle()">
-        <div style="font-size:0.78rem;color:var(--muted);margin-top:8px;">Claude generates an example sentence with the word in context.</div>
-        <button class="btn btn-primary" style="width:100%;margin-top:16px;" id="ankiGenBtn" onclick="generateAnkiSingle()">Generate card →</button>
-      </div>
-
-      <!-- RIGHT: Preview -->
-      <div class="anki-panel">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Preview</div>
-        <div id="ankiPreviewEmpty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.88rem;">Enter a word on the left<br>to generate a card.</div>
-        <div id="ankiLoader" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:0.85rem;">
-          <div class="loading-dots" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>Genererer …
-        </div>
-        <div id="ankiPreview" style="display:none;">
-          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
-            <div class="anki-card-face anki-front">
-              <div class="anki-face-label">▲ Front</div>
-              <div id="ankiPreviewFront"></div>
-            </div>
-            <div class="anki-card-face anki-back">
-              <div class="anki-face-label">▽ Back</div>
-              <div id="ankiPreviewBack"></div>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-primary btn-sm" onclick="saveAnkiCard()">+ Save</button>
-            <button class="btn btn-ghost btn-sm" onclick="copyAnkiCard()">Kopieren</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- BATCH IMPORT -->
     <div class="anki-panel" style="margin-bottom:24px;">
       <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Batch Import</div>
 
-      <!-- Sub-tabs -->
-      <div style="display:flex;gap:6px;margin-bottom:18px;">
-        <button class="anki-tab-btn active" id="batchTabWort" onclick="setBatchTab('wort')">📖 Words</button>
-        <button class="anki-tab-btn" id="batchTabLucke" onclick="setBatchTab('lucke')">🧩 Gap-fill</button>
-      </div>
-
-      <!-- Wörter tab -->
+      <!-- Words -->
       <div id="batchPaneWort">
         <div class="anki-label">Words (one word per line)</div>
         <textarea class="anki-input" id="ankiBulkText" rows="5" placeholder="hund&#10;løbe&#10;smuk&#10;arbejde&#10;…"></textarea>
         <div style="display:flex;gap:12px;align-items:flex-end;margin-top:12px;flex-wrap:wrap;">
           <button class="btn btn-secondary" id="ankiBatchBtn" onclick="startAnkiBatch()">Generate all →</button>
-        </div>
-      </div>
-
-      <!-- Lückentext tab -->
-      <div id="batchPaneLucke" style="display:none;">
-        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-          <button class="anki-tab-btn active" id="luckeSubTabGrammar" onclick="setLuckeSubTab('grammar')">📐 Grammar rule</button>
-          <button class="anki-tab-btn" id="luckeSubTabSatz" onclick="setLuckeSubTab('satz')">✍️ Own sentences</button>
-        </div>
-
-        <!-- Grammar rule mode -->
-        <div id="luckePaneGrammar">
-          <div class="anki-label">Grammar rule or topic</div>
-          <input class="anki-input" type="text" id="luckeGrammarRule" placeholder="e.g. Past tense, definite article, modal verbs …">
-          <div class="anki-label" style="margin-top:10px;">Number of cards</div>
-          <div style="display:flex;gap:8px;margin-bottom:14px;">
-            <button class="anki-tab-btn active" id="luckeCount5" onclick="setLuckeCount(5,this)">5</button>
-            <button class="anki-tab-btn" id="luckeCount10" onclick="setLuckeCount(10,this)">10</button>
-            <button class="anki-tab-btn" id="luckeCount20" onclick="setLuckeCount(20,this)">20</button>
-          </div>
-          <button class="btn btn-secondary" id="luckeGrammarBtn" onclick="startLuckeBatch('grammar')">Generate cards →</button>
-        </div>
-
-        <!-- Own sentences mode -->
-        <div id="luckePaneSatz" style="display:none;">
-          <div class="anki-label">Enter sentences (one per line)</div>
-          <textarea class="anki-input" id="luckeSatzText" rows="5" placeholder="Jeg gik til møde i går.&#10;Hun har arbejdet her i tre år.&#10;Det er et stort hus.&#10;…"></textarea>
-          <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;margin-bottom:12px;">Claude automatically picks the grammatically most interesting word as the gap.</div>
-          <button class="btn btn-secondary" id="luckeSatzBtn" onclick="startLuckeBatch('satz')">Generate cards →</button>
         </div>
       </div>
 
@@ -3942,10 +3870,9 @@ function clearWritingChallenge() {
 // ---- ANKI ----
 
 let ankiCards = [];
-let ankiCurrentCard = null;
 
 function ankiKontextPrompt(w) {
-  return 'You are a language learning assistant. Create a context Anki card for the word: "' + w + '"\nAntworte NUR mit validem JSON ohne Markdown-Backticks:\n{"type":"kontext","word":"' + w + '","sentence_da":"Example sentence in the target language with the word naturally included","sentence_de":"German translation of the sentence","word_de":"German translation of the word","ipa":"IPA pronunciation","wordtype":"Word type and base form in German (e.g. Noun et hus / Verb at løbe)","mnemonic":"Mnemonic in German","grammar_note":"Important grammar note if relevant, otherwise empty string"}';
+  return 'You are a language learning assistant. Create a context Anki card for the word: "' + w + '"\nRespond ONLY with valid JSON, no markdown:\n{"type":"kontext","word":"' + w + '","sentence_da":"Example sentence in Danish with the word naturally included","sentence_de":"German translation of the sentence","word_de":"German translation of the word","ipa":"IPA pronunciation","wordtype":"Word type and base form (e.g. Noun et hus / Verb at løbe)","mnemonic":"Memory trick in English or German","grammar_note":"Important grammar note if relevant, otherwise empty string"}';
 }
 
 async function callAnkiClaude(prompt, maxTokens) {
@@ -3957,194 +3884,6 @@ async function callAnkiClaude(prompt, maxTokens) {
   let text = data.content.map(b=>b.text||'').join('');
   text = text.replace(/```json|```/g,'').trim();
   return JSON.parse(text);
-}
-
-async function generateAnkiSingle() {
-  const w = document.getElementById('ankiWort').value.trim();
-  if (!w) return;
-  const btn = document.getElementById('ankiGenBtn');
-  btn.disabled = true;
-  document.getElementById('ankiPreviewEmpty').style.display = 'none';
-  document.getElementById('ankiLoader').style.display = 'block';
-  document.getElementById('ankiPreview').style.display = 'none';
-  try {
-    const card = await callAnkiClaude(ankiKontextPrompt(w));
-    ankiCurrentCard = card;
-    renderAnkiPreview(card);
-    document.getElementById('ankiPreview').style.display = 'block';
-  } catch(e) {
-    document.getElementById('ankiPreviewEmpty').style.display = 'block';
-    document.getElementById('ankiPreviewEmpty').textContent = 'Error – please try again.';
-  }
-  document.getElementById('ankiLoader').style.display = 'none';
-  btn.disabled = false;
-}
-
-function ankiHighlightWord(sentence, word) {
-  if (!sentence || !word) return ankiEsc(sentence||'');
-  const re = new RegExp('(' + word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'i');
-  return ankiEsc(sentence).replace(re, '<strong style="color:var(--red)">$1</strong>');
-}
-
-function renderAnkiPreview(card) {
-  const front = document.getElementById('ankiPreviewFront');
-  const back  = document.getElementById('ankiPreviewBack');
-  const highlighted = ankiHighlightWord(card.sentence_da, card.word);
-  front.innerHTML =
-    '<div style="font-size:1rem;line-height:1.6;margin-bottom:12px;">' + highlighted + '</div>' +
-    '<div style="border-top:2px solid rgba(200,16,46,0.3);padding-top:12px;margin-top:4px;display:flex;align-items:baseline;gap:10px;">' +
-    '<span style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);white-space:nowrap;">Ord</span>' +
-    '<span class="anki-word">' + ankiEsc(card.word) + '</span>' +
-    (card.ipa ? '<span class="anki-ipa">' + ankiEsc(card.ipa) + '</span>' : '') +
-    '</div>';
-  back.innerHTML =
-    ankiField('Sentence (DE)', '<em>' + ankiEsc(card.sentence_de) + '</em>') +
-    ankiField('Word', '<strong>' + ankiEsc(card.word_de) + '</strong>') +
-    (card.wordtype ? ankiField('Word type', ankiEsc(card.wordtype)) : '') +
-    '<div class="anki-mnemonic">💡 ' + ankiEsc(card.mnemonic) + '</div>' +
-    (card.grammar_note ? '<div class="anki-mnemonic" style="margin-top:6px;background:rgba(100,150,220,0.08);border-left-color:rgba(100,150,220,0.6);">📚 ' + ankiEsc(card.grammar_note) + '</div>' : '');
-}
-
-function ankiEsc(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function ankiField(name, val) {
-  return '<div class="anki-field"><div class="anki-field-name">' + name + '</div><div class="anki-field-val">' + val + '</div></div>';
-}
-
-function saveAnkiCard() {
-  if (!ankiCurrentCard) return;
-  ankiCards.push(Object.assign({}, ankiCurrentCard, { id: Date.now() }));
-  ankiCurrentCard = null;
-  document.getElementById('ankiPreview').style.display = 'none';
-  document.getElementById('ankiPreviewEmpty').style.display = 'block';
-  document.getElementById('ankiPreviewEmpty').textContent = '✓ Saved! Enter the next word.';
-  document.getElementById('ankiWort').value = '';
-  renderAnkiSavedList();
-}
-
-function copyAnkiCard() {
-  if (!ankiCurrentCard) return;
-  const c = ankiCurrentCard;
-  navigator.clipboard.writeText(c.sentence_da + '\n' + c.word + ' – ' + c.word_de + '\n' + c.sentence_de).catch(()=>{});
-}
-
-let luckeCount = 5;
-
-function setBatchTab(tab) {
-  document.getElementById('batchPaneWort').style.display = tab === 'wort' ? '' : 'none';
-  document.getElementById('batchPaneLucke').style.display = tab === 'lucke' ? '' : 'none';
-  document.getElementById('batchTabWort').classList.toggle('active', tab === 'wort');
-  document.getElementById('batchTabLucke').classList.toggle('active', tab === 'lucke');
-}
-
-function setLuckeSubTab(sub) {
-  document.getElementById('luckePaneGrammar').style.display = sub === 'grammar' ? '' : 'none';
-  document.getElementById('luckePaneSatz').style.display = sub === 'satz' ? '' : 'none';
-  document.getElementById('luckeSubTabGrammar').classList.toggle('active', sub === 'grammar');
-  document.getElementById('luckeSubTabSatz').classList.toggle('active', sub === 'satz');
-}
-
-function setLuckeCount(n, btn) {
-  luckeCount = n;
-  ['luckeCount5','luckeCount10','luckeCount20'].forEach(id => {
-    document.getElementById(id).classList.remove('active');
-  });
-  btn.classList.add('active');
-}
-
-function ankiLuckeGrammarPrompt(rule, count) {
-  return 'You are a language learning assistant. Create ' + count + ' gap-fill Anki cards for the grammar rule: "' + rule + '".\n' +
-    'For each card: Create a natural example sentence and choose the grammatically most important word as the gap.\n' +
-    'hint_de = only the German translation of the answer, e.g. "goes (present)".\n' +
-    'Antworte NUR mit einem JSON-Array ohne Markdown:\n' +
-    '[{"type":"cloze_fejl","sentence_with_blank":"Sentence with ___ instead of target word","hint_de":"German translation hint","answer":"target word","full_sentence":"Complete correct sentence","wrong_was":"","grammar_note":"Short grammar explanation in German"}, ...]';
-}
-
-function ankiLuckeSatzPrompt(sentence) {
-  return 'You are a language learning assistant. Create a gap-fill Anki card for this sentence: "' + sentence + '"\n' +
-    'Wähle das grammatisch interessanteste Wort als Lücke (Verbform, Artikel, Pronomen etc.).\n' +
-    'hint_de = only the German translation of the answer, e.g. "goes (present)".\n' +
-    'Antworte NUR mit validem JSON ohne Markdown:\n' +
-    '{"type":"cloze_fejl","sentence_with_blank":"Sentence with ___ instead of target word","hint_de":"German translation hint","answer":"target word","full_sentence":"' + sentence + '","wrong_was":"","grammar_note":"Short grammar explanation in German"}';
-}
-
-async function startLuckeBatch(mode) {
-  const prog = document.getElementById('ankiBatchProgress');
-  const bar  = document.getElementById('ankiBatchBar');
-  const label= document.getElementById('ankiBatchLabel');
-  const frac = document.getElementById('ankiBatchFraction');
-  const log  = document.getElementById('ankiBatchLog');
-
-  if (mode === 'grammar') {
-    const rule = document.getElementById('luckeGrammarRule').value.trim();
-    if (!rule) return;
-    const btn = document.getElementById('luckeGrammarBtn');
-    btn.disabled = true;
-    prog.style.display = 'block'; log.innerHTML = '';
-    bar.style.width = '0%';
-    label.textContent = 'Generating ' + luckeCount + ' gap-fill cards for "' + rule + '" …';
-    frac.textContent = '0 / ' + luckeCount;
-
-    const item = document.createElement('div');
-    item.style.color = 'var(--muted)';
-    item.textContent = '⟳ ' + rule + ' (' + luckeCount + ' cards)';
-    log.appendChild(item);
-
-    try {
-      const res = await callAnkiClaude(ankiLuckeGrammarPrompt(rule, luckeCount), luckeCount * 200);
-      const cards = Array.isArray(res) ? res : [res];
-      cards.forEach((card, i) => {
-        ankiCards.push(Object.assign({}, card, { id: Date.now() + i }));
-      });
-      renderAnkiSavedList();
-      item.style.color = '#5CC488';
-      item.textContent = '✓ ' + cards.length + ' cards for "' + rule + '"';
-      bar.style.width = '100%';
-      frac.textContent = cards.length + ' / ' + luckeCount;
-      label.textContent = '✓ Done!';
-    } catch(e) {
-      item.style.color = '#F07070';
-      item.textContent = '✗ Fejl – prøv igen';
-    }
-    btn.disabled = false;
-
-  } else {
-    // satz mode
-    const raw = document.getElementById('luckeSatzText').value.trim();
-    const sentences = raw.split('\n').map(l => l.trim()).filter(Boolean);
-    if (!sentences.length) return;
-    const btn = document.getElementById('luckeSatzBtn');
-    btn.disabled = true;
-    prog.style.display = 'block'; log.innerHTML = '';
-    bar.style.width = '0%';
-    label.textContent = 'Generating gap-fill cards…';
-
-    for (let i = 0; i < sentences.length; i++) {
-      const s = sentences[i];
-      frac.textContent = i + ' / ' + sentences.length;
-      bar.style.width = Math.round((i / sentences.length) * 100) + '%';
-      const item = document.createElement('div');
-      item.style.color = 'var(--muted)';
-      item.textContent = '⟳ ' + s;
-      log.appendChild(item); log.scrollTop = log.scrollHeight;
-      try {
-        const card = await callAnkiClaude(ankiLuckeSatzPrompt(s));
-        ankiCards.push(Object.assign({}, card, { id: Date.now() + i }));
-        renderAnkiSavedList();
-        item.style.color = '#5CC488';
-        item.textContent = '✓ ' + s;
-      } catch(e) {
-        item.style.color = '#F07070';
-        item.textContent = '✗ ' + s;
-      }
-      if (i < sentences.length - 1) await new Promise(r => setTimeout(r, 400));
-    }
-    bar.style.width = '100%';
-    frac.textContent = sentences.length + ' / ' + sentences.length;
-    label.textContent = '✓ Done!';
-    btn.disabled = false;
-  }
 }
 
 async function startAnkiBatch() {
@@ -4246,7 +3985,7 @@ async function exportFejlToApkg() {
   prog.style.display = 'block';
   log.innerHTML = '';
   bar.style.width = '0%';
-  label.textContent = 'Generating gap-fill cards…';
+  label.textContent = 'Generating cards…';
 
   const cards = [];
   const exportedIds = [];
