@@ -903,10 +903,10 @@
 
       <!-- Hours Learned -->
       <div class="insight-card">
-        <div class="insight-card-title">⏱️ Time Invested</div>
+        <div class="insight-card-title">📅 Activity (last 7 days)</div>
         <div id="hoursWidget">
-          <div class="hours-big" id="hoursTotal">0 h</div>
-          <div class="hours-sub" id="hoursSub">estimated learning time</div>
+          <div class="hours-big" id="hoursTotal">0 days</div>
+          <div class="hours-sub" id="hoursSub">no activity yet</div>
           <div class="hours-breakdown" id="hoursBreakdown"></div>
         </div>
       </div>
@@ -1863,10 +1863,10 @@ function renderStrengthsWeaknesses() {
     {
       id: 'grammar',
       label: '📐 Grammar',
-      positiveVal: (errByTag.grammatik || 0) > 0 ? Math.max(0, 20 - (errByTag.grammatik || 0)) : 0,
+      positiveVal: Math.round(totalWords / 30), // every 30 words written = 1 grammar point
       errors: (errByTag.grammatik || 0) + (errByTag.ordstilling || 0),
-      weight: 5,
-      tip: `${(errByTag.grammatik || 0) + (errByTag.ordstilling || 0)} grammar errors`,
+      weight: 4,
+      tip: `${(errByTag.grammatik || 0) + (errByTag.ordstilling || 0)} grammar errors logged`,
     },
     {
       id: 'vocabulary',
@@ -1946,69 +1946,66 @@ function renderHoursLearned() {
 
   const s = window.stats || {};
 
-  // Estimate minutes per activity type
-  // ~2 min per chat message, ~1.5 min per 100 words written,
-  // ~3 min per error logged (writing + correction time),
-  // ~2 min per Anki card, ~1 min per test question answered
+  // Last 7 days only
+  const cutoff = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const today  = todayStr();
 
-  const chatMsgs = s.chats || 0;
-  const totalWords = s.totalWords || s.sentences || 0;
-  const errorCount = (window.errorLog || []).length + (window.archiveLog || []).length;
-  const anki = ((s.ankiExports || 0));
+  // Words written in last 7 days from dailyActivity
+  const wordsLast7 = Object.entries(s.dailyActivity || {})
+    .filter(([d]) => d >= cutoff && d <= today)
+    .reduce((sum, [, v]) => sum + v, 0);
 
-  // Minutes estimations
-  const minFromChat    = chatMsgs * 2;
-  const minFromWriting = Math.round((totalWords / 100) * 1.5);
-  const minFromErrors  = errorCount * 3;
-  const minFromAnki    = anki * 5;
+  // Errors logged in last 7 days
+  const errorsLast7 = (window.errorLog || [])
+    .filter(e => e.isoDate && e.isoDate.slice(0,10) >= cutoff).length;
 
-  const totalMin = minFromChat + minFromWriting + minFromErrors + minFromAnki;
-  const totalHours = totalMin / 60;
+  // Chats: no per-day tracking, use total but scale down to 7-day estimate
+  // Rough: totalChats spread over all active days, estimate last-7 share
+  const activeDays = Object.keys(s.dailyActivity || {}).length || 1;
+  const totalChats = s.chats || 0;
+  const chatsLast7 = Math.round(totalChats * Math.min(7 / activeDays, 1));
 
-  // Format
-  let displayVal, displayUnit;
-  if (totalHours < 1) {
-    displayVal = totalMin;
-    displayUnit = 'min';
-  } else if (totalHours < 10) {
-    displayVal = totalHours.toFixed(1);
-    displayUnit = 'h';
-  } else {
-    displayVal = Math.round(totalHours);
-    displayUnit = 'h';
-  }
+  // Minutes
+  const minFromWriting = Math.round((wordsLast7 / 100) * 1.5);
+  const minFromErrors  = errorsLast7 * 3;
+  const minFromChat    = chatsLast7 * 2;
+  const totalMin = minFromWriting + minFromErrors + minFromChat;
 
-  el.textContent = displayVal + ' ' + displayUnit;
+  // Total: show active days this week
+  const activeDaysLast7 = Object.keys(s.dailyActivity || {})
+    .filter(d => d >= cutoff && d <= today).length;
 
-  // Streak-based bonus message
+  el.textContent = activeDaysLast7 + (activeDaysLast7 === 1 ? ' day' : ' days');
+
   const streak = s.streak || 0;
   if (streak >= 7) {
     subEl.textContent = `${streak} day streak 🔥 – great consistency!`;
-  } else if (totalHours >= 5) {
-    subEl.textContent = 'estimated total learning time';
+  } else if (activeDaysLast7 >= 5) {
+    subEl.textContent = 'active this week – keep it up!';
+  } else if (activeDaysLast7 > 0) {
+    subEl.textContent = `active out of the last 7 days`;
   } else {
-    subEl.textContent = 'keep practicing to build up your hours!';
+    subEl.textContent = 'no activity in the last 7 days';
   }
 
-  // Breakdown rows
+  // Breakdown – show actual counts, not fake time
   const rows = [
-    { label: '💬 Chat conversations', val: chatMsgs, unit: 'msgs', min: minFromChat },
-    { label: '✍️ Words written', val: totalWords, unit: 'words', min: minFromWriting },
-    { label: '📋 Errors reviewed', val: errorCount, unit: 'errors', min: minFromErrors },
-  ].filter(r => r.val > 0);
+    { label: '💬 Conversations', count: chatsLast7, unit: chatsLast7 === 1 ? 'chat' : 'chats' },
+    { label: '✍️ Words written', count: wordsLast7, unit: 'words' },
+    { label: '📋 Errors logged', count: errorsLast7, unit: errorsLast7 === 1 ? 'error' : 'errors' },
+  ].filter(r => r.count > 0);
 
   if (!rows.length) {
-    breakEl.innerHTML = '<div class="sw-empty" style="padding:8px 0;">Start practicing to track your time!</div>';
+    breakEl.innerHTML = '<div class="sw-empty" style="padding:8px 0;">No activity in the last 7 days.</div>';
     return;
   }
 
-  breakEl.innerHTML = rows.map(r => {
-    const hh = r.min >= 60 ? (r.min / 60).toFixed(1) + ' h' : r.min + ' min';
-    return `<div class="hours-row">
+  breakEl.innerHTML = rows.map(r =>
+    `<div class="hours-row">
       <span class="hours-row-label">${r.label}</span>
-      <span class="hours-row-val">${hh}</span>
-    </div>`;
-  }).join('');
+      <span class="hours-row-val">${r.count} ${r.unit}</span>
+    </div>`
+  ).join('');
 }
 
 let chartPeriod = 7;
