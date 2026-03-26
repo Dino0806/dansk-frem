@@ -3869,7 +3869,7 @@ function clearWritingChallenge() {
 let ankiCards = [];
 
 function ankiKontextPrompt(w) {
-  return 'You are a language learning assistant. Create a context Anki card for the word: "' + w + '"\nRespond ONLY with valid JSON, no markdown:\n{"type":"kontext","word":"' + w + '","sentence_da":"Example sentence in Danish with the word naturally included","sentence_de":"German translation of the sentence","word_de":"German translation of the word","ipa":"IPA pronunciation","wordtype":"Word type and base form (e.g. Noun et hus / Verb at løbe)","mnemonic":"Memory trick in English or German","grammar_note":"Important grammar note if relevant, otherwise empty string"}';
+  return 'You are a language learning assistant. Create a context Anki card for the Danish word: "' + w + '"\nRespond ONLY with valid JSON, no markdown:\n{"type":"kontext","word":"' + w + '","sentence_da":"Natural example sentence in Danish using the word","sentence_en":"English translation of the sentence","word_en":"English translation of the word","ipa":"IPA pronunciation","wordtype":"Word type and base form in English (e.g. noun \'et hus\' / verb \'at løbe\')","mnemonic":"Memory trick in English","grammar_note":"Important grammar note in English, or empty string"}';
 }
 
 async function callAnkiClaude(prompt, maxTokens) {
@@ -4077,24 +4077,24 @@ async function buildAndDownloadApkg(cards, filename) {
       id: modelKontext, name: 'Dansk Frem – Kontext', type: 0, mod: now, usn: -1, sortf: 0, did: deckId,
       tmpls: [{
         name: 'Kontext', ord: 0,
-        qfmt: '<div class="satz">{{Satz_DA}}</div><hr class="sep"><div class="ord-label">ORD</div><span class="word">{{Wort}}</span>{{#IPA}}<span class="ipa">{{IPA}}</span>{{/IPA}}',
+        qfmt: '<div class="satz">{{Satz_DA}}</div><hr class="sep"><div class="ord-label">WORD</div><span class="word">{{Wort}}</span>{{#IPA}}<span class="ipa">{{IPA}}</span>{{/IPA}}',
         afmt: '{{FrontSide}}<hr id=answer>' +
-              '<div class="field-name">Sentence (DE)</div><div><em>{{Satz_DE}}</em></div>' +
-              '{{#Wort_DE}}<div class="field-name">Word</div><div><strong>{{Wort_DE}}</strong></div>{{/Wort_DE}}' +
+              '<div class="field-name">Sentence (EN)</div><div><em>{{Satz_EN}}</em></div>' +
+              '{{#Wort_EN}}<div class="field-name">Word</div><div><strong>{{Wort_EN}}</strong></div>{{/Wort_EN}}' +
               '{{#Word_type}}<div class="field-name">Word type</div><div>{{Word_type}}</div>{{/Word_type}}' +
               '{{#Mnemonic}}<div class="mnemonic">💡 {{Mnemonic}}</div>{{/Mnemonic}}' +
-              '{{#Grammatik}}<div class="grammar">📚 {{Grammatik}}</div>{{/Grammatik}}',
+              '{{#Grammar}}<div class="grammar">📚 {{Grammar}}</div>{{/Grammar}}',
         bqfmt: '', bafmt: '', did: null, bfont: '', bsize: 0
       }],
       flds: [
-        {name:'Satz_DA',  ord:0, sticky:false, rtl:false, font:'Arial', size:20, media:[]},
-        {name:'Wort',     ord:1, sticky:false, rtl:false, font:'Arial', size:20, media:[]},
-        {name:'IPA',      ord:2, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
-        {name:'Satz_DE',  ord:3, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
-        {name:'Wort_DE',  ord:4, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
-        {name:'Word_type',  ord:5, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
-        {name:'Mnemonic', ord:6, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
-        {name:'Grammatik',   ord:7, sticky:false, rtl:false, font:'Arial', size:14, media:[]}
+        {name:'Satz_DA',   ord:0, sticky:false, rtl:false, font:'Arial', size:20, media:[]},
+        {name:'Wort',      ord:1, sticky:false, rtl:false, font:'Arial', size:20, media:[]},
+        {name:'IPA',       ord:2, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
+        {name:'Satz_EN',   ord:3, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
+        {name:'Wort_EN',   ord:4, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
+        {name:'Word_type', ord:5, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
+        {name:'Mnemonic',  ord:6, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
+        {name:'Grammar',   ord:7, sticky:false, rtl:false, font:'Arial', size:14, media:[]}
       ],
       css, latexPre:'', latexPost:'', req:[[0,'any',[0,1]]]
     };
@@ -4134,8 +4134,8 @@ async function buildAndDownloadApkg(cards, filename) {
         flds = satz_da + sep +
                (card.word||'') + sep +
                (card.ipa||'') + sep +
-               (card.sentence_de||'') + sep +
-               (card.word_de||'') + sep +
+               (card.sentence_en||card.sentence_de||'') + sep +
+               (card.word_en||card.word_de||'') + sep +
                (card.wordtype||'') + sep +
                (card.mnemonic||'') + sep +
                (card.grammar_note||'');
@@ -4223,8 +4223,8 @@ function ankiCardToHtmlBack(c) {
       (c.grammar_note ? '<div class="grammar">📚 ' + c.grammar_note + '</div>' : '');
   }
   // kontext card
-  return '<div class="field-name">Sentence (DE)</div><div><em>' + (c.sentence_de||'') + '</em></div>' +
-    '<div class="field-name">Word</div><div><strong>' + (c.word_de||'') + '</strong></div>' +
+  return '<div class="field-name">Sentence (EN)</div><div><em>' + (c.sentence_en||c.sentence_de||'') + '</em></div>' +
+    '<div class="field-name">Word</div><div><strong>' + (c.word_en||c.word_de||'') + '</strong></div>' +
     (c.wordtype ? '<div class="field-name">Word type</div><div>' + (c.wordtype||'') + '</div>' : '') +
     (c.mnemonic ? '<div class="mnemonic">💡 ' + (c.mnemonic||'') + '</div>' : '') +
     (c.grammar_note ? '<div class="grammar">📚 ' + (c.grammar_note||'') + '</div>' : '');
