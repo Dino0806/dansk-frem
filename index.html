@@ -121,6 +121,7 @@
 </script>
 <style>
   :root {
+    /* Note: --white = text color, --dark = bg color (inverted in dark mode below) */
     --red: #C8102E; --white: #1A1612; --cream: #EDE8DC;
     --dark: #FFFFFF; --mid: #F0EBE3; --muted: #6B5F54;
     --accent: #E8B84B; --green: #2D7A4F; --blue: #1B4F8A;
@@ -1298,7 +1299,7 @@
 
       <!-- LEFT: Generator -->
       <div class="anki-panel">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Einzelne Karte erstellen</div>
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Single card</div>
         <div class="anki-label">Word in target language</div>
         <input class="anki-input" type="text" id="ankiWort" placeholder="e.g. hund, løbe, smuk…" onkeydown="if(event.key==='Enter')generateAnkiSingle()">
         <div style="font-size:0.78rem;color:var(--muted);margin-top:8px;">Claude generates an example sentence with the word in context.</div>
@@ -1307,7 +1308,7 @@
 
       <!-- RIGHT: Preview -->
       <div class="anki-panel">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Vorschau</div>
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Preview</div>
         <div id="ankiPreviewEmpty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.88rem;">Enter a word on the left<br>to generate a card.</div>
         <div id="ankiLoader" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:0.85rem;">
           <div class="loading-dots" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>Genererer …
@@ -1360,7 +1361,7 @@
         <!-- Grammar rule mode -->
         <div id="luckePaneGrammar">
           <div class="anki-label">Grammar rule or topic</div>
-          <input class="anki-input" type="text" id="luckeGrammarRule" placeholder="z.B. Datid (Vergangenheit), bestimmter Artikel, Modalverben …">
+          <input class="anki-input" type="text" id="luckeGrammarRule" placeholder="e.g. Past tense, definite article, modal verbs …">
           <div class="anki-label" style="margin-top:10px;">Number of cards</div>
           <div style="display:flex;gap:8px;margin-bottom:14px;">
             <button class="anki-tab-btn active" id="luckeCount5" onclick="setLuckeCount(5,this)">5</button>
@@ -1374,7 +1375,7 @@
         <div id="luckePaneSatz" style="display:none;">
           <div class="anki-label">Enter sentences (one per line)</div>
           <textarea class="anki-input" id="luckeSatzText" rows="5" placeholder="Jeg gik til møde i går.&#10;Hun har arbejdet her i tre år.&#10;Det er et stort hus.&#10;…"></textarea>
-          <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;margin-bottom:12px;">Claude wählt automatisch das grammatisch interessanteste Wort als Lücke.</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;margin-bottom:12px;">Claude automatically picks the grammatically most interesting word as the gap.</div>
           <button class="btn btn-secondary" id="luckeSatzBtn" onclick="startLuckeBatch('satz')">Generate cards →</button>
         </div>
       </div>
@@ -1409,78 +1410,6 @@
   </div><!-- /anki_inner -->
     </div><!-- /logPaneanki -->
 
-    <!-- TEST PANE -->
-    <div id="logPanetest" style="display:none;">
-
-      <!-- Mode selection -->
-      <div id="testModeSelect">
-        <div class="section-title" style="margin-bottom:6px;">🎯 Recall-Test</div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Test what you've learned – Claude asks questions based on your activity.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-          <div onclick="startTest('dag')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
-            <div style="font-size:1.6rem;margin-bottom:8px;">☀️</div>
-            <div style="font-weight:600;margin-bottom:4px;">Daily Test</div>
-            <div style="font-size:0.78rem;color:var(--muted);">10 questions based on what you practised today</div>
-          </div>
-          <div onclick="startTest('svagheder')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
-            <div style="font-size:1.6rem;margin-bottom:8px;">🔍</div>
-            <div style="font-weight:600;margin-bottom:4px;">Weakness Test</div>
-            <div style="font-size:0.78rem;color:var(--muted);">Targeted questions from your most common error patterns</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Active test -->
-      <div id="testActive" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-          <div style="font-family:'Fraunces',serif;font-size:1.05rem;" id="testTitle"></div>
-          <button class="btn btn-ghost btn-sm" onclick="cancelTest()">✕ Cancel</button>
-        </div>
-
-        <!-- Progress -->
-        <div style="margin-bottom:20px;">
-          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
-            <span id="testProgress">Question 1 / 10</span>
-            <span id="testScore" style="color:#5CC488;"></span>
-          </div>
-          <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:5px;overflow:hidden;">
-            <div id="testBar" style="height:100%;background:linear-gradient(90deg,var(--red),var(--accent));border-radius:8px;transition:width 0.4s;width:0%;"></div>
-          </div>
-        </div>
-
-        <!-- Loading -->
-        <div id="testLoading" style="display:none;text-align:center;padding:30px;color:var(--muted);">
-          <div class="loading-dots" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>
-          Claude is generating questions…
-        </div>
-
-        <!-- Question card -->
-        <div id="testQuestionCard" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:22px;margin-bottom:16px;">
-          <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px;" id="testQType"></div>
-          <div style="font-size:1rem;line-height:1.6;margin-bottom:18px;" id="testQText"></div>
-          <textarea id="testAnswer" class="anki-input" rows="2" placeholder="Skriv dit svar på dansk …"
-            style="resize:none;"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitTestAnswer()}"></textarea>
-          <button class="btn btn-primary" style="margin-top:10px;" onclick="submitTestAnswer()">Svar ✓</button>
-        </div>
-
-        <!-- Feedback -->
-        <div id="testFeedback" style="display:none;border-radius:12px;padding:16px;margin-bottom:14px;font-size:0.88rem;line-height:1.6;"></div>
-        <button id="testNextBtn" style="display:none;" class="btn btn-secondary" onclick="nextTestQuestion()">Next question →</button>
-      </div>
-
-      <!-- Done screen -->
-      <div id="testDone" style="display:none;text-align:center;padding:30px;">
-        <div style="font-size:2.5rem;margin-bottom:12px;" id="testDoneEmoji">🎉</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Test complete!</div>
-        <div id="testDoneScore" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
-        <div id="testDoneSummary" style="text-align:left;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin-bottom:20px;font-size:0.85rem;line-height:1.7;"></div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="document.getElementById('testDone').style.display='none';document.getElementById('testModeSelect').style.display='block'">New test</button>
-          <button class="btn btn-ghost" onclick="setLogMode('fejl')">To Error Log</button>
-        </div>
-      </div>
-    </div><!-- /logPanetest (kept for compat) -->
   </div><!-- /log section -->
 
   <!-- TEST (standalone tab) -->
@@ -1577,30 +1506,6 @@
   </div>
 
 
-  <!-- NOTER -->
-  <div id="noter" class="section">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-      <div>
-        <div class="section-title" style="margin-bottom:4px;">My Notes</div>
-        <div style="font-size:0.82rem;color:var(--muted);" data-i18n="notesSubtitle">Thoughts, words, reflections</div>
-      </div>
-      <button class="btn btn-primary btn-sm" data-i18n="newNote" onclick="openNewNote()">+ New note</button>
-    </div>
-
-    <!-- NEW NOTE EDITOR -->
-    <div id="noteEditor" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;margin-bottom:20px;">
-      <textarea id="noteText" class="writing-editor" placeholder="Skriv din note her... (dansk eller tysk)" style="min-height:120px;margin-bottom:12px;"></textarea>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-primary" data-i18n="saveNote" onclick="saveNote()">Save note 💾</button>
-        <button class="btn btn-ghost" id="noteCorrectBtn" data-i18n="correctNote" onclick="correctCurrentNote()">AI check my text ✓</button>
-        <button class="btn btn-ghost" data-i18n="cancel" onclick="closeNoteEditor()">Cancel</button>
-      </div>
-      <div id="noteCorrectionBox" style="display:none;margin-top:14px;background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:10px;padding:14px;font-size:0.88rem;line-height:1.6;"></div>
-    </div>
-
-    <!-- NOTES LIST -->
-    <div id="noteList"></div>
-  </div>
   <!-- SPROGØER -->
   <div id="oer" class="section">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
@@ -1616,11 +1521,11 @@
     <div id="oeCSVImport" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
       <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">⬆ Import CSV</div>
       <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
-        CSV-Datei mit zwei Spalten: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">Zielsprache,Deutsch</code> – mit oder ohne Kopfzeile.
+        CSV file with two columns: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">Target language, German</code> – with or without header row.
       </div>
       <div style="margin-bottom:12px;">
         <div class="anki-label">Topic / Island name</div>
-        <input class="anki-input" type="text" id="csvImportTopic" placeholder="z.B. Arkitektur, Kochen …" style="margin-bottom:0;">
+        <input class="anki-input" type="text" id="csvImportTopic" placeholder="e.g. Architecture, Cooking …" style="margin-bottom:0;">
       </div>
       <div style="margin-bottom:14px;">
         <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none;" onchange="handleCsvFile(this)">
@@ -1650,11 +1555,11 @@
       <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">New Island</div>
       <div style="margin-bottom:12px;">
         <div class="anki-label">Topic</div>
-        <input class="anki-input" type="text" id="oeTopicInput" placeholder="z.B. Arkitektur, Kochen, Medizin, IT, Sport …" style="margin-bottom:0;">
+        <input class="anki-input" type="text" id="oeTopicInput" placeholder="e.g. Architecture, Cooking, Medicine, IT, Sport …" style="margin-bottom:0;">
       </div>
       <div style="margin-bottom:16px;">
         <div class="anki-label">Short description (optional)</div>
-        <input class="anki-input" type="text" id="oeDescInput" placeholder="z.B. Ich arbeite als Architekt seit 10 Jahren">
+        <input class="anki-input" type="text" id="oeDescInput" placeholder="e.g. I work as an architect, I cook every day …">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="startOeInterview()">Start interview →</button>
