@@ -194,6 +194,9 @@
   .btn-primary { background:var(--red); color:white; }
   .btn-primary:hover { background:#A50D25; transform:translateY(-1px); }
   .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .btn-secondary { background:var(--red); color:white; border:none; }
+  .btn-secondary:hover { background:#A50D25; transform:translateY(-1px); }
+  .btn-secondary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
   .btn-ghost { background:rgba(255,255,255,0.07); color:var(--white); border:1px solid rgba(255,255,255,0.12); }
   .btn-ghost:hover { background:rgba(255,255,255,0.12); }
   .btn-sm { padding:7px 14px; font-size:0.8rem; }
@@ -497,6 +500,8 @@
   body:not(.theme-dark) .settings-divider { border-top-color:rgba(0,0,0,0.1); }
 
   /* ── Buttons ── */
+  body:not(.theme-dark) .btn-secondary { background:var(--red); color:white; border:none; }
+  body:not(.theme-dark) .btn-secondary:hover { background:#A50D25; }
   body:not(.theme-dark) .btn-ghost { color:#4A3F36; border-color:rgba(0,0,0,0.2); }
   body:not(.theme-dark) .btn-ghost:hover { background:rgba(0,0,0,0.06); }
   .settings-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1000; backdrop-filter:blur(4px); align-items:flex-end; justify-content:center; }
@@ -677,10 +682,10 @@
 
 
   .tab-write { padding:9px 18px; border-radius:8px; border:1px solid rgba(255,255,255,0.12); background:transparent; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.88rem; cursor:pointer; transition:all 0.2s; }
-  .tab-write.active { background:rgba(200,16,46,0.15); border-color:var(--red); color:var(--white); }
+  .tab-write.active { background:rgba(232,184,75,0.15); border-color:rgba(232,184,75,0.5); color:var(--accent); font-weight:600; }
   .tab-write:hover:not(.active) { background:rgba(255,255,255,0.06); }
   body:not(.theme-dark) .tab-write { color:#6B5F54; background:transparent; }
-  body:not(.theme-dark) .tab-write.active { background:var(--red); color:#fff; }
+  body:not(.theme-dark) .tab-write.active { background:rgba(200,140,0,0.12); border-color:rgba(200,140,0,0.4); color:#7A5500; }
   body:not(.theme-dark) .tab-write:hover:not(.active) { background:rgba(0,0,0,0.06); }
 
   /* ── CHAT FILE ATTACH ── */
@@ -706,6 +711,32 @@
   body:not(.theme-dark) .chat-file-preview { background:#F5F0E8; border-color:rgba(0,0,0,0.1); }
   body:not(.theme-dark) .chat-file-preview .file-name { color:#2A1F1A; }
   body:not(.theme-dark) .chat-file-preview .file-icon { background:rgba(200,16,46,0.08); }
+
+  /* ── INSIGHTS WIDGETS ── */
+  .insights-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
+  @media(max-width:580px){ .insights-grid { grid-template-columns:1fr; } }
+  .insight-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:18px 20px; }
+  body:not(.theme-dark) .insight-card { background:#fff; border-color:rgba(0,0,0,0.1); }
+  .insight-card-title { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+
+  /* Strengths/Weaknesses */
+  .sw-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .sw-label { font-size:0.82rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sw-bar-wrap { width:80px; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; flex-shrink:0; overflow:hidden; }
+  body:not(.theme-dark) .sw-bar-wrap { background:rgba(0,0,0,0.1); }
+  .sw-bar { height:100%; border-radius:3px; transition:width 0.6s ease; }
+  .sw-count { font-size:0.72rem; color:var(--muted); width:20px; text-align:right; flex-shrink:0; }
+  .sw-section-label { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin:10px 0 6px; }
+  .sw-empty { font-size:0.82rem; color:var(--muted); text-align:center; padding:16px 0; }
+
+  /* Hours Learned */
+  .hours-big { font-family:'Fraunces',serif; font-size:2.2rem; line-height:1; margin-bottom:4px; }
+  .hours-sub { font-size:0.78rem; color:var(--muted); margin-bottom:14px; }
+  .hours-breakdown { display:flex; flex-direction:column; gap:6px; }
+  .hours-row { display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; padding:6px 10px; background:rgba(255,255,255,0.04); border-radius:8px; }
+  body:not(.theme-dark) .hours-row { background:rgba(0,0,0,0.04); }
+  .hours-row-label { color:var(--muted); }
+  .hours-row-val { font-weight:600; }
 </style>
 </head>
 <body>
@@ -734,16 +765,16 @@
     <div class="settings-section">
       <div class="settings-label">Appearance</div>
       <div class="settings-btn-group">
-        <button class="settings-btn active" id="themeLight" onclick="setTheme('light')">☀️ Lys</button>
-        <button class="settings-btn" id="themeDark" onclick="setTheme('dark')">🌙 Mørk</button>
+        <button class="settings-btn active" id="themeLight" onclick="setTheme('light')">☀️ Light</button>
+        <button class="settings-btn" id="themeDark" onclick="setTheme('dark')">🌙 Dark</button>
       </div>
     </div>
 
     <hr class="settings-divider">
 
     <div class="settings-section">
-      <div class="settings-label">🎯 Dagligt skrivemål</div>
-      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;">Antal ord du skal skrive for at tælle en dag i din streak.</div>
+      <div class="settings-label">🎯 Daily writing goal</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;">Number of words to write per day to count toward your streak.</div>
       <div style="display:flex;gap:10px;align-items:center;">
         <input type="number" id="dailyGoalInput" min="10" max="2000" step="10"
           style="width:90px;padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);background:var(--dark);color:var(--white);font-size:0.9rem;font-family:'DM Sans',sans-serif;"
@@ -779,9 +810,9 @@
       <div class="settings-label">Über die App</div>
       <div class="settings-about" id="settingsAboutText">
         <strong>Dansk Frem</strong> <span id="appVersionDisplay"></span><br>
-        Personlig dansklæringsapp · A2→B1<br>
-        Bygget med Claude (Anthropic) · Kører lokalt i din browser<br>
-        Alle data gemmes udelukkende på din enhed
+        Personal language learning app · A2→B1<br>
+        Built with Claude (Anthropic) · Runs locally in your browser<br>
+        All data stored locally on your device
       </div>
     </div>
 
@@ -789,7 +820,7 @@
     <hr class="settings-divider">
 
     <div class="settings-section" style="margin-bottom:16px;">
-      <div class="settings-label" id="settingsHelpLabel">❓ Hjælp & FAQ</div>
+      <div class="settings-label" id="settingsHelpLabel">❓ Help & FAQ</div>
 
       <div class="faq-item" id="faq1">
         <button class="faq-question" onclick="toggleFaq('faq1')">
@@ -862,6 +893,27 @@
       <div class="stat-card"><div class="stat-num" id="statStreakHome">0</div><div class="stat-label">🔥 Day streak</div></div>
     </div>
 
+    <!-- INSIGHTS: Strengths/Weaknesses + Hours Learned -->
+    <div class="insights-grid">
+
+      <!-- Strengths & Weaknesses -->
+      <div class="insight-card">
+        <div class="insight-card-title">🎯 Strengths & Weaknesses</div>
+        <div id="swWidget"><div class="sw-empty">Log some errors to see your pattern.</div></div>
+      </div>
+
+      <!-- Hours Learned -->
+      <div class="insight-card">
+        <div class="insight-card-title">⏱️ Time Invested</div>
+        <div id="hoursWidget">
+          <div class="hours-big" id="hoursTotal">0 h</div>
+          <div class="hours-sub" id="hoursSub">estimated learning time</div>
+          <div class="hours-breakdown" id="hoursBreakdown"></div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- ACTIVITY CHART -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:20px;margin-bottom:28px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
@@ -885,6 +937,8 @@
         <button class="btn btn-ghost" data-i18n="practiceInChat" onclick="showTab('chat')">Practice in chat</button>
       </div>
     </div>
+
+    
     <div class="section-title" data-i18n="tipsTitle">Tips for you</div>
     <div id="dailyTipsContainer"></div>
   </div>
@@ -984,7 +1038,7 @@
       <div id="writingChallengeBanner" style="display:none;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.3);border-radius:12px;padding:12px 16px;margin-bottom:16px;">
         <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;" id="writingChallengeBannerTitle">📝 Daily challenge</div>
         <div id="writingChallengeLabel" style="font-size:0.9rem;white-space:pre-line;"></div>
-        <button onclick="clearWritingChallenge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;margin-top:6px;">✕ Skriv frit i stedet</button>
+        <button onclick="clearWritingChallenge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;margin-top:6px;">✕ Write freely instead</button>
       </div>
       <textarea class="writing-editor" id="writingEditor" placeholder="Skriv hvad der falder dig ind på dansk... Fejl er okay! 🇩🇰"></textarea>
       <div id="writingFilePreview" class="chat-file-preview" style="display:none;margin:0 0 8px 0;">
@@ -995,26 +1049,26 @@
       <div class="writing-actions">
         <input type="file" id="writingFileInput" accept="image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleWritingFileSelect(this)">
         <button class="chat-attach-btn" id="writingAttachBtn" onclick="document.getElementById('writingFileInput').click()" title="Vedhæft fil (jpg/png/pdf)">📎</button>
-        <button class="btn btn-primary" id="writingSubmitBtn" onclick="submitWriting()">Check my text ✓</button>
+        <button class="btn btn-secondary" id="writingSubmitBtn" onclick="submitWriting()">Check my text ✓</button>
       </div>
     </div>
 
     <!-- IMAGE -->
     <div id="writeModeBillede" class="write-mode">
       <div class="writing-prompt-card" style="margin-bottom:20px;">
-        <div class="writing-prompt-label">📷 Håndskrevet tekst</div>
-        <div class="writing-prompt-text" style="font-size:1rem;">Upload et foto af din håndskrevne tekst – jeg læser og retter den</div>
+        <div class="writing-prompt-label">📷 Handwritten text</div>
+        <div class="writing-prompt-text" style="font-size:1rem;">Upload et foto af din handwritten text – I will read and correct it</div>
       </div>
       <div class="upload-zone" id="uploadZone">
         <input type="file" accept="image/*" id="imageFileInput" onchange="handleImageUpload(event)">
         <div class="upload-zone-icon">✍️</div>
-        <div class="upload-zone-text"><strong>Klik eller træk et billede hertil</strong>Foto af håndskrevet dansk (JPG, PNG, HEIC)</div>
+        <div class="upload-zone-text"><strong>Click or drag an image here</strong>Photo of handwritten text (JPG, PNG, HEIC)</div>
       </div>
       <img id="uploadPreview" class="upload-preview" alt="Preview">
       <div id="imageExtrasWrap" style="display:none;">
         <input type="text" class="context-input" id="imageContextInput" placeholder="Emne / opgave (valgfrit): f.eks. 'Beskrivelse af min arbejdsdag'">
         <div class="writing-actions">
-          <button class="btn btn-primary" id="imageSubmitBtn" onclick="submitImageWriting()">📖 Læs og ret min tekst</button>
+          <button class="btn btn-secondary" id="imageSubmitBtn" onclick="submitImageWriting()">📖 Read and correct my text</button>
           <button class="btn btn-ghost" onclick="clearImageUpload()">Delete image ×</button>
         </div>
       </div>
@@ -1035,7 +1089,7 @@
     <div id="sprogPaneGram">
       <!-- PERSONALIZED BANNER -->
       <div id="gramPersonalized" style="display:none;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.25);border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;" data-i18n="gramPersonalizedLabel">📊 Baseret på dine fejl</div>
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;" data-i18n="gramPersonalizedLabel">📊 Based on your errors</div>
         <div id="gramPersonalizedText" style="font-size:0.9rem;color:rgba(255,255,255,0.85);line-height:1.6;"></div>
       </div>
 
@@ -1059,7 +1113,7 @@
         <div id="gramExercises" class="scenarios-grid" style="margin-bottom:20px;"></div>
         <div id="gramExerciseArea" style="display:none;">
           <div class="writing-prompt-card" style="margin-bottom:16px;">
-            <div class="writing-prompt-label" id="gramExLabel">Øvelse</div>
+            <div class="writing-prompt-label" id="gramExLabel">Exercise</div>
             <div class="writing-prompt-text" id="gramExPrompt"></div>
           </div>
           <textarea class="writing-editor" id="gramExEditor" placeholder="Write your text here..."></textarea>
@@ -1071,7 +1125,7 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
             <input type="file" id="gramExFileInput" accept="image/jpeg,image/png,application/pdf" style="display:none;" onchange="handleGramExFileSelect(this)">
             <button class="chat-attach-btn" id="gramExAttachBtn" onclick="document.getElementById('gramExFileInput').click()" title="Vedhæft fil (jpg/png/pdf)">📎</button>
-            <button class="btn btn-primary" id="gramExSubmitBtn" onclick="submitGramExercise()">Check my text ✓</button>
+            <button class="btn btn-secondary" id="gramExSubmitBtn" onclick="submitGramExercise()">Check my text ✓</button>
             <button class="btn btn-ghost" onclick="document.getElementById('gramExerciseArea').style.display='none'">← Back</button>
           </div>
           <div id="gramExFeedback"></div>
@@ -1087,7 +1141,7 @@
             <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;" data-i18n="luckeSelectLabel">Which rule do you want to practice?</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
               <select id="luckeRuleSelect" class="sort-select" style="flex:1;min-width:200px;" onchange="onLuckeRuleChange()"></select>
-              <button class="btn btn-primary btn-sm" onclick="startLuckeByRule()" data-i18n="luckeStartBtn">Practice →</button>
+              <button class="btn btn-secondary btn-sm" onclick="startLuckeByRule()" data-i18n="luckeStartBtn">Practice →</button>
             </div>
           </div>
           <!-- Exercises area (hidden until started) -->
@@ -1142,7 +1196,7 @@
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <select class="sort-select" id="sortSelect" onchange="renderErrors()">
             <option value="newest">↓ Newest first</option>
-            <option value="oldest">↑ Älteste zuerst</option>
+            <option value="oldest">↑ Oldest first</option>
           </select>
           <button class="btn btn-ghost btn-sm" onclick="clearAllErrors()">Clear all ×</button>
         </div>
@@ -1151,22 +1205,22 @@
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
       <div class="tag-filter-section">
         <span class="tag-filter-label">Error type</span>
-        <button class="tag-filter-btn tag-grammatik" onclick="toggleTagFilter('grammatik',this)">grammatik</button>
-        <button class="tag-filter-btn tag-ordstilling" onclick="toggleTagFilter('ordstilling',this)">ordstilling</button>
-        <button class="tag-filter-btn tag-ordvalg" onclick="toggleTagFilter('ordvalg',this)">ordvalg</button>
-        <button class="tag-filter-btn tag-udtale" onclick="toggleTagFilter('udtale',this)">udtale</button>
+        <button class="tag-filter-btn tag-grammatik" onclick="toggleTagFilter('grammatik',this)">grammar</button>
+        <button class="tag-filter-btn tag-ordstilling" onclick="toggleTagFilter('ordstilling',this)">word order</button>
+        <button class="tag-filter-btn tag-ordvalg" onclick="toggleTagFilter('ordvalg',this)">word choice</button>
+        <button class="tag-filter-btn tag-udtale" onclick="toggleTagFilter('udtale',this)">pronunciation</button>
       </div>
       <div class="tag-filter-section">
-        <span class="tag-filter-label">Sværhedsgrad</span>
-        <button class="tag-filter-btn tag-let" onclick="toggleTagFilter('let',this)">let</button>
-        <button class="tag-filter-btn tag-middel" onclick="toggleTagFilter('middel',this)">middel</button>
-        <button class="tag-filter-btn tag-svaer" onclick="toggleTagFilter('svær',this)">svær</button>
+        <span class="tag-filter-label">Difficulty</span>
+        <button class="tag-filter-btn tag-let" onclick="toggleTagFilter('let',this)">easy</button>
+        <button class="tag-filter-btn tag-middel" onclick="toggleTagFilter('middel',this)">medium</button>
+        <button class="tag-filter-btn tag-svaer" onclick="toggleTagFilter('svær',this)">hard</button>
       </div>
       <div class="tag-filter-section" style="margin-bottom:0;">
         <span class="tag-filter-label">Tema</span>
-        <button class="tag-filter-btn tag-arbejde" onclick="toggleTagFilter('arbejde',this)">arbejde</button>
-        <button class="tag-filter-btn tag-hverdagen" onclick="toggleTagFilter('hverdagen',this)">hverdagen</button>
-        <button class="tag-filter-btn tag-formelt" onclick="toggleTagFilter('formelt',this)">formelt</button>
+        <button class="tag-filter-btn tag-arbejde" onclick="toggleTagFilter('arbejde',this)">work</button>
+        <button class="tag-filter-btn tag-hverdagen" onclick="toggleTagFilter('hverdagen',this)">daily life</button>
+        <button class="tag-filter-btn tag-formelt" onclick="toggleTagFilter('formelt',this)">formal</button>
       </div>
     </div>
     <div class="error-search-bar">
@@ -1205,12 +1259,12 @@
 
     <!-- FEJLLOG EXPORT BANNER -->
     <div id="ankiFromFejlBanner" style="display:none;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.3);border-radius:12px;padding:16px 20px;margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">📋 Aus Fejllog → Anki</div>
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">📋 From Error Log → Anki</div>
       <div id="ankiFejlInfo" style="font-size:0.9rem;margin-bottom:4px;"></div>
       <div style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;">Claude creates context cards with the <strong>correct</strong> sentences – including mnemonic and grammar note from your error tip.</div>
       <div id="ankiFejlProgress" style="display:none;margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
-          <span id="ankiFejlProgressLabel">Genererer …</span>
+          <span id="ankiFejlProgressLabel">Generating…</span>
           <span id="ankiFejlProgressFrac">0 / 0</span>
         </div>
         <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:6px;overflow:hidden;">
@@ -1219,7 +1273,7 @@
         <div id="ankiFejlLog" style="max-height:80px;overflow-y:auto;font-size:0.78rem;margin-top:8px;display:flex;flex-direction:column;gap:3px;"></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-primary btn-sm" id="ankiFejlExportBtn" onclick="exportFejlToApkg()">✨ Karten generieren & exportieren</button>
+        <button class="btn btn-secondary btn-sm" id="ankiFejlExportBtn" onclick="exportFejlToApkg()">✨ Generate & export cards</button>
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ankiFromFejlBanner').style.display='none'">✕</button>
       </div>
     </div>
@@ -1229,32 +1283,32 @@
       <!-- LEFT: Generator -->
       <div class="anki-panel">
         <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Einzelne Karte erstellen</div>
-        <div class="anki-label">Dänisches Wort</div>
-        <input class="anki-input" type="text" id="ankiWort" placeholder="z.B. hund, løbe, smuk …" onkeydown="if(event.key==='Enter')generateAnkiSingle()">
-        <div style="font-size:0.78rem;color:var(--muted);margin-top:8px;">Claude generiert einen Beispielsatz mit dem Wort im Kontext.</div>
-        <button class="btn btn-primary" style="width:100%;margin-top:16px;" id="ankiGenBtn" onclick="generateAnkiSingle()">Karte generieren →</button>
+        <div class="anki-label">Word in target language</div>
+        <input class="anki-input" type="text" id="ankiWort" placeholder="e.g. hund, løbe, smuk…" onkeydown="if(event.key==='Enter')generateAnkiSingle()">
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:8px;">Claude generates an example sentence with the word in context.</div>
+        <button class="btn btn-primary" style="width:100%;margin-top:16px;" id="ankiGenBtn" onclick="generateAnkiSingle()">Generate card →</button>
       </div>
 
       <!-- RIGHT: Preview -->
       <div class="anki-panel">
         <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Vorschau</div>
-        <div id="ankiPreviewEmpty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.88rem;">Gib links ein Wort ein,<br>um eine Karte zu generieren.</div>
+        <div id="ankiPreviewEmpty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.88rem;">Enter a word on the left<br>to generate a card.</div>
         <div id="ankiLoader" style="display:none;text-align:center;padding:30px;color:var(--muted);font-size:0.85rem;">
           <div class="loading-dots" style="justify-content:center;margin-bottom:8px;"><span></span><span></span><span></span></div>Genererer …
         </div>
         <div id="ankiPreview" style="display:none;">
           <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
             <div class="anki-card-face anki-front">
-              <div class="anki-face-label">▲ Vorderseite</div>
+              <div class="anki-face-label">▲ Front</div>
               <div id="ankiPreviewFront"></div>
             </div>
             <div class="anki-card-face anki-back">
-              <div class="anki-face-label">▽ Rückseite</div>
+              <div class="anki-face-label">▽ Back</div>
               <div id="ankiPreviewBack"></div>
             </div>
           </div>
           <div style="display:flex;gap:8px;">
-            <button class="btn btn-primary btn-sm" onclick="saveAnkiCard()">+ Speichern</button>
+            <button class="btn btn-primary btn-sm" onclick="saveAnkiCard()">+ Save</button>
             <button class="btn btn-ghost btn-sm" onclick="copyAnkiCard()">Kopieren</button>
           </div>
         </div>
@@ -1263,41 +1317,41 @@
 
     <!-- BATCH IMPORT -->
     <div class="anki-panel" style="margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Massen-Import</div>
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Batch Import</div>
 
       <!-- Sub-tabs -->
       <div style="display:flex;gap:6px;margin-bottom:18px;">
-        <button class="anki-tab-btn active" id="batchTabWort" onclick="setBatchTab('wort')">📖 Wörter</button>
-        <button class="anki-tab-btn" id="batchTabLucke" onclick="setBatchTab('lucke')">🧩 Lückentext</button>
+        <button class="anki-tab-btn active" id="batchTabWort" onclick="setBatchTab('wort')">📖 Words</button>
+        <button class="anki-tab-btn" id="batchTabLucke" onclick="setBatchTab('lucke')">🧩 Gap-fill</button>
       </div>
 
       <!-- Wörter tab -->
       <div id="batchPaneWort">
-        <div class="anki-label">Wörter (ein Wort pro Zeile)</div>
+        <div class="anki-label">Words (one word per line)</div>
         <textarea class="anki-input" id="ankiBulkText" rows="5" placeholder="hund&#10;løbe&#10;smuk&#10;arbejde&#10;…"></textarea>
         <div style="display:flex;gap:12px;align-items:flex-end;margin-top:12px;flex-wrap:wrap;">
-          <button class="btn btn-primary" id="ankiBatchBtn" onclick="startAnkiBatch()">Alle generieren →</button>
+          <button class="btn btn-secondary" id="ankiBatchBtn" onclick="startAnkiBatch()">Generate all →</button>
         </div>
       </div>
 
       <!-- Lückentext tab -->
       <div id="batchPaneLucke" style="display:none;">
         <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-          <button class="anki-tab-btn active" id="luckeSubTabGrammar" onclick="setLuckeSubTab('grammar')">📐 Grammatikregel</button>
-          <button class="anki-tab-btn" id="luckeSubTabSatz" onclick="setLuckeSubTab('satz')">✍️ Eigene Sätze</button>
+          <button class="anki-tab-btn active" id="luckeSubTabGrammar" onclick="setLuckeSubTab('grammar')">📐 Grammar rule</button>
+          <button class="anki-tab-btn" id="luckeSubTabSatz" onclick="setLuckeSubTab('satz')">✍️ Own sentences</button>
         </div>
 
         <!-- Grammar rule mode -->
         <div id="luckePaneGrammar">
           <div class="anki-label">Grammar rule or topic</div>
           <input class="anki-input" type="text" id="luckeGrammarRule" placeholder="z.B. Datid (Vergangenheit), bestimmter Artikel, Modalverben …">
-          <div class="anki-label" style="margin-top:10px;">Anzahl Karten</div>
+          <div class="anki-label" style="margin-top:10px;">Number of cards</div>
           <div style="display:flex;gap:8px;margin-bottom:14px;">
             <button class="anki-tab-btn active" id="luckeCount5" onclick="setLuckeCount(5,this)">5</button>
             <button class="anki-tab-btn" id="luckeCount10" onclick="setLuckeCount(10,this)">10</button>
             <button class="anki-tab-btn" id="luckeCount20" onclick="setLuckeCount(20,this)">20</button>
           </div>
-          <button class="btn btn-primary" id="luckeGrammarBtn" onclick="startLuckeBatch('grammar')">Karten generieren →</button>
+          <button class="btn btn-secondary" id="luckeGrammarBtn" onclick="startLuckeBatch('grammar')">Generate cards →</button>
         </div>
 
         <!-- Own sentences mode -->
@@ -1305,7 +1359,7 @@
           <div class="anki-label">Enter sentences (one per line)</div>
           <textarea class="anki-input" id="luckeSatzText" rows="5" placeholder="Jeg gik til møde i går.&#10;Hun har arbejdet her i tre år.&#10;Det er et stort hus.&#10;…"></textarea>
           <div style="font-size:0.78rem;color:var(--muted);margin-top:6px;margin-bottom:12px;">Claude wählt automatisch das grammatisch interessanteste Wort als Lücke.</div>
-          <button class="btn btn-primary" id="luckeSatzBtn" onclick="startLuckeBatch('satz')">Karten generieren →</button>
+          <button class="btn btn-secondary" id="luckeSatzBtn" onclick="startLuckeBatch('satz')">Generate cards →</button>
         </div>
       </div>
 
@@ -1325,12 +1379,12 @@
     <!-- SAVED CARDS -->
     <div class="anki-panel">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">
-        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);">Gemte kort</div>
+        <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);">Saved cards</div>
         <span id="ankiCardCount" style="background:var(--red);color:white;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;">0</span>
       </div>
-      <div id="ankiSavedList"><div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;font-style:italic;" data-i18n="ankiNoCards">Ingen kort gemt endnu.</div></div>
+      <div id="ankiSavedList"><div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;font-style:italic;" data-i18n="ankiNoCards">No cards saved yet.</div></div>
       <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
-        <button class="btn btn-primary" data-i18n="ankiExportApkg" onclick="exportAnkiApkg()">⬇ Eksportér som .apkg</button>
+        <button class="btn btn-primary" data-i18n="ankiExportApkg" onclick="exportAnkiApkg()">⬇ Export as .apkg</button>
         <button class="btn btn-ghost" style="color:var(--red);" data-i18n="ankiDeleteAll" onclick="clearAnkiCards()">Delete all</button>
       </div>
     </div>
@@ -1349,13 +1403,13 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div onclick="startTest('dag')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
             <div style="font-size:1.6rem;margin-bottom:8px;">☀️</div>
-            <div style="font-weight:600;margin-bottom:4px;">Tagestest</div>
-            <div style="font-size:0.78rem;color:var(--muted);">10 Fragen basierend auf dem, was du heute geübt hast</div>
+            <div style="font-weight:600;margin-bottom:4px;">Daily Test</div>
+            <div style="font-size:0.78rem;color:var(--muted);">10 questions based on what you practised today</div>
           </div>
           <div onclick="startTest('svagheder')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
             <div style="font-size:1.6rem;margin-bottom:8px;">🔍</div>
-            <div style="font-weight:600;margin-bottom:4px;">Schwächentest</div>
-            <div style="font-size:0.78rem;color:var(--muted);">Gezielte Fragen aus deinen häufigsten Fehlermustern</div>
+            <div style="font-weight:600;margin-bottom:4px;">Weakness Test</div>
+            <div style="font-size:0.78rem;color:var(--muted);">Targeted questions from your most common error patterns</div>
           </div>
         </div>
       </div>
@@ -1370,7 +1424,7 @@
         <!-- Progress -->
         <div style="margin-bottom:20px;">
           <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
-            <span id="testProgress">Frage 1 / 10</span>
+            <span id="testProgress">Question 1 / 10</span>
             <span id="testScore" style="color:#5CC488;"></span>
           </div>
           <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:5px;overflow:hidden;">
@@ -1396,18 +1450,18 @@
 
         <!-- Feedback -->
         <div id="testFeedback" style="display:none;border-radius:12px;padding:16px;margin-bottom:14px;font-size:0.88rem;line-height:1.6;"></div>
-        <button id="testNextBtn" style="display:none;" class="btn btn-primary" onclick="nextTestQuestion()">Next question →</button>
+        <button id="testNextBtn" style="display:none;" class="btn btn-secondary" onclick="nextTestQuestion()">Next question →</button>
       </div>
 
       <!-- Done screen -->
       <div id="testDone" style="display:none;text-align:center;padding:30px;">
         <div style="font-size:2.5rem;margin-bottom:12px;" id="testDoneEmoji">🎉</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Test afsluttet!</div>
+        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Test complete!</div>
         <div id="testDoneScore" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
         <div id="testDoneSummary" style="text-align:left;background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin-bottom:20px;font-size:0.85rem;line-height:1.7;"></div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="document.getElementById('testDone').style.display='none';document.getElementById('testModeSelect').style.display='block'">Nyt test</button>
-          <button class="btn btn-ghost" onclick="setLogMode('fejl')">Til Fejllog</button>
+          <button class="btn btn-primary" onclick="document.getElementById('testDone').style.display='none';document.getElementById('testModeSelect').style.display='block'">New test</button>
+          <button class="btn btn-ghost" onclick="setLogMode('fejl')">To Error Log</button>
         </div>
       </div>
     </div><!-- /logPanetest -->
@@ -1437,7 +1491,7 @@
       <div style="font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:6px;">📦 Export ready</div>
       <div id="ankiModalInfo" style="font-size:0.85rem;color:var(--muted);margin-bottom:20px;"></div>
       <a id="ankiDownloadLink" style="display:block;padding:12px;background:var(--red);color:white;border-radius:8px;text-align:center;text-decoration:none;font-weight:600;margin-bottom:12px;"id="ankiDownloadLinkText">⬇ Download fil</a>
-      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;text-align:center;"><span data-i18n="ankiInstructions" id="ankiInstructionsEl">I Anki: <strong>Fil → Importér</strong> → vælg .apkg</span></div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:16px;text-align:center;"><span data-i18n="ankiInstructions" id="ankiInstructionsEl">In Anki: <strong>File → Import</strong> → select .apkg</span></div>
       <button class="btn btn-ghost" style="width:100%;" data-i18n="ankiClose" onclick="closeAnkiModal()">Close</button>
     </div>
   </div>
@@ -1474,7 +1528,7 @@
         <div class="section-title" style="margin-bottom:4px;">🗺️ My Language Islands</div>
         <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Build your personal vocabulary for topics you know well – via a conversation with Claude.</div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="openNewOe()">+ Ny ø</button>
+      <button class="btn btn-primary btn-sm" onclick="openNewOe()">+ New island</button>
       <button class="btn btn-ghost btn-sm" onclick="openCsvImport()">⬆ Import CSV</button>
     </div>
 
@@ -1519,11 +1573,11 @@
         <input class="anki-input" type="text" id="oeTopicInput" placeholder="z.B. Arkitektur, Kochen, Medizin, IT, Sport …" style="margin-bottom:0;">
       </div>
       <div style="margin-bottom:16px;">
-        <div class="anki-label">Kurze Beschreibung (optional)</div>
+        <div class="anki-label">Short description (optional)</div>
         <input class="anki-input" type="text" id="oeDescInput" placeholder="z.B. Ich arbeite als Architekt seit 10 Jahren">
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="startOeInterview()">Interview starten →</button>
+        <button class="btn btn-primary" onclick="startOeInterview()">Start interview →</button>
         <button class="btn btn-ghost" onclick="closeOeCreator()">Cancel</button>
       </div>
     </div>
@@ -1590,25 +1644,25 @@
             placeholder="Write the sentence…"
             style="margin-bottom:10px;resize:none;"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();checkOePractice()}"></textarea>
-          <button class="btn btn-primary" onclick="checkOePractice()">Prüfen ✓</button>
+          <button class="btn btn-secondary" onclick="checkOePractice()">Check ✓</button>
         </div>
 
         <!-- Result (shown after check) -->
         <div id="oePracticeResult" style="display:none;">
           <div id="oePracticeResultMsg" style="font-size:0.95rem;margin-bottom:12px;"></div>
           <div style="background:rgba(92,196,136,0.08);border:1px solid rgba(92,196,136,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
-            <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#5CC488;margin-bottom:4px;">Korrekt</div>
+            <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#5CC488;margin-bottom:4px;">Correct</div>
             <div id="oePracticeCorrect" style="font-size:1rem;"></div>
           </div>
           <div id="oePracticeFeedback" style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5;"></div>
-          <button class="btn btn-primary" onclick="nextOePractice()">Next →</button>
+          <button class="btn btn-secondary" onclick="nextOePractice()">Next →</button>
         </div>
       </div>
 
       <!-- Done screen -->
       <div id="oePracticeDone" style="display:none;text-align:center;padding:30px;">
         <div style="font-size:2rem;margin-bottom:12px;">🎉</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Færdig!</div>
+        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Done!</div>
         <div id="oePracticeFinalScore" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="restartOePractice()">↺ Again</button>
@@ -1676,7 +1730,7 @@ async function apiFetch(url, options) {
   return fetch(url, options);
 }
 
-const APP_VERSION = "3.9.4";
+const APP_VERSION = "4.0.1";
 const MODEL = "claude-sonnet-4-20250514";
 let currentPersona = 'lars';
 let chatHistory = [];
@@ -1829,6 +1883,196 @@ window.updateUI = function updateUI() {
   updateLevelDisplay();
   renderErrors();
   renderActivityChart();
+  renderStrengthsWeaknesses();
+  renderHoursLearned();
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRENGTHS & WEAKNESSES WIDGET
+// ═══════════════════════════════════════════════════════════
+function renderStrengthsWeaknesses() {
+  const el = document.getElementById('swWidget');
+  if (!el) return;
+
+  const allErrors = [...(window.errorLog || []), ...(window.archiveLog || [])];
+  if (!allErrors.length) {
+    el.innerHTML = '<div class="sw-empty">Log some errors to see your pattern.</div>';
+    return;
+  }
+
+  // Count tags
+  const tagCount = {};
+  allErrors.forEach(e => (e.tags || []).forEach(tag => {
+    tagCount[tag] = (tagCount[tag] || 0) + 1;
+  }));
+
+  // Count error sources (chat, skriv, job, test, etc.)
+  const sourceCount = {};
+  allErrors.forEach(e => {
+    const src = e.source || 'other';
+    sourceCount[src] = (sourceCount[src] || 0) + 1;
+  });
+
+  // Map tags to readable labels and categories
+  const tagMeta = {
+    grammatik:   { label: '📐 Grammar',       cat: 'weak' },
+    ordstilling: { label: '🔀 Word order',     cat: 'weak' },
+    ordvalg:     { label: '💬 Word choice',    cat: 'weak' },
+    udtale:      { label: '🔊 Pronunciation',  cat: 'weak' },
+    let:         { label: '✅ Easy errors',    cat: 'strong' },
+    middel:      { label: '🔶 Medium errors',  cat: 'neutral' },
+    'svær':      { label: '🔴 Hard errors',    cat: 'weak' },
+    arbejde:     { label: '💼 Work vocab',     cat: 'neutral' },
+    hverdagen:   { label: '🏠 Daily life',     cat: 'neutral' },
+    formelt:     { label: '📄 Formal',         cat: 'neutral' },
+  };
+
+  const sorted = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
+  const maxVal = sorted[0]?.[1] || 1;
+
+  // Identify top weaknesses (most errors) and strengths (fewest in common categories)
+  const weaknessTags = sorted.slice(0, 4);
+
+  // Strength = grammar-type tags with 0 or very low count
+  const gramTags = ['grammatik','ordstilling','ordvalg','udtale'];
+  const strengths = gramTags
+    .filter(t => !tagCount[t] || tagCount[t] < 2)
+    .slice(0, 2);
+
+  let html = '';
+
+  // Weaknesses section
+  if (weaknessTags.length) {
+    html += '<div class="sw-section-label" style="color:#F07070;">⚠ Areas to improve</div>';
+    html += weaknessTags.map(([tag, count]) => {
+      const meta = tagMeta[tag] || { label: tag };
+      const pct = Math.round((count / maxVal) * 100);
+      return `<div class="sw-row">
+        <span class="sw-label">${meta.label || tag}</span>
+        <div class="sw-bar-wrap">
+          <div class="sw-bar" style="width:${pct}%;background:#F07070;"></div>
+        </div>
+        <span class="sw-count">${count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Strengths section
+  if (strengths.length) {
+    html += '<div class="sw-section-label" style="color:#5CC488;">✓ Looking good</div>';
+    html += strengths.map(tag => {
+      const meta = tagMeta[tag] || { label: tag };
+      const count = tagCount[tag] || 0;
+      return `<div class="sw-row">
+        <span class="sw-label">${meta.label || tag}</span>
+        <div class="sw-bar-wrap">
+          <div class="sw-bar" style="width:${count === 0 ? 4 : 12}%;background:#5CC488;"></div>
+        </div>
+        <span class="sw-count" style="color:#5CC488;">${count === 0 ? '✓' : count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Source breakdown
+  const srcLabels = { chat:'💬 Chat', skriv:'✍️ Writing', job:'💼 Job', test:'🎯 Test', billede:'📷 Handwriting', oe:'🗺️ Islands' };
+  const srcEntries = Object.entries(sourceCount).sort((a,b) => b[1]-a[1]).slice(0,3);
+  if (srcEntries.length) {
+    html += '<div class="sw-section-label">📊 Error sources</div>';
+    const srcMax = srcEntries[0][1];
+    html += srcEntries.map(([src, count]) => {
+      const label = srcLabels[src] || src;
+      const pct = Math.round((count / srcMax) * 100);
+      return `<div class="sw-row">
+        <span class="sw-label">${label}</span>
+        <div class="sw-bar-wrap">
+          <div class="sw-bar" style="width:${pct}%;background:var(--accent);"></div>
+        </div>
+        <span class="sw-count">${count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  if (!html) {
+    html = '<div class="sw-empty">Add tags to your errors to see analysis.</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HOURS LEARNED WIDGET
+// ═══════════════════════════════════════════════════════════
+function renderHoursLearned() {
+  const el = document.getElementById('hoursTotal');
+  const subEl = document.getElementById('hoursSub');
+  const breakEl = document.getElementById('hoursBreakdown');
+  if (!el) return;
+
+  const s = window.stats || {};
+
+  // Estimate minutes per activity type
+  // ~2 min per chat message, ~1.5 min per 100 words written,
+  // ~3 min per error logged (writing + correction time),
+  // ~2 min per Anki card, ~1 min per test question answered
+
+  const chatMsgs = s.chats || 0;
+  const totalWords = s.totalWords || s.sentences || 0;
+  const errorCount = (window.errorLog || []).length + (window.archiveLog || []).length;
+  const anki = ((s.ankiExports || 0));
+
+  // Minutes estimations
+  const minFromChat    = chatMsgs * 2;
+  const minFromWriting = Math.round((totalWords / 100) * 1.5);
+  const minFromErrors  = errorCount * 3;
+  const minFromAnki    = anki * 5;
+
+  const totalMin = minFromChat + minFromWriting + minFromErrors + minFromAnki;
+  const totalHours = totalMin / 60;
+
+  // Format
+  let displayVal, displayUnit;
+  if (totalHours < 1) {
+    displayVal = totalMin;
+    displayUnit = 'min';
+  } else if (totalHours < 10) {
+    displayVal = totalHours.toFixed(1);
+    displayUnit = 'h';
+  } else {
+    displayVal = Math.round(totalHours);
+    displayUnit = 'h';
+  }
+
+  el.textContent = displayVal + ' ' + displayUnit;
+
+  // Streak-based bonus message
+  const streak = s.streak || 0;
+  if (streak >= 7) {
+    subEl.textContent = `${streak} day streak 🔥 – great consistency!`;
+  } else if (totalHours >= 5) {
+    subEl.textContent = 'estimated total learning time';
+  } else {
+    subEl.textContent = 'keep practicing to build up your hours!';
+  }
+
+  // Breakdown rows
+  const rows = [
+    { label: '💬 Chat conversations', val: chatMsgs, unit: 'msgs', min: minFromChat },
+    { label: '✍️ Words written', val: totalWords, unit: 'words', min: minFromWriting },
+    { label: '📋 Errors reviewed', val: errorCount, unit: 'errors', min: minFromErrors },
+  ].filter(r => r.val > 0);
+
+  if (!rows.length) {
+    breakEl.innerHTML = '<div class="sw-empty" style="padding:8px 0;">Start practicing to track your time!</div>';
+    return;
+  }
+
+  breakEl.innerHTML = rows.map(r => {
+    const hh = r.min >= 60 ? (r.min / 60).toFixed(1) + ' h' : r.min + ' min';
+    return `<div class="hours-row">
+      <span class="hours-row-label">${r.label}</span>
+      <span class="hours-row-val">${hh}</span>
+    </div>`;
+  }).join('');
 }
 
 let chartPeriod = 7;
@@ -2049,7 +2293,7 @@ function toggleTagFilter(tag, btn) {
 function getFilteredErrors() {
   const searchTerm = (document.getElementById('errorSearchInput')?.value || '').toLowerCase().trim();
   const sort = document.getElementById('sortSelect')?.value || 'newest';
-  let list = currentFilter==='alle' ? [...errorLog] : window.errorLog.filter(e=>e.source===currentFilter);
+  let list = currentFilter==='alle' ? [...window.errorLog] : window.errorLog.filter(e=>e.source===currentFilter);
   if (activeTagFilters.size > 0) {
     list = list.filter(e => e.tags && [...activeTagFilters].every(tag => e.tags.includes(tag)));
   }
@@ -2554,7 +2798,7 @@ async function submitWriting(){
       context = `En elev oversætter en sætning til dansk som en del af sprogøen "${oeTopic}".`;
       sysPrompt = `Du er en venlig dansk sproglærer. ${context}
 Task: Translate to Danish: "${challengePrompt ? challengePrompt.split('\n')[0].replace('Translate to Danish:','').replace(/[„"]/g,'').trim() : ''}"
-Korrekt dansk: "${correctDa}"
+Correct answer: "${correctDa}"
 
 Giv feedback PÅ DANSK:
 1. Sammenlign elevens svar med det korrekte (er det rigtigt, næsten rigtigt, eller forkert?)
@@ -3688,7 +3932,7 @@ let ankiCards = [];
 let ankiCurrentCard = null;
 
 function ankiKontextPrompt(w) {
-  return 'Du bist ein Dänisch-Lernassistent. Erstelle eine Kontext-Anki-Karte für das dänische Wort: "' + w + '"\nAntworte NUR mit validem JSON ohne Markdown-Backticks:\n{"type":"kontext","word":"' + w + '","sentence_da":"Beispielsatz auf Dänisch mit dem Wort natürlich eingebaut","sentence_de":"Übersetzung des Satzes auf Deutsch","word_de":"Übersetzung des Wortes auf Deutsch","ipa":"IPA-Aussprache","wordtype":"Wortart und Grundform auf Deutsch (z.B. Substantiv et hus / Verb at løbe)","mnemonic":"Eselsbrücke auf Deutsch","grammar_note":"Wichtiger Grammatikhinweis falls relevant, sonst leerer String"}';
+  return 'You are a language learning assistant. Create a context Anki card for the word: "' + w + '"\nAntworte NUR mit validem JSON ohne Markdown-Backticks:\n{"type":"kontext","word":"' + w + '","sentence_da":"Example sentence in the target language with the word naturally included","sentence_de":"German translation of the sentence","word_de":"German translation of the word","ipa":"IPA pronunciation","wordtype":"Word type and base form in German (e.g. Noun et hus / Verb at løbe)","mnemonic":"Mnemonic in German","grammar_note":"Important grammar note if relevant, otherwise empty string"}';
 }
 
 async function callAnkiClaude(prompt, maxTokens) {
@@ -3717,7 +3961,7 @@ async function generateAnkiSingle() {
     document.getElementById('ankiPreview').style.display = 'block';
   } catch(e) {
     document.getElementById('ankiPreviewEmpty').style.display = 'block';
-    document.getElementById('ankiPreviewEmpty').textContent = 'Fejl – prøv igen.';
+    document.getElementById('ankiPreviewEmpty').textContent = 'Error – please try again.';
   }
   document.getElementById('ankiLoader').style.display = 'none';
   btn.disabled = false;
@@ -3741,9 +3985,9 @@ function renderAnkiPreview(card) {
     (card.ipa ? '<span class="anki-ipa">' + ankiEsc(card.ipa) + '</span>' : '') +
     '</div>';
   back.innerHTML =
-    ankiField('Satz auf Deutsch', '<em>' + ankiEsc(card.sentence_de) + '</em>') +
-    ankiField('Wort', '<strong>' + ankiEsc(card.word_de) + '</strong>') +
-    (card.wordtype ? ankiField('Wortart', ankiEsc(card.wordtype)) : '') +
+    ankiField('Sentence (DE)', '<em>' + ankiEsc(card.sentence_de) + '</em>') +
+    ankiField('Word', '<strong>' + ankiEsc(card.word_de) + '</strong>') +
+    (card.wordtype ? ankiField('Word type', ankiEsc(card.wordtype)) : '') +
     '<div class="anki-mnemonic">💡 ' + ankiEsc(card.mnemonic) + '</div>' +
     (card.grammar_note ? '<div class="anki-mnemonic" style="margin-top:6px;background:rgba(100,150,220,0.08);border-left-color:rgba(100,150,220,0.6);">📚 ' + ankiEsc(card.grammar_note) + '</div>' : '');
 }
@@ -3761,7 +4005,7 @@ function saveAnkiCard() {
   ankiCurrentCard = null;
   document.getElementById('ankiPreview').style.display = 'none';
   document.getElementById('ankiPreviewEmpty').style.display = 'block';
-  document.getElementById('ankiPreviewEmpty').textContent = '✓ Gespeichert! Gib das nächste Wort ein.';
+  document.getElementById('ankiPreviewEmpty').textContent = '✓ Saved! Enter the next word.';
   document.getElementById('ankiWort').value = '';
   renderAnkiSavedList();
 }
@@ -3797,19 +4041,19 @@ function setLuckeCount(n, btn) {
 }
 
 function ankiLuckeGrammarPrompt(rule, count) {
-  return 'Du bist ein Dänisch-Lernassistent. Erstelle ' + count + ' Lückentext-Anki-Karten zur Grammatikregel: "' + rule + '".\n' +
-    'Für jede Karte: Erstelle einen natürlichen dänischen Beispielsatz und wähle das grammatisch wichtigste Wort als Lücke.\n' +
-    'hint_de = nur die deutsche Übersetzung der Antwort (kein Dänisch), z.B. "geht (Präsens)" oder "das Haus (Neutrum)".\n' +
+  return 'You are a language learning assistant. Create ' + count + ' gap-fill Anki cards for the grammar rule: "' + rule + '".\n' +
+    'For each card: Create a natural example sentence and choose the grammatically most important word as the gap.\n' +
+    'hint_de = only the German translation of the answer, e.g. "goes (present)".\n' +
     'Antworte NUR mit einem JSON-Array ohne Markdown:\n' +
-    '[{"type":"cloze_fejl","sentence_with_blank":"Satz mit ___ statt Zielwort","hint_de":"Nur deutsche Übersetzung","answer":"Zielwort","full_sentence":"Vollständiger korrekter Satz","wrong_was":"","grammar_note":"Kurze Grammatikerklärung auf Deutsch"}, ...]';
+    '[{"type":"cloze_fejl","sentence_with_blank":"Sentence with ___ instead of target word","hint_de":"German translation hint","answer":"target word","full_sentence":"Complete correct sentence","wrong_was":"","grammar_note":"Short grammar explanation in German"}, ...]';
 }
 
 function ankiLuckeSatzPrompt(sentence) {
-  return 'Du bist ein Dänisch-Lernassistent. Erstelle eine Lückentext-Anki-Karte für diesen target-language sentence: "' + sentence + '"\n' +
+  return 'You are a language learning assistant. Create a gap-fill Anki card for this sentence: "' + sentence + '"\n' +
     'Wähle das grammatisch interessanteste Wort als Lücke (Verbform, Artikel, Pronomen etc.).\n' +
-    'hint_de = nur die deutsche Übersetzung der Antwort (kein Dänisch), z.B. "geht (Präsens)".\n' +
+    'hint_de = only the German translation of the answer, e.g. "goes (present)".\n' +
     'Antworte NUR mit validem JSON ohne Markdown:\n' +
-    '{"type":"cloze_fejl","sentence_with_blank":"Satz mit ___ statt Zielwort","hint_de":"Nur deutsche Übersetzung","answer":"Zielwort","full_sentence":"' + sentence + '","wrong_was":"","grammar_note":"Kurze Grammatikerklärung auf Deutsch"}';
+    '{"type":"cloze_fejl","sentence_with_blank":"Sentence with ___ instead of target word","hint_de":"German translation hint","answer":"target word","full_sentence":"' + sentence + '","wrong_was":"","grammar_note":"Short grammar explanation in German"}';
 }
 
 async function startLuckeBatch(mode) {
@@ -3826,12 +4070,12 @@ async function startLuckeBatch(mode) {
     btn.disabled = true;
     prog.style.display = 'block'; log.innerHTML = '';
     bar.style.width = '0%';
-    label.textContent = 'Genererer ' + luckeCount + ' Lückentext-Karten for "' + rule + '" …';
+    label.textContent = 'Generating ' + luckeCount + ' gap-fill cards for "' + rule + '" …';
     frac.textContent = '0 / ' + luckeCount;
 
     const item = document.createElement('div');
     item.style.color = 'var(--muted)';
-    item.textContent = '⟳ ' + rule + ' (' + luckeCount + ' Karten)';
+    item.textContent = '⟳ ' + rule + ' (' + luckeCount + ' cards)';
     log.appendChild(item);
 
     try {
@@ -3842,7 +4086,7 @@ async function startLuckeBatch(mode) {
       });
       renderAnkiSavedList();
       item.style.color = '#5CC488';
-      item.textContent = '✓ ' + cards.length + ' Karten für "' + rule + '"';
+      item.textContent = '✓ ' + cards.length + ' cards for "' + rule + '"';
       bar.style.width = '100%';
       frac.textContent = cards.length + ' / ' + luckeCount;
       label.textContent = '✓ Done!';
@@ -3861,7 +4105,7 @@ async function startLuckeBatch(mode) {
     btn.disabled = true;
     prog.style.display = 'block'; log.innerHTML = '';
     bar.style.width = '0%';
-    label.textContent = 'Genererer Lückentext-Karten …';
+    label.textContent = 'Generating gap-fill cards…';
 
     for (let i = 0; i < sentences.length; i++) {
       const s = sentences[i];
@@ -3903,7 +4147,7 @@ async function startAnkiBatch() {
   const log  = document.getElementById('ankiBatchLog');
   prog.style.display = 'block'; log.innerHTML = '';
   bar.style.width = '0%';
-  label.textContent = 'Genererer kort …';
+  label.textContent = 'Generating cards…';
   for (let i=0; i<words.length; i++) {
     const w = words[i];
     frac.textContent = i + ' / ' + words.length;
@@ -3926,7 +4170,7 @@ async function startAnkiBatch() {
   }
   bar.style.width = '100%';
   frac.textContent = words.length + ' / ' + words.length;
-  label.textContent = '✓ Done! ' + words.length + ' Karten generiert.';
+  label.textContent = '✓ Done! ' + words.length + ' cards generated.';
   btn.disabled = false;
 }
 
@@ -3934,7 +4178,7 @@ function renderAnkiSavedList() {
   document.getElementById('ankiCardCount').textContent = ankiCards.length;
   const list = document.getElementById('ankiSavedList');
   if (!ankiCards.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;font-style:italic;" data-i18n="ankiNoCards">Ingen kort gemt endnu.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;font-style:italic;" data-i18n="ankiNoCards">No cards saved yet.</div>';
     return;
   }
   list.innerHTML = ankiCards.map(c =>
@@ -3959,20 +4203,20 @@ function openAnkiExport() {
 }
 
 function ankiFejlPrompt(e) {
-  return 'Du bist ein Dänisch-Lernassistent. Ein Lernender hat folgenden Fehler gemacht:\n' +
+  return 'You are a language learning assistant. A learner made the following error:\n' +
     'Falsch: "' + (e.fejl||'') + '"\n' +
-    'Korrekt: "' + (e.ret||'') + '"\n' +
+    'Correct: "' + (e.ret||'') + '"\n' +
     (e.tip ? 'Erklärung: "' + e.tip + '"\n' : '') +
-    '\nErstelle eine Lückentext-Anki-Karte. Das fehlerhafte Element soll als Lücke markiert werden.\n' +
-    'WICHTIG für hint_de: Nur die deutsche Übersetzung der gesuchten Antwort – KEIN Dänisch. Beispiele: "geht (Präsens)", "ein Haus (Neutrum)", "haben + Partizip". Das Dänische kommt erst auf der Rückseite.\n' +
+    '\nCreate a gap-fill Anki card. The incorrect element should be marked as the gap.\n' +
+    'IMPORTANT for hint_de: Only the German translation of the expected answer. Examples: "goes (present)", "a house (neuter)", "have + participle".\n' +
     'Antworte NUR mit validem JSON ohne Markdown-Backticks:\n' +
     '{"type":"cloze_fejl",' +
     '"sentence_with_blank":"Korrekter Satz mit ___ statt dem Zielwort/der Zielstruktur",' +
-    '"hint_de":"Nur deutsche Übersetzung + Grammatikform, kein Dänisch",' +
+    '"hint_de":"German translation + grammar form",' +
     '"answer":"' + (e.ret||'').split(' ')[0] + '",' +
     '"full_sentence":"' + (e.ret||'') + '",' +
     '"wrong_was":"' + (e.fejl||'') + '",' +
-    '"grammar_note":"' + (e.tip ? e.tip.replace(/"/g,"'") : 'Grammatikhinweis') + '"}';
+    '"grammar_note":"' + (e.tip ? e.tip.replace(/"/g,"'") : 'Grammar note') + '"}';
 }
 
 async function exportFejlToApkg() {
@@ -3989,7 +4233,7 @@ async function exportFejlToApkg() {
   prog.style.display = 'block';
   log.innerHTML = '';
   bar.style.width = '0%';
-  label.textContent = 'Genererer Lückentext-Karten …';
+  label.textContent = 'Generating gap-fill cards…';
 
   const cards = [];
   const exportedIds = [];
@@ -4027,13 +4271,13 @@ async function exportFejlToApkg() {
 
   bar.style.width = '100%';
   frac.textContent = data.length + ' / ' + data.length;
-  label.textContent = '✓ ' + cards.length + ' Karten erstellt – exportiere …';
+  label.textContent = '✓ ' + cards.length + ' cards created – exporting…';
 
   await buildAndDownloadApkg(cards, 'dansk-frem-fejl');
 
   // Auto-archive exported errors
   archiveErrors(exportedIds);
-  label.textContent = '✓ Eksporteret og arkiveret!';
+  label.textContent = '✓ Exported and archived!';
   btn.disabled = false;
   setTimeout(() => { prog.style.display = 'none'; }, 2000);
 }
@@ -4070,10 +4314,10 @@ async function buildAndDownloadApkg(cards, filename) {
         name: 'Kontext', ord: 0,
         qfmt: '<div class="satz">{{Satz_DA}}</div><hr class="sep"><div class="ord-label">ORD</div><span class="word">{{Wort}}</span>{{#IPA}}<span class="ipa">{{IPA}}</span>{{/IPA}}',
         afmt: '{{FrontSide}}<hr id=answer>' +
-              '<div class="field-name">Satz auf Deutsch</div><div><em>{{Satz_DE}}</em></div>' +
-              '{{#Wort_DE}}<div class="field-name">Wort</div><div><strong>{{Wort_DE}}</strong></div>{{/Wort_DE}}' +
-              '{{#Wortart}}<div class="field-name">Wortart</div><div>{{Wortart}}</div>{{/Wortart}}' +
-              '{{#Eselsbrücke}}<div class="mnemonic">💡 {{Eselsbrücke}}</div>{{/Eselsbrücke}}' +
+              '<div class="field-name">Sentence (DE)</div><div><em>{{Satz_DE}}</em></div>' +
+              '{{#Wort_DE}}<div class="field-name">Word</div><div><strong>{{Wort_DE}}</strong></div>{{/Wort_DE}}' +
+              '{{#Word_type}}<div class="field-name">Word type</div><div>{{Word_type}}</div>{{/Word_type}}' +
+              '{{#Mnemonic}}<div class="mnemonic">💡 {{Mnemonic}}</div>{{/Mnemonic}}' +
               '{{#Grammatik}}<div class="grammar">📚 {{Grammatik}}</div>{{/Grammatik}}',
         bqfmt: '', bafmt: '', did: null, bfont: '', bsize: 0
       }],
@@ -4083,8 +4327,8 @@ async function buildAndDownloadApkg(cards, filename) {
         {name:'IPA',      ord:2, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
         {name:'Satz_DE',  ord:3, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
         {name:'Wort_DE',  ord:4, sticky:false, rtl:false, font:'Arial', size:16, media:[]},
-        {name:'Wortart',  ord:5, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
-        {name:'Eselsbrücke', ord:6, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
+        {name:'Word_type',  ord:5, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
+        {name:'Mnemonic', ord:6, sticky:false, rtl:false, font:'Arial', size:14, media:[]},
         {name:'Grammatik',   ord:7, sticky:false, rtl:false, font:'Arial', size:14, media:[]}
       ],
       css, latexPre:'', latexPost:'', req:[[0,'any',[0,1]]]
@@ -4214,9 +4458,9 @@ function ankiCardToHtmlBack(c) {
       (c.grammar_note ? '<div class="grammar">📚 ' + c.grammar_note + '</div>' : '');
   }
   // kontext card
-  return '<div class="field-name">Satz auf Deutsch</div><div><em>' + (c.sentence_de||'') + '</em></div>' +
-    '<div class="field-name">Wort</div><div><strong>' + (c.word_de||'') + '</strong></div>' +
-    (c.wordtype ? '<div class="field-name">Wortart</div><div>' + (c.wordtype||'') + '</div>' : '') +
+  return '<div class="field-name">Sentence (DE)</div><div><em>' + (c.sentence_de||'') + '</em></div>' +
+    '<div class="field-name">Word</div><div><strong>' + (c.word_de||'') + '</strong></div>' +
+    (c.wordtype ? '<div class="field-name">Word type</div><div>' + (c.wordtype||'') + '</div>' : '') +
     (c.mnemonic ? '<div class="mnemonic">💡 ' + (c.mnemonic||'') + '</div>' : '') +
     (c.grammar_note ? '<div class="grammar">📚 ' + (c.grammar_note||'') + '</div>' : '');
 }
@@ -4572,7 +4816,7 @@ async function getNoteFeedback(text) {
     if (!res) return;
     const data = await res.json();
     return data.content[0].text.replace(/\n/g,'<br>');
-  } catch(e) { return '⚠️ Fejl – prøv igen.'; }
+  } catch(e) { return '⚠️ Error – please try again.'; }
 }
 
 
@@ -4824,24 +5068,24 @@ async function startOeInterview() {
 function buildOeSystemPrompt() {
   return `Du bist ein dänischer Sprachcoach. Der Nutzer möchte dänisches Vokabular für sein Fachgebiet aufbauen: "${activeOe.topic}"${activeOe.desc ? ' (' + activeOe.desc + ')' : ''}.
 
-Führe ein Interview auf DÄNISCH, aber gib kurze deutsche Erklärungen in Klammern wenn nötig.
+Conduct the interview in the TARGET LANGUAGE, but give short German explanations in parentheses when needed.
 Stelle max. 1-2 Fragen pro Nachricht. Fragen sollen praktisch und kontextbezogen sein.
-Der Nutzer kann auf Dänisch ODER Deutsch antworten – beides ist willkommen. Fordere ihn NICHT auf, auf Dänisch zu antworten oder seine Antwort zu übersetzen. Es geht nur ums Sammeln von nützlichen Sätzen.
+The user can answer in the target language OR German – both are welcome. Do NOT ask them to answer in the target language. The goal is only to collect useful sentences.
 
 Nach jeder Antwort:
-1. Kurzes freundliches Feedback (1 Satz auf Dänisch)
+1. Brief friendly feedback (1 sentence in the target language)
 2. Formulate 2-4 useful sentences in the target language based on the topic of the answer
 3. Nächste Frage
 
 WICHTIG: Gib am Ende jeder Antwort immer einen Block mit neuen Sätzen in diesem Format:
 ---SÆTNINGER---
-DA: [dänischer Satz]
-DE: [deutsche Übersetzung]
-DA: [dänischer Satz]
-DE: [deutsche Übersetzung]
+TL: [target language sentence]
+DE: [German translation]
+TL: [target language sentence]
+DE: [German translation]
 ---END---
 
-Beginne mit einer kurzen Begrüßung auf Dänisch und der ersten Frage zum Thema.`;
+Start with a brief greeting in the target language and the first question about the topic.`;
 }
 
 async function callOeClaude(userMsg) {
@@ -4926,7 +5170,7 @@ async function sendOeMessage() {
     addOeMessage('claude', reply);
   } catch(e) {
     loader.remove();
-    addOeMessage('claude', 'Fejl – prøv igen.');
+    addOeMessage('claude', 'Error – please try again.');
   }
 }
 
@@ -5009,7 +5253,7 @@ async function checkOePractice() {
       const res = await apiFetch(API_URL, { method:'POST',
         headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
         body: JSON.stringify({ model:MODEL, max_tokens:300,
-          messages:[{role:'user', content:`Briefly evaluate this translation in German (max 2 sentences).\nOriginal (DE): "${p.de}"\nKorrekt (DA): "${p.da}"\nAntwort des Lernenden: "${answer}"\nIs it correct, almost correct, or wrong? What is the difference?`}]
+          messages:[{role:'user', content:`Briefly evaluate this translation in English (max 2 sentences).\nOriginal (DE): "${p.de}"\nKorrekt (DA): "${p.da}"\nLearner's answer: "${answer}"\nIs it correct, almost correct, or wrong? What is the difference?`}]
         })
       });
     if (!res) return;
@@ -5027,7 +5271,7 @@ async function checkOePractice() {
         document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:var(--accent);font-weight:600;">~ Tæt på</span>';
         saveError(answer, p.da, p.de, 'oe');
       } else {
-        document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:#F07070;font-weight:600;">✗ Ikke helt rigtigt</span>';
+        document.getElementById('oePracticeResultMsg').innerHTML = '<span style="color:#F07070;font-weight:600;">✗ Not quite rigtigt</span>';
         saveError(answer, p.da, p.de, 'oe');
       }
       document.getElementById('oePracticeFeedback').textContent = fb;
@@ -5127,43 +5371,45 @@ let testState = null;
 
 function buildTestPrompt(type) {
   const today = todayStr();
+  // Daily test: only today's errors
   const todayErrors = window.errorLog.filter(e => e.isoDate && e.isoDate.slice(0,10) === today);
-  const recentErrors = window.errorLog.slice(0, 20);
+  // Weakness test: all errors including archive, most recent 30
+  const allErrors = [...window.errorLog, ...(window.archiveLog||[])].slice(0, 30);
 
   if (type === 'dag') {
     const wordsToday = window.stats.dailyActivity?.[today] || 0;
-    const errSample = todayErrors.slice(0,5).map(e => `Fejl: "${e.fejl}" → Ret: "${e.ret}"${e.tip?' ('+e.tip+')':''}`).join('\n');
-    return `Du er en dansk sproglærer. En elev har øvet sig i dag (${wordsToday} ord skrevet).
-${errSample ? 'Dagens fejl:\n' + errSample : 'No errors logget i dag.'}
+    const errSample = todayErrors.slice(0,5).map(e => `Error: "${e.fejl}" → Correction: "${e.ret}"${e.tip?' ('+e.tip+')':''}`).join('\n');
+    return `You are a language teacher. A learner has practised today (${wordsToday} words written).
+${errSample ? "Today's errors:\n" + errSample : 'No errors logged today.'}
 
-Lav 10 korte testspørgsmål PÅ DANSK til eleven baseret på dagens øvelse.
-Bland: oversættelse (DE→DA), udfyld tomrum, multiple choice, grammatikspørgsmål.
-Brug hverdagssætninger og ord fra de viste fejl.
+Create 10 short test questions IN THE TARGET LANGUAGE based on today's practice.
+Mix: translation (native→target), fill-in-the-blank, multiple choice, grammar questions.
+Use everyday sentences and words from the errors shown.
 
-Svar KUN med JSON array:
-[{"type":"Oversæt","question":"Wie geht es dir?","answer":"Hvordan har du det?"},
- {"type":"Udfyld","question":"Jeg ___ til arbejde hver dag. (gå, nutid)","answer":"går"},
+Reply ONLY with a JSON array (no markdown):
+[{"type":"Translate","question":"How are you?","answer":"[correct target language answer]"},
+ {"type":"Fill in","question":"I ___ to work every day. (go, present tense)","answer":"[correct form]"},
  ...]
-10 spørgsmål i alt. Ingen markdown, kun JSON.`;
+Exactly 10 questions.`;
   } else {
-    // Schwächentest: basierend auf häufigsten Fehlermustern
+    // Weakness test: based on error log + archive
     const tagCount = {};
-    recentErrors.forEach(e => (e.tags||[]).forEach(t => { tagCount[t]=(tagCount[t]||0)+1; }));
+    allErrors.forEach(e => (e.tags||[]).forEach(t => { tagCount[t]=(tagCount[t]||0)+1; }));
     const topTags = Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([t])=>t);
-    const errSample = recentErrors.slice(0,8).map(e => `"${e.fejl}" → "${e.ret}"${e.tip?' ('+e.tip+')':''}`).join('\n');
-    return `Du er en dansk sproglærer. En elev har følgende tilbagevendende fejl:
-${errSample || 'No errors endnu.'}
-${topTags.length ? 'Fejlmønstre: ' + topTags.join(', ') : ''}
+    const errSample = allErrors.slice(0,8).map(e => `"${e.fejl}" → "${e.ret}"${e.tip?' ('+e.tip+')':''}`).join('\n');
+    return `You are a language teacher. A learner has the following recurring errors:
+${errSample || 'No errors yet.'}
+${topTags.length ? 'Error patterns: ' + topTags.join(', ') : ''}
 
-Lav 10 målrettede testspørgsmål PÅ DANSK som adresserer disse specifikke fejlmønstre.
-Fokuser på de grammatikområder eleven fejler mest i.
-Bland: oversættelse, udfyld tomrum, vælg det rigtige ord, ret fejlen.
+Create 10 targeted test questions IN THE TARGET LANGUAGE addressing these specific error patterns.
+Focus on the grammar areas where the learner makes the most mistakes.
+Mix: translation, fill-in-the-blank, choose the right word, correct the error.
 
-Svar KUN med JSON array:
-[{"type":"Ret fejlen","question":"Jeg gå til arbejde – ret fejlen","answer":"Jeg går til arbejde"},
- {"type":"Vælg","question":"___ bil er det? (Hvems/Hvis/Hvad)","answer":"Hvis"},
+Reply ONLY with a JSON array (no markdown):
+[{"type":"Correct it","question":"[sentence with error] – correct the error","answer":"[correct version]"},
+ {"type":"Choose","question":"___ is that? (Who/Whose/What)","answer":"[correct word]"},
  ...]
-10 spørgsmål i alt. Ingen markdown, kun JSON.`;
+Exactly 10 questions.`;
   }
 }
 
@@ -5175,7 +5421,7 @@ async function startTest(type) {
   document.getElementById('testQuestionCard').style.display = 'none';
   document.getElementById('testFeedback').style.display = 'none';
   document.getElementById('testNextBtn').style.display = 'none';
-  document.getElementById('testTitle').textContent = type === 'dag' ? '☀️ Tagestest' : '🔍 Schwächentest';
+  document.getElementById('testTitle').textContent = type === 'dag' ? '☀️ Daily Test' : '🔍 Weakness Test';
   document.getElementById('testScore').textContent = '';
 
   try {
@@ -5191,7 +5437,7 @@ async function startTest(type) {
     document.getElementById('testLoading').style.display = 'none';
     showTestQuestion();
   } catch(e) {
-    document.getElementById('testLoading').innerHTML = '<div style="color:#F07070;">Fejl – prøv igen.</div>';
+    document.getElementById('testLoading').innerHTML = '<div style="color:#F07070;">Error – please try again.</div>';
   }
 }
 
@@ -5199,7 +5445,7 @@ function showTestQuestion() {
   const s = testState;
   const q = s.questions[s.current];
   const total = s.questions.length;
-  document.getElementById('testProgress').textContent = 'Frage ' + (s.current+1) + ' / ' + total;
+  document.getElementById('testProgress').textContent = 'Question ' + (s.current+1) + ' / ' + total;
   document.getElementById('testBar').style.width = Math.round((s.current/total)*100) + '%';
   document.getElementById('testScore').textContent = s.correct + ' ✓';
   document.getElementById('testQType').textContent = q.type || 'Spørgsmål';
@@ -5228,14 +5474,14 @@ async function submitTestAnswer() {
     const res = await apiFetch(API_URL, { method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({ model:MODEL, max_tokens:200,
-        messages:[{role:'user',content:`Spørgsmål: "${q.question}"\nKorrekt svar: "${q.answer}"\nElevens svar: "${answer}"\nEr svaret rigtigt, næsten rigtigt eller forkert? Giv kort feedback på dansk (max 2 sætninger). Vis det korrekte svar.`}]
+        messages:[{role:'user',content:`Question: "${q.question}"\nCorrect answer: "${q.answer}"\nLearner's answer: "${answer}"\nIs the answer correct, almost correct, or wrong? Give brief feedback in English (max 2 sentences). Show the correct answer.`}]
       })
     });
     if (!res) return;
     const d = await res.json();
     feedback = d.content[0].text;
   } catch(e) {
-    feedback = `Korrekt svar: ${q.answer}`;
+    feedback = `Correct answer: ${q.answer}`;
   }
 
   // Score
@@ -5252,11 +5498,11 @@ async function submitTestAnswer() {
   fb.style.display = 'block';
   fb.style.background = counted ? 'rgba(92,196,136,0.1)' : 'rgba(200,16,46,0.08)';
   fb.style.border = '1px solid ' + (counted ? 'rgba(92,196,136,0.3)' : 'rgba(200,16,46,0.2)');
-  fb.innerHTML = '<strong>' + (counted ? '✓ Rigtigt!' : '✗ Ikke helt') + '</strong><br>' + feedback.replace(/\n/g,'<br>');
+  fb.innerHTML = '<strong>' + (counted ? '✓ Correct!' : '✗ Not quite') + '</strong><br>' + feedback.replace(/\n/g,'<br>');
 
   document.getElementById('testQuestionCard').style.display = 'none';
   document.getElementById('testNextBtn').style.display = 'block';
-  document.getElementById('testNextBtn').textContent = s.current + 1 < s.questions.length ? 'Next question →' : 'Se resultat →';
+  document.getElementById('testNextBtn').textContent = s.current + 1 < s.questions.length ? 'Next question →' : 'See result →';
 }
 
 function nextTestQuestion() {
