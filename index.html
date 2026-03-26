@@ -1298,7 +1298,7 @@
 
     <!-- BATCH IMPORT -->
     <div class="anki-panel" style="margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Batch Import</div>
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">Word Card Generator</div>
 
       <!-- Words -->
       <div id="batchPaneWort">
@@ -3877,7 +3877,13 @@ async function callAnkiClaude(prompt, maxTokens) {
     headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body: JSON.stringify({ model:MODEL, max_tokens: maxTokens||1000, messages:[{role:'user',content:prompt}] })
   });
+  if (!res) throw new Error('No API response – check your API key');
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.error?.message || 'API error ' + res.status);
+  }
   const data = await res.json();
+  if (data.error) throw new Error(data.error.message || 'API error');
   let text = data.content.map(b=>b.text||'').join('');
   text = text.replace(/```json|```/g,'').trim();
   return JSON.parse(text);
@@ -3896,13 +3902,15 @@ async function startAnkiBatch() {
   const log  = document.getElementById('ankiBatchLog');
   prog.style.display = 'block'; log.innerHTML = '';
   bar.style.width = '0%';
-  label.textContent = 'Generating cards…';
+  label.textContent = 'Generating ' + words.length + ' card' + (words.length > 1 ? 's' : '') + '…';
+  frac.textContent = '0 / ' + words.length;
+  let successCount = 0;
   for (let i=0; i<words.length; i++) {
     const w = words[i];
     frac.textContent = i + ' / ' + words.length;
     bar.style.width = Math.round((i/words.length)*100) + '%';
     const item = document.createElement('div');
-    item.style.color = 'var(--muted)';
+    item.style.cssText = 'color:var(--muted);padding:2px 0;font-size:0.82rem;';
     item.textContent = '⟳ ' + w;
     log.appendChild(item); log.scrollTop = log.scrollHeight;
     try {
@@ -3910,16 +3918,20 @@ async function startAnkiBatch() {
       ankiCards.push(Object.assign({}, card, { id: Date.now()+i }));
       item.style.color = '#5CC488';
       item.textContent = '✓ ' + w;
+      successCount++;
       renderAnkiSavedList();
     } catch(e) {
       item.style.color = '#F07070';
-      item.textContent = '✗ ' + w;
+      item.textContent = '✗ ' + w + ' – ' + (e.message || 'error');
+      console.error('Anki batch error for word "' + w + '":', e);
     }
     if (i < words.length-1) await new Promise(r=>setTimeout(r,400));
   }
   bar.style.width = '100%';
   frac.textContent = words.length + ' / ' + words.length;
-  label.textContent = '✓ Done! ' + words.length + ' cards generated.';
+  label.textContent = successCount === words.length
+    ? '✓ Done! ' + successCount + ' cards generated.'
+    : '⚠ ' + successCount + ' / ' + words.length + ' cards generated.';
   btn.disabled = false;
 }
 
