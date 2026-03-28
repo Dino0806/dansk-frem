@@ -5556,9 +5556,10 @@ function buildReadPrompt() {
 Write ${typeDesc} about: ${topicMap[readOpts.topic]}.
 Level: ${readOpts.level} – vocabulary and grammar appropriate for this level.
 Length: ${lengthMap[readOpts.length]} words. Write ONLY in Danish. Natural, authentic language.
+Use proper paragraphs separated by blank lines (\\n\\n). For fiction include dialogue where natural.
 Then provide 3 comprehension questions in Danish.
 Respond ONLY with valid JSON, no markdown:
-{"title":"Short title in Danish","meta":"${readOpts.level} · ${readOpts.type === 'fiction' ? 'Fiction' : 'Non-fiction'}","text":"Full Danish text here","questions":[{"q":"Question?","hint":"keyword"},{"q":"Question?","hint":"keyword"},{"q":"Question?","hint":"keyword"}]}`;
+{"title":"Short title in Danish","meta":"${readOpts.level} · ${readOpts.type === 'fiction' ? 'Fiction' : 'Non-fiction'}","text":"Paragraph one here.\\n\\nParagraph two here.\\n\\nParagraph three here.","questions":[{"q":"Question?","hint":"keyword"},{"q":"Question?","hint":"keyword"},{"q":"Question?","hint":"keyword"}]}`;
 }
 
 async function generateReadText() {
@@ -5624,9 +5625,11 @@ function loadUploadedText() {
   const text  = document.getElementById('readUploadText').value.trim();
   const title = document.getElementById('readUploadTitle').value.trim() || 'My text';
   if (!text) return;
-  readCurrentText = { title, meta: 'Uploaded', text, questions: [], saved: false };
-  // Hide upload pane, show text
-  document.getElementById('readPaneUpload').style.display = 'none';
+  readCurrentText = { title, meta: 'Uploaded · ' + new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'}), text, questions: [], saved: false };
+  // Hide all panes, show text area
+  ['readPaneGenerate','readPaneUpload','readPaneLibrary'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   renderReadText(readCurrentText);
 }
 
@@ -5646,15 +5649,33 @@ function renderReadText(data) {
     saveBtn.disabled = false;
   }
 
-  // Render clickable words
+  // Split text into paragraphs first, then tokenise each paragraph
   const body = document.getElementById('readTextBody');
-  const tokens = data.text.split(/(\s+)/);
-  body.innerHTML = tokens.map(token => {
-    if (/^\s+$/.test(token)) return token;
-    const clean = token.replace(/[.,!?;:"""()»«\-]/g, '').trim();
-    if (!clean) return esc(token);
-    return `<span class="read-word" data-word="${esc(clean)}" onclick="lookupWord(this,'${clean.replace(/'/g,"\\'").replace(/"/g,'\\"')}',event)">${esc(token)}</span>`;
-  }).join('');
+  const paragraphs = data.text.split(/\n\n+/).filter(p => p.trim());
+
+  function tokeniseParagraph(para) {
+    // Split on whitespace but keep the whitespace tokens
+    return para.split(/(\s+)/).map(token => {
+      if (/^\s+$/.test(token)) return token.replace(/\n/g, ' ');
+      const clean = token.replace(/[.,!?;:"""()»«\-–]/g, '').trim();
+      if (!clean) return esc(token);
+      const safeWord = clean.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');
+      return `<span class="read-word" data-word="${esc(clean)}" onclick="lookupWord(this,'${safeWord}',event)">${esc(token)}</span>`;
+    }).join('');
+  }
+
+  if (paragraphs.length > 1) {
+    // Render as proper paragraphs
+    body.innerHTML = paragraphs.map(p =>
+      `<p style="margin-bottom:1em;">${tokeniseParagraph(p)}</p>`
+    ).join('');
+  } else {
+    // Single block – split on single newlines as line breaks
+    const lines = data.text.split(/\n/);
+    body.innerHTML = lines.map((line, i) =>
+      tokeniseParagraph(line) + (i < lines.length - 1 ? '<br>' : '')
+    ).join('');
+  }
 
   readQuestionData = data.questions || [];
   document.getElementById('readQPanel').style.display = 'none';
