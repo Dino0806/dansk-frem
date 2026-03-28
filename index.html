@@ -738,6 +738,24 @@
   body:not(.theme-dark) .hours-row { background:rgba(0,0,0,0.04); }
   .hours-row-label { color:var(--muted); }
   .hours-row-val { font-weight:600; }
+  /* ── READ TAB ── */
+  .read-label { font-size:0.72rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .read-opt-btn { padding:6px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:0.82rem; cursor:pointer; transition:all 0.18s; }
+  .read-opt-btn:hover { border-color:rgba(255,255,255,0.3); color:var(--white); }
+  .read-opt-btn.active { background:rgba(200,16,46,0.15); border-color:var(--red); color:var(--white); font-weight:600; }
+  body:not(.theme-dark) .read-opt-btn { border-color:rgba(0,0,0,0.15); color:#6B5F54; background:#fff; }
+  body:not(.theme-dark) .read-opt-btn.active { background:rgba(200,16,46,0.1); border-color:var(--red); color:var(--red); }
+  .read-word { cursor:pointer; border-radius:3px; transition:background 0.15s; padding:1px 2px; }
+  .read-word:hover { background:rgba(232,184,75,0.25); }
+  .read-word.saved { border-bottom:2px solid #5CC488; }
+  .read-word.looked-up { border-bottom:2px solid rgba(232,184,75,0.6); }
+
+  /* ── WORDS LOG ── */
+  .word-log-item { display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:10px; margin-bottom:8px; }
+  .word-log-da { font-weight:600; font-size:0.95rem; min-width:100px; }
+  .word-log-en { color:var(--muted); font-size:0.88rem; flex:1; }
+  .word-log-note { font-size:0.78rem; color:var(--muted); margin-top:2px; font-style:italic; }
+  body:not(.theme-dark) .word-log-item { background:#fff; border-color:rgba(0,0,0,0.1); }
 </style>
 </head>
 <body>
@@ -941,12 +959,105 @@
     <div id="dailyTipsContainer"></div>
   </div>
 
-  <!-- READ (placeholder – content coming next) -->
+  <!-- READ TAB -->
   <div id="read" class="section">
-    <div style="text-align:center;padding:60px 20px;color:var(--muted);">
-      <div style="font-size:3rem;margin-bottom:16px;">📖</div>
-      <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;color:var(--white);">Reading exercises coming soon</div>
-      <div style="font-size:0.9rem;line-height:1.6;">Click-to-translate Danish texts with instant explanations and Anki integration.</div>
+
+    <!-- GENERATOR CONTROLS -->
+    <div id="readControls">
+      <div class="section-title" style="margin-bottom:16px;">📖 Read Danish</div>
+
+      <!-- Type -->
+      <div style="margin-bottom:14px;">
+        <div class="read-label">Type</div>
+        <div style="display:flex;gap:8px;">
+          <button class="read-opt-btn active" id="readTypeNonfiction" onclick="setReadOpt('type','nonfiction',this)">🗞 Non-fiction</button>
+          <button class="read-opt-btn" id="readTypeFiction" onclick="setReadOpt('type','fiction',this)">📖 Fiction</button>
+        </div>
+      </div>
+
+      <!-- Topic -->
+      <div style="margin-bottom:14px;">
+        <div class="read-label">Topic</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="read-opt-btn active" id="readTopicEveryday" onclick="setReadOpt('topic','everyday',this)">🏠 Everyday life</button>
+          <button class="read-opt-btn" id="readTopicAuthorities" onclick="setReadOpt('topic','authorities',this)">🏛 Authorities</button>
+          <button class="read-opt-btn" id="readTopicNature" onclick="setReadOpt('topic','nature',this)">🌿 Nature</button>
+          <button class="read-opt-btn" id="readTopicCulture" onclick="setReadOpt('topic','culture',this)">🎭 Culture</button>
+          <button class="read-opt-btn" id="readTopicHistory" onclick="setReadOpt('topic','history',this)">📜 History</button>
+        </div>
+      </div>
+
+      <!-- Level + Length -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div>
+          <div class="read-label">Level</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="read-opt-btn" id="readLevelA1" onclick="setReadOpt('level','A1',this)">A1</button>
+            <button class="read-opt-btn active" id="readLevelA2" onclick="setReadOpt('level','A2',this)">A2</button>
+            <button class="read-opt-btn" id="readLevelB1" onclick="setReadOpt('level','B1',this)">B1</button>
+            <button class="read-opt-btn" id="readLevelB2" onclick="setReadOpt('level','B2',this)">B2</button>
+          </div>
+        </div>
+        <div>
+          <div class="read-label">Length</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="read-opt-btn" id="readLenShort" onclick="setReadOpt('length','short',this)">~100 words</button>
+            <button class="read-opt-btn active" id="readLenMedium" onclick="setReadOpt('length','medium',this)">~200 words</button>
+            <button class="read-opt-btn" id="readLenLong" onclick="setReadOpt('length','long',this)">~350 words</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="generateReadText()" id="readGenBtn">📖 Generate text →</button>
+    </div>
+
+    <!-- LOADING -->
+    <div id="readLoading" style="display:none;text-align:center;padding:40px;color:var(--muted);">
+      <div class="loading-dots" style="justify-content:center;margin-bottom:10px;"><span></span><span></span><span></span></div>
+      Generating text…
+    </div>
+
+    <!-- TEXT AREA -->
+    <div id="readTextArea" style="display:none;">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:1.2rem;" id="readTitle"></div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;" id="readMeta"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="resetRead()">← New text</button>
+      </div>
+
+      <!-- Clickable text -->
+      <div id="readTextBody" style="font-size:1.05rem;line-height:2.1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px 24px;margin-bottom:20px;"></div>
+
+      <!-- Word tooltip -->
+      <div id="readTooltip" style="display:none;position:fixed;z-index:500;background:var(--dark);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 16px;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--white);" id="readTooltipWord"></div>
+          <button onclick="closeReadTooltip()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 0 0 8px;line-height:1;">✕</button>
+        </div>
+        <div id="readTooltipLoading" style="color:var(--muted);font-size:0.82rem;">Looking up…</div>
+        <div id="readTooltipContent" style="display:none;">
+          <div style="font-size:0.95rem;color:#5CC488;font-weight:600;margin-bottom:4px;" id="readTooltipTranslation"></div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:4px;" id="readTooltipForm"></div>
+          <div style="font-size:0.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px;" id="readTooltipNote"></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;" onclick="saveReadWord()">+ Save to Log</button>
+        </div>
+      </div>
+
+      <!-- Questions (optional) -->
+      <div id="readQuestionsSection" style="margin-top:8px;">
+        <button onclick="toggleReadQuestions()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.85rem;font-family:'DM Sans',sans-serif;padding:0;margin-bottom:12px;">
+          <span id="readQChev" style="transition:transform 0.2s;display:inline-block;">▶</span>
+          <span>🎯 Comprehension questions</span>
+        </button>
+        <div id="readQPanel" style="display:none;">
+          <div id="readQuestions"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1280,9 +1391,10 @@
 
     <!-- LOG MODE SWITCHER -->
     <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
-      <button class="chat-mode-btn active" id="logModeFejlBtn" onclick="setLogMode('fejl')">📋 Fejllog<span class="err-badge" id="errBadgeLog" style="display:none;margin-left:4px;"></span></button>
-      <button class="chat-mode-btn" id="logModeArchivBtn" onclick="setLogMode('archiv')">📦 Archiv</button>
-      <button class="chat-mode-btn" id="logModeNoterBtn" onclick="setLogMode('noter')">📓 Notizen</button>
+      <button class="chat-mode-btn active" id="logModeFejlBtn" onclick="setLogMode('fejl')">📋 Errors<span class="err-badge" id="errBadgeLog" style="display:none;margin-left:4px;"></span></button>
+      <button class="chat-mode-btn" id="logModeWordsBtn" onclick="setLogMode('words')">📚 Words</button>
+      <button class="chat-mode-btn" id="logModeArchivBtn" onclick="setLogMode('archiv')">📦 Archive</button>
+      <button class="chat-mode-btn" id="logModeNoterBtn" onclick="setLogMode('noter')">📓 Notes</button>
       <button class="chat-mode-btn" id="logModeAnkiBtn" onclick="setLogMode('anki')">🃏 Anki</button>
     </div>
 
@@ -1349,6 +1461,18 @@
 
   </div><!-- /fejl_inner -->
     </div><!-- /logPanefejl -->
+
+    <!-- WORDS PANE -->
+    <div id="logPanewords" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;">📚 Saved Words</div>
+          <div style="font-size:0.82rem;color:var(--muted);">Words you saved while reading. Click a word to export as Anki card.</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearSavedWords()" style="color:var(--red);">Clear all ×</button>
+      </div>
+      <div id="wordsList"></div>
+    </div><!-- /logPanewords -->
 
     <!-- ARCHIV PANE -->
     <div id="logPanearchiv" style="display:none;">
@@ -2768,16 +2892,19 @@ let logMode = 'fejl';
 function setLogMode(mode) {
   logMode = mode;
   document.getElementById('logModeFejlBtn').classList.toggle('active', mode==='fejl');
+  document.getElementById('logModeWordsBtn').classList.toggle('active', mode==='words');
   document.getElementById('logModeArchivBtn').classList.toggle('active', mode==='archiv');
   document.getElementById('logModeNoterBtn').classList.toggle('active', mode==='noter');
   document.getElementById('logModeAnkiBtn').classList.toggle('active', mode==='anki');
   document.getElementById('logPanefejl').style.display   = mode==='fejl'   ? '' : 'none';
+  document.getElementById('logPanewords').style.display  = mode==='words'  ? '' : 'none';
   document.getElementById('logPanearchiv').style.display = mode==='archiv' ? '' : 'none';
   document.getElementById('logPanenote').style.display   = mode==='noter'  ? '' : 'none';
   document.getElementById('logPaneanki').style.display   = mode==='anki'   ? '' : 'none';
   if (mode === 'fejl')   renderErrors();
   if (mode === 'archiv') renderArchive();
   if (mode === 'noter')  renderNotesLog();
+  if (mode === 'words')  renderWordsList();
 }
 
 // ---- CHAT MODE SWITCHER ----
@@ -5351,7 +5478,287 @@ function renderNotesLog() {
 
 // ═══════════════════════════════════════════════════════════
 
-// ---- INIT ----
+// ═══════════════════════════════════════════════════════════
+// READ TAB
+// ═══════════════════════════════════════════════════════════
+const readOpts = { type: 'nonfiction', topic: 'everyday', level: 'A2', length: 'medium' };
+let readCurrentWord = null;
+let readCurrentText = null;
+let readQuestionData = [];
+
+function setReadOpt(key, val, btn) {
+  readOpts[key] = val;
+  // Deactivate siblings
+  btn.parentElement.querySelectorAll('.read-opt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function buildReadPrompt() {
+  const lengthMap = { short: '80–120', medium: '180–220', long: '320–380' };
+  const topicMap  = {
+    everyday: 'everyday life in Denmark (neighbours, shopping, seasons, food, transport)',
+    authorities: 'Danish authorities and civic life (kommune, school, health system, forms)',
+    nature: 'Danish nature, weather and landscape',
+    culture: 'Danish culture, traditions and history (hygge, jul, sommerhus, etc.)',
+    history: 'Danish history or a historical event',
+  };
+  const typeDesc = readOpts.type === 'fiction'
+    ? 'a short fiction piece (story, dialogue or scene from daily life)'
+    : 'a non-fiction text (letter, article, notice, description or explanation)';
+
+  return `You are a Danish language teacher creating reading material.
+
+Write ${typeDesc} about: ${topicMap[readOpts.topic]}.
+Level: ${readOpts.level} – vocabulary and grammar appropriate for this level.
+Length: ${lengthMap[readOpts.length]} words.
+Write ONLY in Danish. Natural, authentic language.
+
+Then provide 3 comprehension questions in Danish (short answer).
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "title": "Short title in Danish",
+  "meta": "${readOpts.level} · ${readOpts.type === 'fiction' ? 'Fiction' : 'Non-fiction'} · ${topicMap[readOpts.topic].split(' ')[0]}",
+  "text": "Full Danish text here",
+  "questions": [
+    {"q": "Question in Danish?", "hint": "keyword answer"},
+    {"q": "Question in Danish?", "hint": "keyword answer"},
+    {"q": "Question in Danish?", "hint": "keyword answer"}
+  ]
+}`;
+}
+
+async function generateReadText() {
+  document.getElementById('readControls').style.display = 'none';
+  document.getElementById('readLoading').style.display = 'block';
+  document.getElementById('readTextArea').style.display = 'none';
+
+  try {
+    const res = await apiFetch(API_URL, { method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model: MODEL, max_tokens: 1500, messages: [{ role: 'user', content: buildReadPrompt() }] })
+    });
+    if (!res) { resetRead(); return; }
+    const data = await res.json();
+    let txt = data.content[0].text.replace(/```json|```/g,'').trim();
+    readCurrentText = JSON.parse(txt);
+    renderReadText(readCurrentText);
+    readQuestionData = readCurrentText.questions || [];
+  } catch(e) {
+    document.getElementById('readLoading').style.display = 'none';
+    document.getElementById('readControls').style.display = 'block';
+    alert('Error generating text – please try again.');
+  }
+}
+
+function renderReadText(data) {
+  document.getElementById('readLoading').style.display = 'none';
+  document.getElementById('readTextArea').style.display = 'block';
+  document.getElementById('readTitle').textContent = data.title;
+  document.getElementById('readMeta').textContent = data.meta;
+
+  // Split into words and punctuation, make each word clickable
+  const body = document.getElementById('readTextBody');
+  const tokens = data.text.split(/(\s+)/);
+  body.innerHTML = tokens.map(token => {
+    if (/^\s+$/.test(token)) return token;
+    // Strip punctuation for lookup but keep it in display
+    const clean = token.replace(/[.,!?;:"""()»«]/g, '').trim();
+    if (!clean) return esc(token);
+    return `<span class="read-word" data-word="${clean}" onclick="lookupWord(this,'${clean.replace(/'/g,"\\'")}',event)">${esc(token)}</span>`;
+  }).join('');
+
+  // Reset questions panel
+  document.getElementById('readQPanel').style.display = 'none';
+  document.getElementById('readQChev').style.transform = '';
+  renderReadQuestions();
+}
+
+function resetRead() {
+  closeReadTooltip();
+  document.getElementById('readTextArea').style.display = 'none';
+  document.getElementById('readLoading').style.display = 'none';
+  document.getElementById('readControls').style.display = 'block';
+  readCurrentText = null;
+  readCurrentWord = null;
+}
+
+// ── WORD LOOKUP ─────────────────────────────────────────────
+async function lookupWord(el, word, event) {
+  // Position tooltip near click
+  const tt = document.getElementById('readTooltip');
+  tt.style.display = 'block';
+  const x = Math.min(event.clientX, window.innerWidth - 280);
+  const y = event.clientY + 20;
+  tt.style.left = x + 'px';
+  tt.style.top  = y + 'px';
+
+  document.getElementById('readTooltipWord').textContent = word;
+  document.getElementById('readTooltipLoading').style.display = 'block';
+  document.getElementById('readTooltipContent').style.display = 'none';
+  readCurrentWord = { word, el };
+
+  // Mark as looked up
+  el.classList.add('looked-up');
+
+  try {
+    const res = await apiFetch(API_URL, { method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model: MODEL, max_tokens: 200,
+        messages: [{ role: 'user', content:
+          `Look up the Danish word "${word}" as it appears in this context: "${readCurrentText?.text?.slice(0,200) || ''}"\n\nRespond ONLY with valid JSON:\n{"translation":"English translation","form":"grammatical form (e.g. noun et hus, verb at løbe past tense, adjective plural)","note":"one short useful grammar or usage tip in English, or empty string"}` }]
+      })
+    });
+    if (!res) { closeReadTooltip(); return; }
+    const data = await res.json();
+    let txt = data.content[0].text.replace(/```json|```/g,'').trim();
+    const lookup = JSON.parse(txt);
+    readCurrentWord.translation = lookup.translation;
+    readCurrentWord.form = lookup.form;
+    readCurrentWord.note = lookup.note;
+
+    document.getElementById('readTooltipTranslation').textContent = lookup.translation;
+    document.getElementById('readTooltipForm').textContent = lookup.form;
+    document.getElementById('readTooltipNote').textContent = lookup.note;
+    document.getElementById('readTooltipLoading').style.display = 'none';
+    document.getElementById('readTooltipContent').style.display = 'block';
+  } catch(e) {
+    closeReadTooltip();
+  }
+}
+
+function closeReadTooltip() {
+  document.getElementById('readTooltip').style.display = 'none';
+  readCurrentWord = null;
+}
+
+// Close tooltip when clicking outside
+document.addEventListener('click', e => {
+  const tt = document.getElementById('readTooltip');
+  if (tt && !tt.contains(e.target) && !e.target.classList.contains('read-word')) {
+    closeReadTooltip();
+  }
+});
+
+function saveReadWord() {
+  if (!readCurrentWord) return;
+  const w = readCurrentWord;
+  window.savedWords = window.savedWords || [];
+  // Avoid duplicates
+  if (window.savedWords.find(x => x.word === w.word)) {
+    closeReadTooltip();
+    return;
+  }
+  window.savedWords.unshift({
+    word: w.word,
+    translation: w.translation || '',
+    form: w.form || '',
+    note: w.note || '',
+    date: new Date().toISOString(),
+    context: readCurrentText?.title || ''
+  });
+  localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
+  // Mark word as saved in text
+  if (w.el) w.el.classList.add('saved');
+  closeReadTooltip();
+}
+
+function renderWordsList() {
+  const container = document.getElementById('wordsList');
+  if (!container) return;
+  window.savedWords = window.savedWords || [];
+  if (!window.savedWords.length) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:2rem;margin-bottom:12px;">📚</div>
+      <div>No words saved yet. Read a text and click words to save them.</div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = window.savedWords.map((w, i) => `
+    <div class="word-log-item">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:2px;">
+          <span class="word-log-da">${esc(w.word)}</span>
+          <span class="word-log-en">${esc(w.translation)}</span>
+        </div>
+        <div class="word-log-note">${esc(w.form)}${w.context ? ' · from: ' + esc(w.context) : ''}</div>
+        ${w.note ? `<div class="word-log-note" style="color:var(--accent);">💡 ${esc(w.note)}</div>` : ''}
+      </div>
+      <button onclick="deleteWord(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;flex-shrink:0;padding:4px;">🗑️</button>
+    </div>`).join('');
+}
+
+function deleteWord(i) {
+  window.savedWords = window.savedWords || [];
+  window.savedWords.splice(i, 1);
+  localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
+  renderWordsList();
+}
+
+function clearSavedWords() {
+  if (confirm('Delete all saved words?')) {
+    window.savedWords = [];
+    localStorage.setItem('danskFrem_savedWords', JSON.stringify([]));
+    renderWordsList();
+  }
+}
+
+// ── COMPREHENSION QUESTIONS ──────────────────────────────────
+function toggleReadQuestions() {
+  const panel = document.getElementById('readQPanel');
+  const chev  = document.getElementById('readQChev');
+  const open  = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : '';
+  chev.style.transform = open ? '' : 'rotate(90deg)';
+}
+
+function renderReadQuestions() {
+  const container = document.getElementById('readQuestions');
+  if (!readQuestionData.length) { container.innerHTML = ''; return; }
+  container.innerHTML = readQuestionData.map((q, i) => `
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+      <div style="font-size:0.88rem;margin-bottom:8px;">${esc(q.q)}</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <input type="text" class="anki-input" id="readQ${i}" placeholder="Skriv dit svar…" style="flex:1;margin:0;"
+          onkeydown="if(event.key==='Enter')checkReadQuestion(${i})">
+        <button class="btn btn-ghost btn-sm" onclick="checkReadQuestion(${i})">Check</button>
+      </div>
+      <div id="readQFeedback${i}" style="display:none;margin-top:8px;font-size:0.82rem;padding:8px 10px;border-radius:8px;"></div>
+    </div>`).join('');
+}
+
+async function checkReadQuestion(i) {
+  const q = readQuestionData[i];
+  const answer = document.getElementById('readQ' + i)?.value.trim();
+  if (!answer) return;
+  const fb = document.getElementById('readQFeedback' + i);
+  fb.style.display = 'block';
+  fb.textContent = 'Checking…';
+  fb.style.background = 'rgba(255,255,255,0.05)';
+
+  try {
+    const res = await apiFetch(API_URL, { method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model: MODEL, max_tokens: 150,
+        messages: [{ role: 'user', content:
+          `Danish reading question: "${q.q}"\nExpected answer hint: "${q.hint}"\nLearner's answer: "${answer}"\n\nIs the answer correct or close enough? Reply in 1-2 sentences in English. Start with ✓ if correct, ✗ if not.` }]
+      })
+    });
+    if (!res) return;
+    const data = await res.json();
+    const result = data.content[0].text;
+    const ok = result.startsWith('✓');
+    fb.textContent = result;
+    fb.style.background = ok ? 'rgba(92,196,136,0.1)' : 'rgba(200,16,46,0.08)';
+    fb.style.border = '1px solid ' + (ok ? 'rgba(92,196,136,0.3)' : 'rgba(200,16,46,0.2)');
+    fb.style.color = ok ? '#5CC488' : '#F07070';
+  } catch(e) {
+    fb.textContent = 'Error – try again.';
+  }
+}
+
+// Load saved words on startup
+window.savedWords = window.savedWords || JSON.parse(localStorage.getItem('danskFrem_savedWords') || '[]');
 loadSettings();
 loadData();
 loadOeer();
