@@ -1289,36 +1289,6 @@
           <div id="gramExFeedback"></div>
         </div>
       </div>
-
-      <!-- LÜCKENTEXT BOX -->
-      <div style="margin-top:32px;">
-        <div style="font-size:0.8rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;" data-i18n="luckeTitle">Lückentext</div>
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:20px;margin-bottom:16px;">
-          <!-- Rule selector -->
-          <div style="margin-bottom:16px;">
-            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;" data-i18n="luckeSelectLabel">Which rule do you want to practice?</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-              <select id="luckeRuleSelect" class="sort-select" style="flex:1;min-width:200px;" onchange="onLuckeRuleChange()"></select>
-              <button class="btn btn-secondary btn-sm" onclick="startLuckeByRule()" data-i18n="luckeStartBtn">Practice →</button>
-            </div>
-          </div>
-          <!-- Exercises area (hidden until started) -->
-          <div id="luckeExArea" style="display:none;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div id="luckeActiveRuleLabel" style="font-size:0.88rem;font-weight:600;"></div>
-              <button class="btn btn-ghost btn-sm" onclick="closeLuckeArea()">✕</button>
-            </div>
-            <div id="luckeExList"></div>
-            <div id="luckeResultBar" style="display:none;margin-top:12px;">
-              <div class="lucke-score-bar"><div class="lucke-score-fill" id="luckeScoreFill" style="width:0%"></div></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:var(--muted);margin-top:6px;">
-                <span id="luckeScoreText"></span>
-                <button class="btn btn-ghost btn-sm" onclick="startLuckeByRule()" data-i18n="luckeRetryBtn">↺ Again</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div><!-- /sprogPaneGram -->
 
     </div><!-- /practicePaneGrammar -->
@@ -2940,7 +2910,7 @@ function setPracticeMode(mode) {
     if (btn)  btn.classList.toggle('active', m === mode);
     if (pane) pane.style.display = m === mode ? '' : 'none';
   });
-  if (mode === 'grammar') { renderGrammar(); renderLuckeCatSelect(); renderLuckeExercises(); }
+  if (mode === 'grammar') { renderGrammar(); }
   if (mode === 'islands') renderOeList();
 }
 
