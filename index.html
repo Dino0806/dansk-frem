@@ -5849,33 +5849,53 @@ document.addEventListener('click', e => {
   }
 });
 
+function extractSentence(text, word) {
+  // Split text into sentences and find the one containing the word
+  const sentences = text.split(/(?<=[.!?»])\s+|(?<=\n)/);
+  const lower = word.toLowerCase();
+  const match = sentences.find(s => s.toLowerCase().includes(lower));
+  if (match) return match.trim();
+  // Fallback: grab ~80 chars around the word
+  const idx = text.toLowerCase().indexOf(lower);
+  if (idx === -1) return word;
+  const start = Math.max(0, idx - 40);
+  const end   = Math.min(text.length, idx + word.length + 40);
+  return (start > 0 ? '…' : '') + text.slice(start, end).trim() + (end < text.length ? '…' : '');
+}
+
 function saveReadWord() {
   if (!readCurrentWord) return;
   const w = readCurrentWord;
-  // Ensure array is initialised
   if (!Array.isArray(window.savedWords)) window.savedWords = [];
   // Avoid duplicates (case-insensitive)
   if (window.savedWords.find(x => x.word.toLowerCase() === w.word.toLowerCase())) {
-    // Already saved – show feedback
     const btn = document.getElementById('readTooltip').querySelector('button.btn-primary');
     if (btn) { btn.textContent = '✓ Already saved'; btn.disabled = true; }
     if (w.el) w.el.classList.add('saved');
     setTimeout(closeReadTooltip, 800);
     return;
   }
+  // Extract the sentence containing this word from the current text
+  const sentence_da = readCurrentText?.text
+    ? extractSentence(readCurrentText.text, w.word)
+    : w.word;
+
   window.savedWords.unshift({
-    word: w.word,
+    word:        w.word,
+    sentence_da: sentence_da,
+    sentence_en: w.translation
+      ? `The word "${w.word}" means: ${w.translation}${w.form ? ' (' + w.form + ')' : ''}.`
+      : '',
     translation: w.translation || '',
-    form: w.form || '',
-    note: w.note || '',
-    date: new Date().toISOString(),
-    context: readCurrentText?.title || ''
+    form:        w.form || '',
+    note:        w.note || '',
+    date:        new Date().toISOString(),
+    context:     readCurrentText?.title || ''
   });
   localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
   if (window._fbSave) window._fbSave({ savedWords: window.savedWords });
   updateWordsBadge();
   if (w.el) w.el.classList.add('saved');
-  // Show confirmation in tooltip
   const btn = document.getElementById('readTooltip').querySelector('button.btn-primary');
   if (btn) { btn.textContent = '✓ Saved to Log!'; btn.disabled = true; }
   setTimeout(closeReadTooltip, 700);
@@ -5910,17 +5930,16 @@ async function exportSelectedWordsToAnki() {
   const selected = [...document.querySelectorAll('.word-checkbox:checked')].map(cb => parseInt(cb.dataset.idx));
   if (!selected.length) return;
   const words = selected.map(i => window.savedWords[i]).filter(Boolean);
-  // Build kontext-style cards from saved word data – no API call needed
   const cards = words.map((w, j) => ({
-    type: 'kontext',
-    id: Date.now() + j,
-    word: w.word,
-    sentence_da: w.word,
-    sentence_en: w.translation,
-    word_en: w.translation,
-    ipa: '',
-    wordtype: w.form || '',
-    mnemonic: w.note || '',
+    type:         'kontext',
+    id:           Date.now() + j,
+    word:         w.word,
+    sentence_da:  w.sentence_da || w.word,
+    sentence_en:  w.sentence_en || w.translation,
+    word_en:      w.translation,
+    ipa:          '',
+    wordtype:     w.form || '',
+    mnemonic:     w.note || '',
     grammar_note: w.form || '',
   }));
   await buildAndDownloadApkg(cards, 'dansk_frem_words');
@@ -5946,10 +5965,11 @@ function renderWordsList() {
         style="width:16px;height:16px;accent-color:var(--red);flex-shrink:0;cursor:pointer;"
         onclick="event.stopPropagation();updateWordsActionBar()">
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:2px;">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
           <span class="word-log-da">${esc(w.word)}</span>
           <span class="word-log-en">${esc(w.translation)}</span>
         </div>
+        ${w.sentence_da && w.sentence_da !== w.word ? `<div style="font-size:0.82rem;color:rgba(255,255,255,0.6);line-height:1.5;margin-bottom:4px;font-style:italic;">${esc(w.sentence_da).replace(new RegExp('('+w.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','i'),'<strong style="color:var(--red);font-style:normal;">$1</strong>')}</div>` : ''}
         <div class="word-log-note">${esc(w.form)}${w.context ? ' · ' + esc(w.context) : ''}</div>
         ${w.note ? `<div class="word-log-note" style="color:var(--accent);">💡 ${esc(w.note)}</div>` : ''}
       </div>
