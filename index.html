@@ -1089,7 +1089,6 @@
     <div id="writingFeedback"></div>
   </div>
 
-    </div><!-- /oevPaneskriv -->
     </div><!-- /practicePaneWrite -->
 
     <!-- GRAMMAR PANE -->
@@ -1175,12 +1174,106 @@
       </div>
     </div><!-- /sprogPaneGram -->
 
-
-    </div><!-- /oevPanesprog -->
     </div><!-- /practicePaneGrammar -->
 
     <!-- ISLANDS PANE -->
     <div id="practicePaneIslands" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div class="section-title" style="margin-bottom:4px;">🗺️ My Language Islands</div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Build your personal vocabulary for topics you know well – via a conversation with Claude.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openNewOe()">+ New island</button>
+      <button class="btn btn-ghost btn-sm" onclick="openCsvImport()">⬆ Import CSV</button>
+    </div>
+    <div id="oeCSVImport" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">⬆ Import CSV</div>
+      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">CSV file with two columns: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">Target language, German</code> – with or without header row.</div>
+      <div style="margin-bottom:12px;"><div class="anki-label">Topic / Island name</div><input class="anki-input" type="text" id="csvImportTopic" placeholder="e.g. Architecture, Cooking …" style="margin-bottom:0;"></div>
+      <div style="margin-bottom:14px;">
+        <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none;" onchange="handleCsvFile(this)">
+        <div id="csvDropZone" onclick="document.getElementById('csvFileInput').click()" style="border:2px dashed rgba(255,255,255,0.15);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+          <div style="font-size:1.5rem;margin-bottom:8px;">📄</div>
+          <div style="font-size:0.88rem;color:var(--muted);">Select CSV file or drag here</div>
+        </div>
+      </div>
+      <div id="csvPreview" style="display:none;margin-bottom:14px;">
+        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;">Preview (<span id="csvRowCount">0</span> sentences)</div>
+        <div id="csvPreviewList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="csvImportBtn" onclick="importCsvAsOe()" style="display:none;">✓ Import as island</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeCsvImport()">Cancel</button>
+      </div>
+    </div>
+    <div id="oeList"></div>
+    <div id="oeCreator" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">New Island</div>
+      <div style="margin-bottom:12px;"><div class="anki-label">Topic</div><input class="anki-input" type="text" id="oeTopicInput" placeholder="e.g. Architecture, Cooking, Medicine, IT, Sport …" style="margin-bottom:0;"></div>
+      <div style="margin-bottom:16px;"><div class="anki-label">Short description (optional)</div><input class="anki-input" type="text" id="oeDescInput" placeholder="e.g. I work as an architect, I cook every day …"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="startOeInterview()">Start interview →</button>
+        <button class="btn btn-ghost" onclick="closeOeCreator()">Cancel</button>
+      </div>
+    </div>
+    <div id="oeInterview" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="font-family:'Fraunces',serif;font-size:1.1rem;" id="oeInterviewTitle"></div>
+        <span style="font-size:0.72rem;background:rgba(200,16,46,0.15);color:var(--red);padding:2px 8px;border-radius:20px;font-weight:600;">Interview active</span>
+      </div>
+      <div id="oePhraseBox" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:16px;min-height:60px;">
+        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Collected sentences (<span id="oePhraseCount">0</span>)</div>
+        <div id="oePhraseList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+      <div id="oeChat" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:12px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <textarea id="oeChatInput" class="anki-input" rows="1" placeholder="Reply in your target language…" style="flex:1;resize:none;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendOeMessage()}" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button class="btn btn-primary" onclick="sendOeMessage()">Send</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="finishOeInterview()">✓ Finish interview</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="cancelOeInterview()">Cancel</button>
+      </div>
+    </div>
+    <div id="oePractice" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <div><div style="font-family:'Fraunces',serif;font-size:1.1rem;" id="oePracticeTitle"></div><div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Translate to Danish</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="closeOePractice()">✕ Stop</button>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;"><span id="oePracticeProgress">0 / 0</span><span id="oePracticeScore" style="color:#5CC488;"></span></div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:6px;overflow:hidden;"><div id="oePracticeBar" style="height:100%;background:linear-gradient(90deg,var(--red),var(--accent));border-radius:8px;transition:width 0.4s;width:0%;"></div></div>
+      </div>
+      <div id="oePracticeCard" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin-bottom:16px;">
+        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Translate to Danish</div>
+        <div id="oePracticeDE" style="font-size:1.1rem;line-height:1.6;margin-bottom:20px;font-style:italic;"></div>
+        <div id="oePracticeInputArea">
+          <textarea id="oePracticeInput" class="anki-input" rows="2" placeholder="Write the sentence…" style="margin-bottom:10px;resize:none;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();checkOePractice()}"></textarea>
+          <button class="btn btn-secondary" onclick="checkOePractice()">Check ✓</button>
+        </div>
+        <div id="oePracticeResult" style="display:none;">
+          <div id="oePracticeResultMsg" style="font-size:0.95rem;margin-bottom:12px;"></div>
+          <div style="background:rgba(92,196,136,0.08);border:1px solid rgba(92,196,136,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#5CC488;margin-bottom:4px;">Correct</div>
+            <div id="oePracticeCorrect" style="font-size:1rem;"></div>
+          </div>
+          <div id="oePracticeFeedback" style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5;"></div>
+          <button class="btn btn-secondary" onclick="nextOePractice()">Next →</button>
+        </div>
+      </div>
+      <div id="oePracticeDone" style="display:none;text-align:center;padding:30px;">
+        <div style="font-size:2rem;margin-bottom:12px;">🎉</div>
+        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Done!</div>
+        <div id="oePracticeFinalScore" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="restartOePractice()">↺ Again</button>
+          <button class="btn btn-ghost" onclick="closeOePractice()">Done</button>
+        </div>
+      </div>
+    </div>
+    </div><!-- /practicePaneIslands -->
+
+  </div><!-- /practice section -->
 
   <!-- LOG (Fejllog + Anki combined) -->
   <div id="log" class="section">
@@ -1449,159 +1542,6 @@
       <button class="btn btn-ghost" style="width:100%;" data-i18n="ankiClose" onclick="closeAnkiModal()">Close</button>
     </div>
   </div>
-
-
-  <!-- SPROGØER -->
-  <div id="oer" style="display:contents;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-      <div>
-        <div class="section-title" style="margin-bottom:4px;">🗺️ My Language Islands</div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:20px;">Build your personal vocabulary for topics you know well – via a conversation with Claude.</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="openNewOe()">+ New island</button>
-      <button class="btn btn-ghost btn-sm" onclick="openCsvImport()">⬆ Import CSV</button>
-    </div>
-
-    <!-- CSV Import panel -->
-    <div id="oeCSVImport" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">⬆ Import CSV</div>
-      <div style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;">
-        CSV file with two columns: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;">Target language, German</code> – with or without header row.
-      </div>
-      <div style="margin-bottom:12px;">
-        <div class="anki-label">Topic / Island name</div>
-        <input class="anki-input" type="text" id="csvImportTopic" placeholder="e.g. Architecture, Cooking …" style="margin-bottom:0;">
-      </div>
-      <div style="margin-bottom:14px;">
-        <input type="file" id="csvFileInput" accept=".csv,.txt" style="display:none;" onchange="handleCsvFile(this)">
-        <div id="csvDropZone" onclick="document.getElementById('csvFileInput').click()"
-          style="border:2px dashed rgba(255,255,255,0.15);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:border-color 0.2s;"
-          onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
-          <div style="font-size:1.5rem;margin-bottom:8px;">📄</div>
-          <div style="font-size:0.88rem;color:var(--muted);">CSV-Datei auswählen oder hierher ziehen</div>
-        </div>
-      </div>
-      <!-- Preview -->
-      <div id="csvPreview" style="display:none;margin-bottom:14px;">
-        <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;">Preview (<span id="csvRowCount">0</span> sentences)</div>
-        <div id="csvPreviewList" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" id="csvImportBtn" onclick="importCsvAsOe()" style="display:none;">✓ Als Insel importieren</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeCsvImport()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Island list -->
-    <div id="oeList"></div>
-
-    <!-- New island creator -->
-    <div id="oeCreator" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:20px;margin-bottom:24px;">
-      <div style="font-size:0.75rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;">New Island</div>
-      <div style="margin-bottom:12px;">
-        <div class="anki-label">Topic</div>
-        <input class="anki-input" type="text" id="oeTopicInput" placeholder="e.g. Architecture, Cooking, Medicine, IT, Sport …" style="margin-bottom:0;">
-      </div>
-      <div style="margin-bottom:16px;">
-        <div class="anki-label">Short description (optional)</div>
-        <input class="anki-input" type="text" id="oeDescInput" placeholder="e.g. I work as an architect, I cook every day …">
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="startOeInterview()">Start interview →</button>
-        <button class="btn btn-ghost" onclick="closeOeCreator()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Active interview -->
-    <div id="oeInterview" style="display:none;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-        <div style="font-family:'Fraunces',serif;font-size:1.1rem;" id="oeInterviewTitle"></div>
-        <span style="font-size:0.72rem;background:rgba(200,16,46,0.15);color:var(--red);padding:2px 8px;border-radius:20px;font-weight:600;">Interview active</span>
-      </div>
-
-      <!-- Collected phrases -->
-      <div id="oePhraseBox" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:16px;min-height:60px;">
-        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Collected sentences (<span id="oePhraseCount">0</span>)</div>
-        <div id="oePhraseList" style="display:flex;flex-direction:column;gap:6px;"></div>
-      </div>
-
-      <!-- Chat -->
-      <div id="oeChat" style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:12px;max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;"></div>
-
-      <div style="display:flex;gap:8px;align-items:flex-end;">
-        <textarea id="oeChatInput" class="anki-input" rows="1" placeholder="Reply in your target language…"
-          style="flex:1;resize:none;"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendOeMessage()}"
-          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-        <button class="btn btn-primary" onclick="sendOeMessage()">Send</button>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="finishOeInterview()">✓ Finish interview</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="cancelOeInterview()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- Practice session -->
-    <div id="oePractice" style="display:none;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
-        <div>
-          <div style="font-family:'Fraunces',serif;font-size:1.1rem;" id="oePracticeTitle"></div>
-          <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Translate to Danish</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="closeOePractice()">✕ Beenden</button>
-      </div>
-
-      <!-- Progress bar -->
-      <div style="margin-bottom:20px;">
-        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
-          <span id="oePracticeProgress">0 / 0</span>
-          <span id="oePracticeScore" style="color:#5CC488;"></span>
-        </div>
-        <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:6px;overflow:hidden;">
-          <div id="oePracticeBar" style="height:100%;background:linear-gradient(90deg,var(--red),var(--accent));border-radius:8px;transition:width 0.4s;width:0%;"></div>
-        </div>
-      </div>
-
-      <!-- Current card -->
-      <div id="oePracticeCard" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin-bottom:16px;">
-        <!-- German sentence to translate -->
-        <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Translate to Danish</div>
-        <div id="oePracticeDE" style="font-size:1.1rem;line-height:1.6;margin-bottom:20px;font-style:italic;"></div>
-
-        <!-- Input -->
-        <div id="oePracticeInputArea">
-          <textarea id="oePracticeInput" class="anki-input" rows="2"
-            placeholder="Write the sentence…"
-            style="margin-bottom:10px;resize:none;"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();checkOePractice()}"></textarea>
-          <button class="btn btn-secondary" onclick="checkOePractice()">Check ✓</button>
-        </div>
-
-        <!-- Result (shown after check) -->
-        <div id="oePracticeResult" style="display:none;">
-          <div id="oePracticeResultMsg" style="font-size:0.95rem;margin-bottom:12px;"></div>
-          <div style="background:rgba(92,196,136,0.08);border:1px solid rgba(92,196,136,0.2);border-radius:10px;padding:12px;margin-bottom:12px;">
-            <div style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#5CC488;margin-bottom:4px;">Correct</div>
-            <div id="oePracticeCorrect" style="font-size:1rem;"></div>
-          </div>
-          <div id="oePracticeFeedback" style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5;"></div>
-          <button class="btn btn-secondary" onclick="nextOePractice()">Next →</button>
-        </div>
-      </div>
-
-      <!-- Done screen -->
-      <div id="oePracticeDone" style="display:none;text-align:center;padding:30px;">
-        <div style="font-size:2rem;margin-bottom:12px;">🎉</div>
-        <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;">Done!</div>
-        <div id="oePracticeFinalScore" style="font-size:0.95rem;color:var(--muted);margin-bottom:20px;"></div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="restartOePractice()">↺ Again</button>
-          <button class="btn btn-ghost" onclick="closeOePractice()">Done</button>
-        </div>
-      </div>
-    </div>
-    </div><!-- /practicePaneIslands -->
-  </div><!-- /practice section -->
 
 </main>
 
@@ -2421,7 +2361,7 @@ function showTab(id) {
     if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + id + "'")) t.classList.add('active');
   });
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-  if (id === 'practice') { renderGrammar(); renderLuckeCatSelect(); renderLuckeExercises(); renderOeList(); }
+  if (id === 'practice') setPracticeMode(practiceMode || 'chat');
   if (id === 'log') renderErrors();
 }
 function switchWriteMode(mode, btn) {
@@ -4977,6 +4917,9 @@ function cancelOeInterview() {
 function startOeUebung(i) {
   const oe = window.sprogOeer[i];
   if (!oe.phrases.length) return;
+  // Ensure we're in practice/islands view
+  showTab('practice');
+  setPracticeMode('islands');
   // Hide other panels
   document.getElementById('oeList').style.display = 'none';
   document.getElementById('oeCreator').style.display = 'none';
@@ -5413,6 +5356,7 @@ loadSettings();
 loadData();
 loadOeer();
 loadDailyContent();
+setPracticeMode('chat'); // ensure only chat pane visible on load
 </script>
 
 <!-- MOBILE BOTTOM NAV -->
