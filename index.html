@@ -962,10 +962,15 @@
   <!-- READ TAB -->
   <div id="read" class="section">
 
-    <!-- GENERATOR CONTROLS -->
-    <div id="readControls">
-      <div class="section-title" style="margin-bottom:16px;">📖 Read Danish</div>
+    <!-- TOP MODE SWITCHER -->
+    <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
+      <button class="chat-mode-btn active" id="readModeGenBtn" onclick="setReadMode('generate')">✨ Generate</button>
+      <button class="chat-mode-btn" id="readModeUploadBtn" onclick="setReadMode('upload')">⬆ Upload</button>
+      <button class="chat-mode-btn" id="readModeLibraryBtn" onclick="setReadMode('library')">📚 Library <span id="readLibCount" style="font-size:0.7rem;opacity:0.7;"></span></button>
+    </div>
 
+    <!-- GENERATE PANE -->
+    <div id="readPaneGenerate">
       <!-- Type -->
       <div style="margin-bottom:14px;">
         <div class="read-label">Type</div>
@@ -974,7 +979,6 @@
           <button class="read-opt-btn" id="readTypeFiction" onclick="setReadOpt('type','fiction',this)">📖 Fiction</button>
         </div>
       </div>
-
       <!-- Topic -->
       <div style="margin-bottom:14px;">
         <div class="read-label">Topic</div>
@@ -986,7 +990,6 @@
           <button class="read-opt-btn" id="readTopicHistory" onclick="setReadOpt('topic','history',this)">📜 History</button>
         </div>
       </div>
-
       <!-- Level + Length -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
         <div>
@@ -1007,8 +1010,33 @@
           </div>
         </div>
       </div>
-
       <button class="btn btn-primary" onclick="generateReadText()" id="readGenBtn">📖 Generate text →</button>
+    </div>
+
+    <!-- UPLOAD PANE -->
+    <div id="readPaneUpload" style="display:none;">
+      <div style="margin-bottom:16px;">
+        <div class="read-label">Paste or type Danish text</div>
+        <textarea id="readUploadText" class="writing-editor" rows="8" placeholder="Paste any Danish text here – a news article, a letter, a story…" style="margin-bottom:12px;"></textarea>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input type="file" id="readUploadFile" accept=".txt,.pdf" style="display:none;" onchange="handleReadFileUpload(this)">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('readUploadFile').click()">📄 Upload .txt / .pdf</button>
+          <span style="font-size:0.78rem;color:var(--muted);">or paste text above</span>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <div class="read-label">Title (optional)</div>
+        <input type="text" id="readUploadTitle" class="anki-input" placeholder="e.g. Article from DR Nyheder" style="max-width:340px;">
+      </div>
+      <button class="btn btn-primary" onclick="loadUploadedText()">📖 Open text →</button>
+    </div>
+
+    <!-- LIBRARY PANE -->
+    <div id="readPaneLibrary" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="section-title" style="margin-bottom:0;">Saved texts</div>
+      </div>
+      <div id="readLibraryList"></div>
     </div>
 
     <!-- LOADING -->
@@ -1019,14 +1047,16 @@
 
     <!-- TEXT AREA -->
     <div id="readTextArea" style="display:none;">
-
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
         <div>
           <div style="font-family:'Fraunces',serif;font-size:1.2rem;" id="readTitle"></div>
           <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;" id="readMeta"></div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="resetRead()">← New text</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="readSaveBtn" onclick="saveCurrentText()">🔖 Save</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetRead()">← Back</button>
+        </div>
       </div>
 
       <!-- Clickable text -->
@@ -1057,7 +1087,6 @@
           <div id="readQuestions"></div>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -2486,6 +2515,7 @@ function showTab(id) {
   });
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   if (id === 'practice') setPracticeMode(practiceMode || 'chat');
+  if (id === 'read') updateReadLibCount();
   if (id === 'log') renderErrors();
 }
 function switchWriteMode(mode, btn) {
@@ -5485,10 +5515,26 @@ const readOpts = { type: 'nonfiction', topic: 'everyday', level: 'A2', length: '
 let readCurrentWord = null;
 let readCurrentText = null;
 let readQuestionData = [];
+let readMode = 'generate';
+
+// Load library from localStorage
+window.readLibrary = window.readLibrary || JSON.parse(localStorage.getItem('danskFrem_readLibrary') || '[]');
+
+function setReadMode(mode) {
+  readMode = mode;
+  ['generate','upload','library'].forEach(m => {
+    const btn  = document.getElementById('readMode' + m.charAt(0).toUpperCase() + m.slice(1) + 'Btn');
+    const pane = document.getElementById('readPane' + m.charAt(0).toUpperCase() + m.slice(1));
+    if (btn)  btn.classList.toggle('active', m === mode);
+    if (pane) pane.style.display = m === mode ? '' : 'none';
+  });
+  document.getElementById('readLoading').style.display = 'none';
+  document.getElementById('readTextArea').style.display = 'none';
+  if (mode === 'library') renderReadLibrary();
+}
 
 function setReadOpt(key, val, btn) {
   readOpts[key] = val;
-  // Deactivate siblings
   btn.parentElement.querySelectorAll('.read-opt-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
@@ -5496,59 +5542,92 @@ function setReadOpt(key, val, btn) {
 function buildReadPrompt() {
   const lengthMap = { short: '80–120', medium: '180–220', long: '320–380' };
   const topicMap  = {
-    everyday: 'everyday life in Denmark (neighbours, shopping, seasons, food, transport)',
+    everyday:    'everyday life in Denmark (neighbours, shopping, seasons, food, transport)',
     authorities: 'Danish authorities and civic life (kommune, school, health system, forms)',
-    nature: 'Danish nature, weather and landscape',
-    culture: 'Danish culture, traditions and history (hygge, jul, sommerhus, etc.)',
-    history: 'Danish history or a historical event',
+    nature:      'Danish nature, weather and landscape',
+    culture:     'Danish culture, traditions and history (hygge, jul, sommerhus, etc.)',
+    history:     'Danish history or a historical event',
   };
   const typeDesc = readOpts.type === 'fiction'
     ? 'a short fiction piece (story, dialogue or scene from daily life)'
     : 'a non-fiction text (letter, article, notice, description or explanation)';
 
   return `You are a Danish language teacher creating reading material.
-
 Write ${typeDesc} about: ${topicMap[readOpts.topic]}.
 Level: ${readOpts.level} – vocabulary and grammar appropriate for this level.
-Length: ${lengthMap[readOpts.length]} words.
-Write ONLY in Danish. Natural, authentic language.
-
-Then provide 3 comprehension questions in Danish (short answer).
-
+Length: ${lengthMap[readOpts.length]} words. Write ONLY in Danish. Natural, authentic language.
+Then provide 3 comprehension questions in Danish.
 Respond ONLY with valid JSON, no markdown:
-{
-  "title": "Short title in Danish",
-  "meta": "${readOpts.level} · ${readOpts.type === 'fiction' ? 'Fiction' : 'Non-fiction'} · ${topicMap[readOpts.topic].split(' ')[0]}",
-  "text": "Full Danish text here",
-  "questions": [
-    {"q": "Question in Danish?", "hint": "keyword answer"},
-    {"q": "Question in Danish?", "hint": "keyword answer"},
-    {"q": "Question in Danish?", "hint": "keyword answer"}
-  ]
-}`;
+{"title":"Short title in Danish","meta":"${readOpts.level} · ${readOpts.type === 'fiction' ? 'Fiction' : 'Non-fiction'}","text":"Full Danish text here","questions":[{"q":"Question?","hint":"keyword"},{"q":"Question?","hint":"keyword"},{"q":"Question?","hint":"keyword"}]}`;
 }
 
 async function generateReadText() {
-  document.getElementById('readControls').style.display = 'none';
+  ['readPaneGenerate','readPaneUpload','readPaneLibrary'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   document.getElementById('readLoading').style.display = 'block';
   document.getElementById('readTextArea').style.display = 'none';
-
   try {
-    const res = await apiFetch(API_URL, { method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({ model: MODEL, max_tokens: 1500, messages: [{ role: 'user', content: buildReadPrompt() }] })
+    const res = await apiFetch(API_URL, { method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:MODEL, max_tokens:1500, messages:[{role:'user',content:buildReadPrompt()}] })
     });
     if (!res) { resetRead(); return; }
     const data = await res.json();
     let txt = data.content[0].text.replace(/```json|```/g,'').trim();
     readCurrentText = JSON.parse(txt);
+    readCurrentText.saved = false;
     renderReadText(readCurrentText);
-    readQuestionData = readCurrentText.questions || [];
   } catch(e) {
-    document.getElementById('readLoading').style.display = 'none';
-    document.getElementById('readControls').style.display = 'block';
+    resetRead();
     alert('Error generating text – please try again.');
   }
+}
+
+async function handleReadFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.name.endsWith('.pdf')) {
+    // Use FileReader for PDF – extract text via Claude vision
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const base64 = e.target.result.split(',')[1];
+      document.getElementById('readUploadText').value = '(Loading PDF…)';
+      try {
+        const res = await apiFetch(API_URL, { method:'POST',
+          headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          body: JSON.stringify({ model:MODEL, max_tokens:2000,
+            messages:[{role:'user',content:[
+              {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
+              {type:'text',text:'Extract all text from this document. Return only the raw text, no commentary.'}
+            ]}]
+          })
+        });
+        if (!res) return;
+        const data = await res.json();
+        document.getElementById('readUploadText').value = data.content[0].text;
+      } catch(e) {
+        document.getElementById('readUploadText').value = '';
+        alert('Could not read PDF. Try copy-pasting the text instead.');
+      }
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // Plain text file
+    const reader = new FileReader();
+    reader.onload = e => { document.getElementById('readUploadText').value = e.target.result; };
+    reader.readAsText(file, 'UTF-8');
+  }
+}
+
+function loadUploadedText() {
+  const text  = document.getElementById('readUploadText').value.trim();
+  const title = document.getElementById('readUploadTitle').value.trim() || 'My text';
+  if (!text) return;
+  readCurrentText = { title, meta: 'Uploaded', text, questions: [], saved: false };
+  // Hide upload pane, show text
+  document.getElementById('readPaneUpload').style.display = 'none';
+  renderReadText(readCurrentText);
 }
 
 function renderReadText(data) {
@@ -5557,18 +5636,27 @@ function renderReadText(data) {
   document.getElementById('readTitle').textContent = data.title;
   document.getElementById('readMeta').textContent = data.meta;
 
-  // Split into words and punctuation, make each word clickable
+  // Update save button
+  const saveBtn = document.getElementById('readSaveBtn');
+  if (data.saved) {
+    saveBtn.textContent = '✓ Saved';
+    saveBtn.disabled = true;
+  } else {
+    saveBtn.textContent = '🔖 Save';
+    saveBtn.disabled = false;
+  }
+
+  // Render clickable words
   const body = document.getElementById('readTextBody');
   const tokens = data.text.split(/(\s+)/);
   body.innerHTML = tokens.map(token => {
     if (/^\s+$/.test(token)) return token;
-    // Strip punctuation for lookup but keep it in display
-    const clean = token.replace(/[.,!?;:"""()»«]/g, '').trim();
+    const clean = token.replace(/[.,!?;:"""()»«\-]/g, '').trim();
     if (!clean) return esc(token);
-    return `<span class="read-word" data-word="${clean}" onclick="lookupWord(this,'${clean.replace(/'/g,"\\'")}',event)">${esc(token)}</span>`;
+    return `<span class="read-word" data-word="${esc(clean)}" onclick="lookupWord(this,'${clean.replace(/'/g,"\\'").replace(/"/g,'\\"')}',event)">${esc(token)}</span>`;
   }).join('');
 
-  // Reset questions panel
+  readQuestionData = data.questions || [];
   document.getElementById('readQPanel').style.display = 'none';
   document.getElementById('readQChev').style.transform = '';
   renderReadQuestions();
@@ -5578,35 +5666,90 @@ function resetRead() {
   closeReadTooltip();
   document.getElementById('readTextArea').style.display = 'none';
   document.getElementById('readLoading').style.display = 'none';
-  document.getElementById('readControls').style.display = 'block';
+  setReadMode(readMode === 'library' ? 'library' : readMode === 'upload' ? 'upload' : 'generate');
   readCurrentText = null;
   readCurrentWord = null;
 }
 
+// ── SAVE TEXT TO LIBRARY ────────────────────────────────────
+function saveCurrentText() {
+  if (!readCurrentText) return;
+  window.readLibrary = window.readLibrary || [];
+  window.readLibrary.unshift({
+    id: 'rt' + Date.now(),
+    title:     readCurrentText.title,
+    meta:      readCurrentText.meta,
+    text:      readCurrentText.text,
+    questions: readCurrentText.questions || [],
+    date:      new Date().toISOString().slice(0,10),
+  });
+  // Keep max 30 texts
+  if (window.readLibrary.length > 30) window.readLibrary = window.readLibrary.slice(0,30);
+  localStorage.setItem('danskFrem_readLibrary', JSON.stringify(window.readLibrary));
+  readCurrentText.saved = true;
+  const saveBtn = document.getElementById('readSaveBtn');
+  saveBtn.textContent = '✓ Saved';
+  saveBtn.disabled = true;
+  updateReadLibCount();
+}
+
+function updateReadLibCount() {
+  const el = document.getElementById('readLibCount');
+  if (el) el.textContent = window.readLibrary.length ? '(' + window.readLibrary.length + ')' : '';
+}
+
+function renderReadLibrary() {
+  updateReadLibCount();
+  const container = document.getElementById('readLibraryList');
+  if (!container) return;
+  if (!window.readLibrary.length) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:2rem;margin-bottom:12px;">📚</div>
+      <div>No saved texts yet. Generate or upload a text and click 🔖 Save.</div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = window.readLibrary.map((t, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.2s;" onclick="openLibraryText(${i})" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:2px;">${esc(t.title)}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">${esc(t.meta)} · ${t.date}</div>
+      </div>
+      <button onclick="event.stopPropagation();deleteLibraryText(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;flex-shrink:0;padding:4px;">🗑️</button>
+    </div>`).join('');
+}
+
+function openLibraryText(i) {
+  const t = window.readLibrary[i];
+  readCurrentText = { ...t, saved: true };
+  document.getElementById('readPaneLibrary').style.display = 'none';
+  renderReadText(readCurrentText);
+}
+
+function deleteLibraryText(i) {
+  window.readLibrary.splice(i, 1);
+  localStorage.setItem('danskFrem_readLibrary', JSON.stringify(window.readLibrary));
+  renderReadLibrary();
+}
+
 // ── WORD LOOKUP ─────────────────────────────────────────────
 async function lookupWord(el, word, event) {
-  // Position tooltip near click
   const tt = document.getElementById('readTooltip');
   tt.style.display = 'block';
   const x = Math.min(event.clientX, window.innerWidth - 280);
-  const y = event.clientY + 20;
+  const y = Math.min(event.clientY + 20, window.innerHeight - 200);
   tt.style.left = x + 'px';
   tt.style.top  = y + 'px';
-
   document.getElementById('readTooltipWord').textContent = word;
   document.getElementById('readTooltipLoading').style.display = 'block';
   document.getElementById('readTooltipContent').style.display = 'none';
   readCurrentWord = { word, el };
-
-  // Mark as looked up
   el.classList.add('looked-up');
-
   try {
-    const res = await apiFetch(API_URL, { method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({ model: MODEL, max_tokens: 200,
-        messages: [{ role: 'user', content:
-          `Look up the Danish word "${word}" as it appears in this context: "${readCurrentText?.text?.slice(0,200) || ''}"\n\nRespond ONLY with valid JSON:\n{"translation":"English translation","form":"grammatical form (e.g. noun et hus, verb at løbe past tense, adjective plural)","note":"one short useful grammar or usage tip in English, or empty string"}` }]
+    const res = await apiFetch(API_URL, { method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:MODEL, max_tokens:200,
+        messages:[{role:'user',content:`Look up the Danish word "${word}" in this context: "${(readCurrentText?.text||'').slice(0,200)}"\nRespond ONLY with valid JSON:\n{"translation":"English translation","form":"grammatical form (e.g. noun et/en, verb past tense, adjective)","note":"one short useful tip in English, or empty string"}`}]
       })
     });
     if (!res) { closeReadTooltip(); return; }
@@ -5616,26 +5759,23 @@ async function lookupWord(el, word, event) {
     readCurrentWord.translation = lookup.translation;
     readCurrentWord.form = lookup.form;
     readCurrentWord.note = lookup.note;
-
     document.getElementById('readTooltipTranslation').textContent = lookup.translation;
     document.getElementById('readTooltipForm').textContent = lookup.form;
     document.getElementById('readTooltipNote').textContent = lookup.note;
     document.getElementById('readTooltipLoading').style.display = 'none';
     document.getElementById('readTooltipContent').style.display = 'block';
-  } catch(e) {
-    closeReadTooltip();
-  }
+  } catch(e) { closeReadTooltip(); }
 }
 
 function closeReadTooltip() {
-  document.getElementById('readTooltip').style.display = 'none';
+  const tt = document.getElementById('readTooltip');
+  if (tt) tt.style.display = 'none';
   readCurrentWord = null;
 }
 
-// Close tooltip when clicking outside
 document.addEventListener('click', e => {
   const tt = document.getElementById('readTooltip');
-  if (tt && !tt.contains(e.target) && !e.target.classList.contains('read-word')) {
+  if (tt && tt.style.display !== 'none' && !tt.contains(e.target) && !e.target.classList.contains('read-word')) {
     closeReadTooltip();
   }
 });
@@ -5644,63 +5784,14 @@ function saveReadWord() {
   if (!readCurrentWord) return;
   const w = readCurrentWord;
   window.savedWords = window.savedWords || [];
-  // Avoid duplicates
-  if (window.savedWords.find(x => x.word === w.word)) {
-    closeReadTooltip();
-    return;
-  }
+  if (window.savedWords.find(x => x.word === w.word)) { closeReadTooltip(); return; }
   window.savedWords.unshift({
-    word: w.word,
-    translation: w.translation || '',
-    form: w.form || '',
-    note: w.note || '',
-    date: new Date().toISOString(),
-    context: readCurrentText?.title || ''
+    word: w.word, translation: w.translation||'', form: w.form||'',
+    note: w.note||'', date: new Date().toISOString(), context: readCurrentText?.title||''
   });
   localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
-  // Mark word as saved in text
   if (w.el) w.el.classList.add('saved');
   closeReadTooltip();
-}
-
-function renderWordsList() {
-  const container = document.getElementById('wordsList');
-  if (!container) return;
-  window.savedWords = window.savedWords || [];
-  if (!window.savedWords.length) {
-    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
-      <div style="font-size:2rem;margin-bottom:12px;">📚</div>
-      <div>No words saved yet. Read a text and click words to save them.</div>
-    </div>`;
-    return;
-  }
-  container.innerHTML = window.savedWords.map((w, i) => `
-    <div class="word-log-item">
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:2px;">
-          <span class="word-log-da">${esc(w.word)}</span>
-          <span class="word-log-en">${esc(w.translation)}</span>
-        </div>
-        <div class="word-log-note">${esc(w.form)}${w.context ? ' · from: ' + esc(w.context) : ''}</div>
-        ${w.note ? `<div class="word-log-note" style="color:var(--accent);">💡 ${esc(w.note)}</div>` : ''}
-      </div>
-      <button onclick="deleteWord(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;flex-shrink:0;padding:4px;">🗑️</button>
-    </div>`).join('');
-}
-
-function deleteWord(i) {
-  window.savedWords = window.savedWords || [];
-  window.savedWords.splice(i, 1);
-  localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
-  renderWordsList();
-}
-
-function clearSavedWords() {
-  if (confirm('Delete all saved words?')) {
-    window.savedWords = [];
-    localStorage.setItem('danskFrem_savedWords', JSON.stringify([]));
-    renderWordsList();
-  }
 }
 
 // ── COMPREHENSION QUESTIONS ──────────────────────────────────
@@ -5714,13 +5805,12 @@ function toggleReadQuestions() {
 
 function renderReadQuestions() {
   const container = document.getElementById('readQuestions');
-  if (!readQuestionData.length) { container.innerHTML = ''; return; }
+  if (!readQuestionData.length) { container.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px 0;">No comprehension questions for uploaded texts.</div>'; return; }
   container.innerHTML = readQuestionData.map((q, i) => `
     <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
       <div style="font-size:0.88rem;margin-bottom:8px;">${esc(q.q)}</div>
       <div style="display:flex;gap:8px;align-items:flex-end;">
-        <input type="text" class="anki-input" id="readQ${i}" placeholder="Skriv dit svar…" style="flex:1;margin:0;"
-          onkeydown="if(event.key==='Enter')checkReadQuestion(${i})">
+        <input type="text" class="anki-input" id="readQ${i}" placeholder="Skriv dit svar…" style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')checkReadQuestion(${i})">
         <button class="btn btn-ghost btn-sm" onclick="checkReadQuestion(${i})">Check</button>
       </div>
       <div id="readQFeedback${i}" style="display:none;margin-top:8px;font-size:0.82rem;padding:8px 10px;border-radius:8px;"></div>
@@ -5732,16 +5822,12 @@ async function checkReadQuestion(i) {
   const answer = document.getElementById('readQ' + i)?.value.trim();
   if (!answer) return;
   const fb = document.getElementById('readQFeedback' + i);
-  fb.style.display = 'block';
-  fb.textContent = 'Checking…';
-  fb.style.background = 'rgba(255,255,255,0.05)';
-
+  fb.style.display = 'block'; fb.textContent = 'Checking…'; fb.style.cssText += ';background:rgba(255,255,255,0.05);border:none;';
   try {
-    const res = await apiFetch(API_URL, { method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({ model: MODEL, max_tokens: 150,
-        messages: [{ role: 'user', content:
-          `Danish reading question: "${q.q}"\nExpected answer hint: "${q.hint}"\nLearner's answer: "${answer}"\n\nIs the answer correct or close enough? Reply in 1-2 sentences in English. Start with ✓ if correct, ✗ if not.` }]
+    const res = await apiFetch(API_URL, { method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:MODEL, max_tokens:150,
+        messages:[{role:'user',content:`Danish reading question: "${q.q}"\nExpected: "${q.hint}"\nLearner answered: "${answer}"\nIs the answer correct or close enough? Reply in 1-2 English sentences. Start with ✓ if correct, ✗ if not.`}]
       })
     });
     if (!res) return;
@@ -5752,13 +5838,12 @@ async function checkReadQuestion(i) {
     fb.style.background = ok ? 'rgba(92,196,136,0.1)' : 'rgba(200,16,46,0.08)';
     fb.style.border = '1px solid ' + (ok ? 'rgba(92,196,136,0.3)' : 'rgba(200,16,46,0.2)');
     fb.style.color = ok ? '#5CC488' : '#F07070';
-  } catch(e) {
-    fb.textContent = 'Error – try again.';
-  }
+  } catch(e) { fb.textContent = 'Error – try again.'; }
 }
 
-// Load saved words on startup
-window.savedWords = window.savedWords || JSON.parse(localStorage.getItem('danskFrem_savedWords') || '[]');
+// Load saved words and library on startup
+window.savedWords   = window.savedWords   || JSON.parse(localStorage.getItem('danskFrem_savedWords')   || '[]');
+window.readLibrary  = window.readLibrary  || JSON.parse(localStorage.getItem('danskFrem_readLibrary')  || '[]');
 loadSettings();
 loadData();
 loadOeer();
