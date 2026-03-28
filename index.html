@@ -5760,6 +5760,9 @@ function deleteLibraryText(i) {
 }
 
 // ── WORD LOOKUP ─────────────────────────────────────────────
+// Simple in-session cache: word → {translation, form, note}
+const readWordCache = {};
+
 async function lookupWord(el, word, event) {
   const tt = document.getElementById('readTooltip');
   tt.style.display = 'block';
@@ -5768,10 +5771,26 @@ async function lookupWord(el, word, event) {
   tt.style.left = x + 'px';
   tt.style.top  = y + 'px';
   document.getElementById('readTooltipWord').textContent = word;
-  document.getElementById('readTooltipLoading').style.display = 'block';
-  document.getElementById('readTooltipContent').style.display = 'none';
   readCurrentWord = { word, el };
   el.classList.add('looked-up');
+
+  // Check cache first
+  const cached = readWordCache[word.toLowerCase()];
+  if (cached) {
+    document.getElementById('readTooltipLoading').style.display = 'none';
+    document.getElementById('readTooltipContent').style.display = 'block';
+    document.getElementById('readTooltipTranslation').textContent = cached.translation;
+    document.getElementById('readTooltipForm').textContent = cached.form;
+    document.getElementById('readTooltipNote').textContent = cached.note;
+    readCurrentWord.translation = cached.translation;
+    readCurrentWord.form = cached.form;
+    readCurrentWord.note = cached.note;
+    return;
+  }
+
+  document.getElementById('readTooltipLoading').style.display = 'block';
+  document.getElementById('readTooltipContent').style.display = 'none';
+
   try {
     const res = await apiFetch(API_URL, { method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':getApiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -5783,6 +5802,8 @@ async function lookupWord(el, word, event) {
     const data = await res.json();
     let txt = data.content[0].text.replace(/```json|```/g,'').trim();
     const lookup = JSON.parse(txt);
+    // Store in cache
+    readWordCache[word.toLowerCase()] = lookup;
     readCurrentWord.translation = lookup.translation;
     readCurrentWord.form = lookup.form;
     readCurrentWord.note = lookup.note;
