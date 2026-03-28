@@ -749,7 +749,7 @@
 </script>
 
 <header>
-  <div class="logo" onclick="showTab('hjem')" style="cursor:pointer;" title="Hjem"><div class="logo-flag"></div> Dansk Frem</div>
+  <div class="logo" onclick="showTab('home')" style="cursor:pointer;" title="Home"><div class="logo-flag"></div> Dansk Frem</div>
   <div style="display:flex;align-items:center;gap:12px;">
     <div class="streak-badge">🔥 <span id="streakCount">0</span> dage</div>
     <div id="rateLimitBadge" style="font-size:0.72rem;color:var(--muted);padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);display:none;">⚡ <span id="rateLimitCount">20</span> tilbage</div>
@@ -864,10 +864,9 @@
 </div>
 
 <nav class="top-nav">
-  <button class="tab active" onclick="showTab('hjem')">🏠 Hjem</button>
-  <button class="tab" onclick="showTab('chat')">💬 Chat</button>
-  <button class="tab" onclick="showTab('oev')">✍️ Øv</button>
-  <button class="tab" onclick="showTab('oer')">🗺️ Øer</button>
+  <button class="tab active" onclick="showTab('home')">🏠 Home</button>
+  <button class="tab" onclick="showTab('read')">📖 Read</button>
+  <button class="tab" onclick="showTab('practice')">✍️ Practice</button>
   <button class="tab" onclick="showTab('test')">🎯 Test</button>
   <button class="tab" id="logTabBtn" onclick="showTab('log')">📋 Log<span class="err-badge" id="errBadge" style="display:none">0</span></button>
 </nav>
@@ -875,7 +874,7 @@
 <main>
 
   <!-- HOME -->
-  <div id="hjem" class="section active">
+  <div id="home" class="section active">
     <div style="margin-bottom:28px;">
       <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;" data-i18n="yourLevel">Your level</div>
       <div style="font-family:'Fraunces',serif;font-size:1.1rem;margin-bottom:4px;" id="levelLabel">A1</div>
@@ -933,7 +932,7 @@
       <div class="challenge-desc" id="dailyChallengeDesc">Write 4–6 sentences about what you did at work yesterday. Use past tense.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary" data-i18n="startChallenge" onclick="goToChallenge()">Start challenge →</button>
-        <button class="btn btn-ghost" data-i18n="practiceInChat" onclick="showTab('chat')">Practice in chat</button>
+        <button class="btn btn-ghost" data-i18n="practiceInChat" onclick="showTab('practice');setPracticeMode('chat')">Practice in chat</button>
       </div>
     </div>
 
@@ -942,25 +941,45 @@
     <div id="dailyTipsContainer"></div>
   </div>
 
-  <!-- CHAT -->
-  <div id="chat" class="section">
+  <!-- READ (placeholder – content coming next) -->
+  <div id="read" class="section">
+    <div style="text-align:center;padding:60px 20px;color:var(--muted);">
+      <div style="font-size:3rem;margin-bottom:16px;">📖</div>
+      <div style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:8px;color:var(--white);">Reading exercises coming soon</div>
+      <div style="font-size:0.9rem;line-height:1.6;">Click-to-translate Danish texts with instant explanations and Anki integration.</div>
+    </div>
+  </div>
+
+  <!-- PRACTICE (Chat + Write + Grammar + Islands) -->
+  <div id="practice" class="section">
+
+    <!-- PRACTICE MODE SWITCHER -->
+    <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;overflow-x:auto;">
+      <button class="chat-mode-btn active" id="practiceModeChat" onclick="setPracticeMode('chat')">💬 Chat</button>
+      <button class="chat-mode-btn" id="practiceModeWrite" onclick="setPracticeMode('write')">✍️ Write</button>
+      <button class="chat-mode-btn" id="practiceModeGrammar" onclick="setPracticeMode('grammar')">📐 Grammar</button>
+      <button class="chat-mode-btn" id="practiceModeIslands" onclick="setPracticeMode('islands')">🗺️ Islands</button>
+    </div>
+
+    <!-- CHAT PANE -->
+    <div id="practicePaneChat">
 
     <!-- PERSONA PICKER -->
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <div id="personaLars" onclick="selectPersona(this,'lars')"
         style="flex:1;min-width:120px;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(200,16,46,0.1);border:2px solid var(--red);border-radius:14px;cursor:pointer;transition:all 0.2s;">
-        <div style="font-size:1.6rem;line-height:1;">👨‍💼</div>
+        <div style="font-size:1.6rem;line-height:1;">👨</div>
         <div>
           <div style="font-weight:600;font-size:0.9rem;">Lars</div>
-          <div style="font-size:0.75rem;color:var(--muted);">Kollega · uformel</div>
+          <div style="font-size:0.75rem;color:var(--muted);">Nabo · uformel</div>
         </div>
       </div>
       <div id="personaMaja" onclick="selectPersona(this,'maja')"
         style="flex:1;min-width:120px;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.1);border-radius:14px;cursor:pointer;transition:all 0.2s;">
-        <div style="font-size:1.6rem;line-height:1;">👩‍🦰</div>
+        <div style="font-size:1.6rem;line-height:1;">👩</div>
         <div>
           <div style="font-weight:600;font-size:0.9rem;">Maja</div>
-          <div style="font-size:0.75rem;color:var(--muted);">Friend · everyday language</div>
+          <div style="font-size:0.75rem;color:var(--muted);">Veninde · hverdagsdansk</div>
         </div>
       </div>
       <div id="personaFri" onclick="openFreePersona()"
@@ -977,7 +996,7 @@
       <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Describe the situation briefly:</div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="freePersonaInput" class="anki-input" style="flex:1;margin:0;"
-          placeholder="z.B. hos tandlægen, i supermarkedet, på jobsamtale …"
+          placeholder="e.g. hos lægen, i supermarkedet, på posthuset, til fest …"
           onkeydown="if(event.key==='Enter'){event.preventDefault();startFreePersona()}">
         <button class="btn btn-primary btn-sm" onclick="startFreePersona()">Start →</button>
       </div>
@@ -1014,16 +1033,10 @@
         <button class="btn btn-primary" id="chatSendBtn" onclick="sendChat()">Send</button>
       </div>
     </div>
-  </div>
+    </div><!-- /practicePaneChat -->
 
-  <!-- ØV (Skriv + Sprog combined) -->
-  <div id="oev" class="section">
-
-    <!-- TOP MODE SWITCHER -->
-    <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
-      <button class="chat-mode-btn active" id="oevModeSkrivBtn" onclick="setOevMode('skriv')">✍️ Write</button>
-      <button class="chat-mode-btn" id="oevModeSprogBtn" onclick="setOevMode('sprog')" data-i18n="oevModeSprog">📖 Grammatik</button>
-    </div>
+    <!-- WRITE PANE -->
+    <div id="practicePaneWrite" style="display:none;">
 
     <!-- SKRIV PANE -->
     <div id="oevPaneskriv">
@@ -1077,10 +1090,10 @@
   </div>
 
     </div><!-- /oevPaneskriv -->
+    </div><!-- /practicePaneWrite -->
 
-    <!-- SPROG PANE -->
-    <div id="oevPanesprog" style="display:none;">
-    <!-- replaces grammatik section -->
+    <!-- GRAMMAR PANE -->
+    <div id="practicePaneGrammar" style="display:none;">
 
 
 
@@ -1164,7 +1177,10 @@
 
 
     </div><!-- /oevPanesprog -->
-  </div><!-- /oev section -->
+    </div><!-- /practicePaneGrammar -->
+
+    <!-- ISLANDS PANE -->
+    <div id="practicePaneIslands" style="display:none;">
 
   <!-- LOG (Fejllog + Anki combined) -->
   <div id="log" class="section">
@@ -1436,7 +1452,7 @@
 
 
   <!-- SPROGØER -->
-  <div id="oer" class="section">
+  <div id="oer" style="display:contents;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
       <div>
         <div class="section-title" style="margin-bottom:4px;">🗺️ My Language Islands</div>
@@ -1584,7 +1600,8 @@
         </div>
       </div>
     </div>
-  </div>
+    </div><!-- /practicePaneIslands -->
+  </div><!-- /practice section -->
 
 </main>
 
@@ -2398,15 +2415,13 @@ function downloadFile(filename, mime, content) {
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  // Match tab button by onclick content – robust against order changes
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
   document.querySelectorAll('nav.top-nav .tab').forEach(t => {
     if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + id + "'")) t.classList.add('active');
   });
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
-  if (id === 'oev') { renderGrammar(); renderLuckeCatSelect(); renderLuckeExercises(); }
-  if (id === 'noter') renderNotes();
-  if (id === 'oer') { renderOeList(); }
+  if (id === 'practice') { renderGrammar(); renderLuckeCatSelect(); renderLuckeExercises(); renderOeList(); }
   if (id === 'log') renderErrors();
 }
 function switchWriteMode(mode, btn) {
@@ -2472,14 +2487,14 @@ async function submitImageWriting() {
 // ---- PERSONAS ----
 const personas = {
   lars: {
-    icon: '👨‍💼', name: 'Lars', role: 'Din kollega · Uformelt dansk',
-    system: `Du er Lars, en venlig dansk kollega (35 år). Uformelt hverdagsdansk. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
-    greeting: 'Hej! Hvad sker der? Har du haft en god dag? ☕'
+    icon: '👨', name: 'Lars', role: 'Din nabo · Uformelt hverdagsdansk',
+    system: `Du er Lars, en venlig dansk nabo (38 år). Du taler uformelt, naturligt hverdagsdansk. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst. Tal om hverdagsemner: vejret, weekenden, familien, nabolaget, mad, fritid.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
+    greeting: 'Hej! Hvordan går det? Har du haft en god dag? ☀️'
   },
   maja: {
-    icon: '👩‍🦰', name: 'Maja', role: 'Din veninde · Hverdagsdansk',
-    system: `Du er Maja, en venlig dansk kvinde (32 år). Naturligt hverdagsdansk, varm og imødekommende tone. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
-    greeting: 'Hej! Hvordan går det? Har du lavet noget sjovt i dag? 😊'
+    icon: '👩', name: 'Maja', role: 'Din veninde · Naturligt hverdagsdansk',
+    system: `Du er Maja, en venlig dansk kvinde (30 år). Naturligt hverdagsdansk, varm og imødekommende tone. SVAR KUN PÅ DANSK. Korte beskeder (2-3 sætn). Stil ét spørgsmål sidst. Tal om hverdagsemner: mad, familie, fritid, Danmark, oplevelser.\n\nEfter din besked ALTID:\n---KORREKTION---\nFejl: [hvad der var forkert, eller "No errors"]\nRet: [korrekt version]\nTip: [kort forklaring på dansk]`,
+    greeting: 'Hej! Hvordan går det? Har du lavet noget sjovt? 😊'
   }
 };
 
@@ -2787,15 +2802,25 @@ Kun dansk. Vær venlig.`;
   document.getElementById('writingSubmitBtn').disabled=false;
 }
 
-// ---- ØV MODE SWITCHER ----
-let oevMode = 'skriv';
+// ---- PRACTICE MODE SWITCHER ----
+let practiceMode = 'chat';
+function setPracticeMode(mode) {
+  practiceMode = mode;
+  ['chat','write','grammar','islands'].forEach(m => {
+    const key = m.charAt(0).toUpperCase() + m.slice(1);
+    const btn  = document.getElementById('practiceMode' + key);
+    const pane = document.getElementById('practicePane' + key);
+    if (btn)  btn.classList.toggle('active', m === mode);
+    if (pane) pane.style.display = m === mode ? '' : 'none';
+  });
+  if (mode === 'grammar') { renderGrammar(); renderLuckeCatSelect(); renderLuckeExercises(); }
+  if (mode === 'islands') renderOeList();
+}
+
 function setOevMode(mode) {
-  oevMode = mode;
-  document.getElementById('oevModeSkrivBtn').classList.toggle('active', mode==='skriv');
-  document.getElementById('oevModeSprogBtn').classList.toggle('active', mode==='sprog');
-  document.getElementById('oevPaneskriv').style.display = mode==='skriv' ? '' : 'none';
-  document.getElementById('oevPanesprog').style.display = mode==='sprog' ? '' : 'none';
-  if (mode === 'sprog') { renderGrammar(); renderLuckeCatSelect(); renderLuckeExercises(); }
+  // Legacy – maps to setPracticeMode
+  if (mode === 'skriv') setPracticeMode('write');
+  else if (mode === 'sprog') setPracticeMode('grammar');
 }
 
 // ---- LOG MODE SWITCHER ----
@@ -3315,23 +3340,23 @@ const gramCatLabel = { artikler:'🏷️ Artikler & køn', verber:'🔧 Verber',
 
 const gramExercises = [
   {id:'ex_ordstilling',icon:'📐',title:'Word order',desc:'Write 5 sentences starting with a time expression',rule:'ordstilling',
-    prompt:'Write 5 sentences about your week, each starting with a time expression like "Yesterday", "Tomorrow", "Usually", "Therefore", "Nevertheless". Focus on correct word order after inversion.'},
+    prompt:'Write 5 sentences about your daily life, each starting with a time expression like "Yesterday", "Every morning", "Last weekend", "Usually", "Tomorrow". Focus on correct word order after inversion.'},
   {id:'ex_datid',icon:'⏮️',title:'Past tense',desc:'Describe your day yesterday using only past tense',rule:'datid',
-    prompt:'Describe what you did yesterday from morning to evening. Use only past tense. Include at least 6 verbs – both regular and irregular.'},
-  {id:'ex_artikel',icon:'🏷️',title:'Articles',desc:'Describe your workplace using 8 nouns with correct articles',rule:'kendeord',
-    prompt:'Describe your workplace. Use at least 8 nouns with correct articles (indefinite and definite forms).'},
-  {id:'ex_negation',icon:'🚫',title:'Negation',desc:'Write sentences using negation correctly',rule:'negation',
-    prompt:'Write 5 main clauses and 5 subordinate clauses (using "because", "that", "although") – all with correct negation placement.'},
-  {id:'ex_perfektum',icon:'🔙',title:'Present perfect',desc:'Describe 3 things you have done today',rule:'perfektum',
-    prompt:'Write 6 sentences about what you have done today. Use present perfect. Include at least 2 motion verbs.'},
-  {id:'ex_fremtid',icon:'🔜',title:'Future tense',desc:'Describe your plans for the next 7 days',rule:'fremtid',
-    prompt:'Describe your plan for the next 7 days. Use different ways to express the future at least 2 times each.'},
-  {id:'ex_bisaetning',icon:'🔗',title:'Subordinate clauses',desc:'Write 6 subordinate clauses with conjunctions',rule:'bisaetning',
-    prompt:'Write 6 compound sentences using these conjunctions: because, although, that, when, if, while. Remember correct word order in subordinate clauses.'},
-  {id:'ex_mening',icon:'💭',title:'Expressing opinions',desc:'Express your opinions using different verbs',rule:'mening',
-    prompt:'Write 6 sentences expressing your opinion. Use "think" (personal taste) at least 2 times, "believe" (assumption) at least 2 times, and "consider" (stance) at least 1 time.'},
-  {id:'ex_fri',icon:'✍️',title:'Free writing',desc:'Write freely on any topic',rule:'fri',
-    prompt:'Write a text of at least 8 sentences on a topic of your choice. Focus on correct grammar.'},
+    prompt:'Describe what you did yesterday from morning to evening. Use only past tense. Include at least 6 verbs – both regular and irregular. Write about everyday activities like eating, going somewhere, meeting people.'},
+  {id:'ex_artikel',icon:'🏷️',title:'Articles',desc:'Describe your home or neighbourhood using 8 nouns with correct articles',rule:'kendeord',
+    prompt:'Describe your home or the area where you live. Use at least 8 nouns with correct articles (indefinite and definite forms). For example: en stol / stolen, et vindue / vinduet.'},
+  {id:'ex_negation',icon:'🚫',title:'Negation',desc:'Write sentences about things you do and don\'t do',rule:'negation',
+    prompt:'Write 5 main clauses and 5 subordinate clauses about your daily life – all with correct negation placement. For example: "Jeg spiser ikke kød" / "Jeg er glad, fordi jeg ikke er træt".'},
+  {id:'ex_perfektum',icon:'🔙',title:'Present perfect',desc:'Write about things you have experienced in Denmark',rule:'perfektum',
+    prompt:'Write 6 sentences about things you have done or experienced in Denmark. Use present perfect. Include at least 2 motion verbs (e.g. er gået, er taget).'},
+  {id:'ex_fremtid',icon:'🔜',title:'Future tense',desc:'Describe your plans for the coming week',rule:'fremtid',
+    prompt:'Describe your plans for the coming week. Use different ways to express the future at least 2 times each: "skal", "vil", and present tense for fixed plans.'},
+  {id:'ex_bisaetning',icon:'🔗',title:'Subordinate clauses',desc:'Write 6 sentences about your life in Denmark',rule:'bisaetning',
+    prompt:'Write 6 compound sentences about everyday life in Denmark using these conjunctions: fordi, selvom, at, når, hvis, mens. Remember correct word order in subordinate clauses.'},
+  {id:'ex_mening',icon:'💭',title:'Expressing opinions',desc:'Share your opinions about Danish life and culture',rule:'mening',
+    prompt:'Write 6 sentences sharing your opinions about Danish life, food, weather or culture. Use "synes" (personal taste) at least 2 times, "tror" (belief) at least 2 times, and "mener" (stance) at least 1 time.'},
+  {id:'ex_fri',icon:'✍️',title:'Free writing',desc:'Write freely about anything in your life in Denmark',rule:'fri',
+    prompt:'Write a text of at least 8 sentences about your life, experiences or thoughts. It can be about anything – your neighbourhood, a recent experience, your feelings about living in Denmark. Focus on correct grammar.'},
 ];
 
 
@@ -3700,7 +3725,7 @@ function toggleRule(id) {
 }
 
 function openRule(id) {
-  setOevMode('sprog'); showTab('oev');
+  setOevMode('sprog'); showTab('practice'); setPracticeMode('grammar');
   setTimeout(()=>{
     const body=document.getElementById('body-'+id);
     const chev=document.getElementById('chev-'+id);
@@ -3752,34 +3777,34 @@ async function submitGramExercise() {
 }
 
 const allChallenges = [
-  { title: 'Describe your workday', desc: 'Write 4–6 sentences about what you did at work yesterday. Use past tense.' },
-  { title: 'Skriv en besked til en kollega', desc: 'Din kollega var syg i går. Skriv en kort besked og spørg, hvordan det går. Brug "håber" og "det går bedre".' },
-  { title: 'Beskriv din morgenrutine', desc: 'Skriv 5 sætninger om, hvad du gør om morgenen. Brug nutid: "Jeg vågner...", "Jeg spiser..."' },
-  { title: 'Hvad laver du i weekenden?', desc: 'Skriv om dine planer for weekenden – eller hvad du gjorde i den forrige. Brug "jeg skal" eller "jeg lavede".' },
-  { title: 'Beskriv din by', desc: 'Skriv 4 sætninger om, hvor du bor. Hvad kan man se og gøre der? Brug: "Der er...", "Man kan..."' },
-  { title: 'Skriv en e-mail til din chef', desc: 'Du skal have fri på fredag. Skriv en kort og høflig e-mail. Brug "Kære" og "Med venlig hilsen".' },
-  { title: 'Præsenter dig selv', desc: 'Skriv 5–7 sætninger, som om du møder nye kollegaer. Navn, job, hvor du kommer fra, hvad du godt kan lide.' },
-  { title: 'En situation på arbejdet', desc: 'Beskriv en konkret situation fra din arbejdsuge. Hvad skete der? Hvem var med? Hvad sagde du?' },
-  { title: 'Dine mål med dansk', desc: 'Skriv om, hvorfor du lærer dansk og hvad du håber at opnå. Brug "jeg vil gerne", "mit mål er..."' },
-  { title: 'Beskriv en person', desc: 'Beskriv en kollega eller ven (uden navn). Hvordan ser personen ud? Hvad arbejder vedkommende med?' },
-  { title: 'Hvad spiste du i dag?', desc: 'Skriv om dine måltider i dag. Brug maddanskord som "morgenmad", "frokost", "aftensmad". Var det godt?' },
-  { title: 'En ting du er stolt af', desc: 'Skriv om noget du har lært eller klaret for nylig – på arbejdet eller privat. Brug "jeg er glad for at..."' },
-  { title: 'Din pendling til arbejde', desc: 'Hvordan kommer du på arbejde? Skriv om ruten, transportmidlet og hvor lang tid det tager.' },
-  { title: 'Giv en kollega feedback', desc: 'En kollega har præsenteret et projekt. Skriv 4 sætninger med konstruktiv feedback på dansk. Vær høflig og præcis.' },
-  { title: 'Beskriv vejret i dag', desc: 'Skriv 3–4 sætninger om vejret. Brug: "Det er...", "Det blæser...", "Jeg synes vejret er..."' },
-  { title: 'Din favoritdanskret', desc: 'Skriv om en dansk ret du kan lide eller har prøvet. Hvad hedder den? Hvad indeholder den? Hvornår spiser man den?' },
-  { title: 'Hvad er svært ved dansk?', desc: 'Skriv ærligt om, hvad du synes er sværest at lære. Udtale? Grammatik? Ordforråd? Brug "jeg har svært ved..."' },
-  { title: 'En positiv oplevelse på arbejdet', desc: 'Beskriv noget godt der skete på arbejdet for nylig. Hvem var involveret? Hvad betød det for dig?' },
-  { title: 'Planlæg et møde', desc: 'Skriv en kort invitation til et møde. Hvornår? Hvor? Hvad handler det om? Brug "jeg foreslår" og "passer det?"' },
-  { title: 'Hvad drømmer du om?', desc: 'Skriv om dine fremtidsdrømme – privat eller arbejdsmæssigt. Brug "en dag vil jeg...", "jeg håber at..."' },
-  { title: 'Beskriv dit kontor', desc: 'Hvor arbejder du? Beskriv stedet: åbent kontorlandskab, hjemmekontor, ude? Hvad kan du lide ved det?' },
-  { title: 'En dansk tradition', desc: 'Skriv om en dansk tradition du kender eller har oplevet: jul, påske, sommerferie, fredagsslik... Hvad synes du om den?' },
-  { title: 'Sæt grænser høfligt', desc: 'Du er overbelastet på arbejdet. Skriv en høflig besked til din chef om, at du ikke kan tage endnu en opgave.' },
-  { title: 'Hvad er hygge for dig?', desc: 'Danskerne er kendte for "hygge". Skriv hvad hygge betyder for dig personligt, og beskriv en hyggelig situation.' },
-  { title: 'Bestil noget hos håndværkeren', desc: 'Du skal have malet din lejlighed. Skriv en kort besked til en håndværker. Hvad skal laves? Hvornår?' },
-  { title: 'Reflekter over din uge', desc: 'Det er fredag. Hvad var den bedste og den sværeste ting i denne uge? Brug "den bedste var...", "det var svært at..."' },
-  { title: 'Tal om din familie', desc: 'Beskriv din familie med 5–7 sætninger. Hvem er de? Hvad laver de? Brug "min", "mine", "hans/hendes".' },
-  { title: 'En dansklærdom', desc: 'Hvad har du lært på dansk for nylig? Skriv en sætning du er stolt af at kunne sige rigtigt nu.' },
+  { title: 'Beskriv din morgenrutine', desc: 'Skriv 5 sætninger om, hvad du gør om morgenen fra du vågner til du går hjemmefra. Brug nutid.' },
+  { title: 'På indkøb i supermarkedet', desc: 'Du skal handle ind til aftensmad. Skriv hvad du køber, og brug ord som "jeg har brug for", "det koster" og "jeg betaler".' },
+  { title: 'Beskriv dit kvarter', desc: 'Skriv 4–5 sætninger om, hvor du bor. Hvad er der i nærheden? Hvad kan lide og ikke lide? Brug "Der er...", "Man kan..."' },
+  { title: 'En dag i dit liv', desc: 'Beskriv en typisk dag fra morgen til aften. Hvad laver du? Hvem møder du? Hvad spiser du? Brug tidsudtryk som "om morgenen", "til middag", "om aftenen".' },
+  { title: 'Hvad spiste du i dag?', desc: 'Skriv om dine måltider. Brug ord som "morgenmad", "frokost", "aftensmad". Hvad kan du godt lide at spise? Hvad er typisk dansk?' },
+  { title: 'Præsenter dig selv', desc: 'Skriv 5–7 sætninger om dig selv. Hvad hedder du, hvor kommer du fra, hvad laver du, hvad holder du af? Som om du møder en ny nabo.' },
+  { title: 'Hos lægen', desc: 'Du er ikke rask. Skriv hvad der sker: Hvordan har du det? Hvad siger lægen? Brug "jeg har ondt i...", "jeg føler mig...", "lægen siger at..."' },
+  { title: 'En tur i naturen', desc: 'Beskriv en tur du har taget eller gerne vil tage. Strand, skov, cykeltur? Brug "vi gik", "det var", "vi så".' },
+  { title: 'Dine mål med dansk', desc: 'Skriv om, hvorfor du lærer dansk og hvad du håber at opnå. Brug "jeg vil gerne", "mit mål er", "når jeg kan dansk...".' },
+  { title: 'Beskriv en person du holder af', desc: 'Beskriv en ven, et familiemedlem eller en nabo (uden navn). Hvordan ser personen ud? Hvad laver vedkommende? Hvad holder du af ved personen?' },
+  { title: 'Planlæg en weekend', desc: 'Hvad skal du lave i weekenden? Skriv dine planer med "jeg skal", "vi har tænkt os at", "jeg glæder mig til".' },
+  { title: 'Danske traditioner', desc: 'Skriv om en dansk tradition du kender eller har oplevet: jul, påske, st. hans, sommerferie. Hvad sker der? Hvad synes du om den?' },
+  { title: 'Transport i Danmark', desc: 'Hvordan kommer du rundt i Danmark? Beskriv en rejse med tog, bus eller cykel. Brug "jeg tager", "det tager", "jeg stiger af ved".' },
+  { title: 'Hvad er hygge for dig?', desc: 'Danskerne er kendte for "hygge". Skriv hvad hygge betyder for dig, og beskriv en hyggelig situation du har oplevet.' },
+  { title: 'Beskriv vejret', desc: 'Skriv 3–4 sætninger om vejret i dag og i den kommende uge. Brug: "Det er...", "Det blæser...", "Det ser ud til at..."' },
+  { title: 'Din favoritdansk mad', desc: 'Skriv om en dansk ret du kan lide eller har prøvet. Smørrebrød, stegt flæsk, æbleskiver? Hvad er det? Hvornår spiser man det?' },
+  { title: 'En oplevelse i Danmark', desc: 'Beskriv noget du har oplevet i Danmark – et sted du besøgte, noget der overraskede dig, noget du lærte.' },
+  { title: 'Hvad er svært ved dansk?', desc: 'Skriv ærligt om, hvad du synes er sværest ved dansk. Udtale? Grammatik? Ordforråd? Brug "jeg har svært ved...", "jeg forstår ikke..."' },
+  { title: 'Til fest hos naboerne', desc: 'Du er inviteret til fest. Skriv om forberedelserne, hvad du giver som gave, og hvad du siger til værtinden.' },
+  { title: 'Hvad drømmer du om?', desc: 'Skriv om dine fremtidsdrømme i Danmark. Brug "en dag vil jeg...", "jeg håber at...", "om nogle år..."' },
+  { title: 'Din bolig', desc: 'Beskriv hvor du bor. Stor eller lille? Hus eller lejlighed? Hvad kan du lide og ikke lide? Brug "der er", "vi har", "jeg savner".' },
+  { title: 'En snak med naboen', desc: 'Du møder din nabo på trappen. Skriv hvad I siger til hinanden. Brug "hvordan går det?", "har du set at...", "vi ses!"' },
+  { title: 'Sæsoner i Danmark', desc: 'Hvad sker der i Danmark om vinteren, foråret, sommeren og efteråret? Skriv mindst 2 sætninger om hver sæson.' },
+  { title: 'Din familie', desc: 'Beskriv din familie med 5–7 sætninger. Hvem er de? Hvad laver de? Brug "min", "mine", "vi", "os".' },
+  { title: 'Fritid og hobbyer', desc: 'Hvad laver du i din fritid? Sport, musik, madlavning? Brug "jeg elsker at", "jeg bruger tid på", "det giver mig..."' },
+  { title: 'Hos tandlægen', desc: 'Du skal til tandlæge. Skriv hvad der sker: Hvad siger tandlægen? Hvad gør det ondt? Brug "jeg har ondt i", "tandlægen siger".' },
+  { title: 'En dansklærdom', desc: 'Hvad har du lært på dansk for nylig? Skriv et ord eller en sætning du er stolt af at kunne sige rigtigt nu – og brug det i en sætning.' },
+  { title: 'Reflekter over din uge', desc: 'Det er fredag. Hvad var det bedste og det sværeste i denne uge? Brug "det bedste var...", "jeg lærte at...", "næste uge vil jeg..."' },
 ];
 
 const allTips = [
@@ -3840,17 +3865,15 @@ function loadDailyContent() {
 }
 
 function goToChallenge() {
-  const title = document.getElementById('dailyChallengeTitle').textContent;
   const desc = document.getElementById('dailyChallengeDesc').textContent;
-  // Show challenge banner in writing area
   document.getElementById('writingChallengeLabel').textContent = desc;
   const banner = document.getElementById('writingChallengeBanner');
   banner.style.display = 'block';
   document.getElementById('writingEditor').value = '';
   document.getElementById('writingFeedback').innerHTML = '';
-  setOevMode('skriv');
-  switchWriteMode('tekst', document.querySelector('.tab-write.active') || document.querySelector('.tab-write'));
-  showTab('oev');
+  showTab('practice');
+  setPracticeMode('write');
+  switchWriteMode('tekst', document.querySelector('.tab-write') || document.querySelector('.tab-write'));
   setTimeout(() => document.getElementById('writingEditor').focus(), 200);
 }
 
@@ -4240,9 +4263,8 @@ const I18N = {
     streakDays: n => `${n} day${n===1?'':'s'}`,
     streakTitle0: 'Use the app today to start your streak!',
     streakTitleN: n => `${n} day${n===1?'':'s'} in a row 🔥`,
-    tabHjem: '🏠 Home', tabChat: '💬 Chat', tabOev: '✍️ Practice',
-    oevModeSprog: '📖 Grammar',
-    tabLog: '📋 Log', tabOer: '🗺️ Islands', tabTest: '🎯 Test',
+    tabHome: '🏠 Home', tabRead: '📖 Read', tabPractice: '✍️ Practice',
+    tabTest: '🎯 Test', tabLog: '📋 Log',
     settingsTitle: 'Settings',
     settingsAppearance: 'Appearance',
     themeDark: '🌙 Dark', themeLight: '☀️ Light',
@@ -4359,8 +4381,8 @@ function applyLang() {
     if (btn) btn.classList.toggle('active', l === (appSettings.lang||'da'));
   });
   // Nav tabs (top)
-  const tabIds = ['hjem','chat','oev','oer','test','log'];
-  const tabKeys = ['tabHjem','tabChat','tabOev','tabOer','tabTest','tabLog'];
+  const tabIds = ['home','read','practice','test','log'];
+  const tabKeys = ['tabHome','tabRead','tabPractice','tabTest','tabLog'];
   tabIds.forEach((id, i) => {
     const tab = document.querySelector(`nav.top-nav button[onclick*="'${id}'"]`);
     if (!tab) return;
@@ -5395,17 +5417,14 @@ loadDailyContent();
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bottom-nav-item active" onclick="showTab('hjem')" data-tab="hjem">
-    <span class="nav-icon">🏠</span><span>Hjem</span>
+  <button class="bottom-nav-item active" onclick="showTab('home')" data-tab="home">
+    <span class="nav-icon">🏠</span><span>Home</span>
   </button>
-  <button class="bottom-nav-item" onclick="showTab('chat')" data-tab="chat">
-    <span class="nav-icon">💬</span><span>Chat</span>
+  <button class="bottom-nav-item" onclick="showTab('read')" data-tab="read">
+    <span class="nav-icon">📖</span><span>Read</span>
   </button>
-  <button class="bottom-nav-item" onclick="showTab('oev')" data-tab="oev">
-    <span class="nav-icon">✍️</span><span>Øv</span>
-  </button>
-  <button class="bottom-nav-item" onclick="showTab('oer')" data-tab="oer">
-    <span class="nav-icon">🗺️</span><span>Øer</span>
+  <button class="bottom-nav-item" onclick="showTab('practice')" data-tab="practice">
+    <span class="nav-icon">✍️</span><span>Practice</span>
   </button>
   <button class="bottom-nav-item" onclick="showTab('test')" data-tab="test">
     <span class="nav-icon">🎯</span><span>Test</span>
