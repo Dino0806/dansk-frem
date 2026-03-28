@@ -1425,7 +1425,7 @@
     <!-- LOG MODE SWITCHER -->
     <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
       <button class="chat-mode-btn active" id="logModeFejlBtn" onclick="setLogMode('fejl')">📋 Errors<span class="err-badge" id="errBadgeLog" style="display:none;margin-left:4px;"></span></button>
-      <button class="chat-mode-btn" id="logModeWordsBtn" onclick="setLogMode('words')">📚 Words</button>
+      <button class="chat-mode-btn" id="logModeWordsBtn" onclick="setLogMode('words')">📚 Words <span id="wordsBadge" style="font-size:0.7rem;opacity:0.7;"></span></button>
       <button class="chat-mode-btn" id="logModeArchivBtn" onclick="setLogMode('archiv')">📦 Archive</button>
       <button class="chat-mode-btn" id="logModeNoterBtn" onclick="setLogMode('noter')">📓 Notes</button>
       <button class="chat-mode-btn" id="logModeAnkiBtn" onclick="setLogMode('anki')">🃏 Anki</button>
@@ -5831,19 +5831,42 @@ document.addEventListener('click', e => {
 function saveReadWord() {
   if (!readCurrentWord) return;
   const w = readCurrentWord;
-  window.savedWords = window.savedWords || [];
-  if (window.savedWords.find(x => x.word === w.word)) { closeReadTooltip(); return; }
+  // Ensure array is initialised
+  if (!Array.isArray(window.savedWords)) window.savedWords = [];
+  // Avoid duplicates (case-insensitive)
+  if (window.savedWords.find(x => x.word.toLowerCase() === w.word.toLowerCase())) {
+    // Already saved – show feedback
+    const btn = document.getElementById('readTooltip').querySelector('button.btn-primary');
+    if (btn) { btn.textContent = '✓ Already saved'; btn.disabled = true; }
+    if (w.el) w.el.classList.add('saved');
+    setTimeout(closeReadTooltip, 800);
+    return;
+  }
   window.savedWords.unshift({
-    word: w.word, translation: w.translation||'', form: w.form||'',
-    note: w.note||'', date: new Date().toISOString(), context: readCurrentText?.title||''
+    word: w.word,
+    translation: w.translation || '',
+    form: w.form || '',
+    note: w.note || '',
+    date: new Date().toISOString(),
+    context: readCurrentText?.title || ''
   });
   localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
   if (window._fbSave) window._fbSave({ savedWords: window.savedWords });
+  updateWordsBadge();
   if (w.el) w.el.classList.add('saved');
-  closeReadTooltip();
+  // Show confirmation in tooltip
+  const btn = document.getElementById('readTooltip').querySelector('button.btn-primary');
+  if (btn) { btn.textContent = '✓ Saved to Log!'; btn.disabled = true; }
+  setTimeout(closeReadTooltip, 700);
+}
+
+function updateWordsBadge() {
+  const el = document.getElementById('wordsBadge');
+  if (el) el.textContent = window.savedWords?.length ? '(' + window.savedWords.length + ')' : '';
 }
 
 function renderWordsList() {
+  updateWordsBadge();
   const container = document.getElementById('wordsList');
   if (!container) return;
   window.savedWords = window.savedWords || [];
@@ -5938,7 +5961,9 @@ loadSettings();
 loadData();
 loadOeer();
 loadDailyContent();
-setPracticeMode('chat'); // ensure only chat pane visible on load
+setPracticeMode('chat');
+updateWordsBadge();
+updateReadLibCount();
 </script>
 
 <!-- MOBILE BOTTOM NAV -->
