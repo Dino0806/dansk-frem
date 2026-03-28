@@ -156,6 +156,9 @@
   .err-badge { position:absolute; top:5px; right:4px; background:var(--red); color:white; font-size:0.58rem; font-weight:700; min-width:15px; height:15px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
 
   main { max-width:860px; margin:0 auto; padding:32px 24px; }
+  /* Read tab uses full available width */
+  body.read-active main { max-width:1100px; }
+  @media(max-width:600px) { body.read-active main { max-width:100%; } }
   .section { display:none; }
   .section.active { display:block; }
 
@@ -1064,7 +1067,7 @@
       </div>
 
       <!-- Clickable text -->
-      <div id="readTextBody" style="font-size:1.05rem;line-height:2.1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px 24px;margin-bottom:20px;"></div>
+      <div id="readTextBody" style="font-size:1.05rem;line-height:2.0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px 32px;margin-bottom:20px;"></div>
 
       <!-- Word tooltip -->
       <div id="readTooltip" style="display:none;position:fixed;z-index:500;background:var(--dark);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 16px;max-width:260px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
@@ -1497,12 +1500,23 @@
 
     <!-- WORDS PANE -->
     <div id="logPanewords" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
         <div>
           <div class="section-title" style="margin-bottom:4px;">📚 Saved Words</div>
-          <div style="font-size:0.82rem;color:var(--muted);">Words you saved while reading. Click a word to export as Anki card.</div>
+          <div style="font-size:0.82rem;color:var(--muted);">Select words and export as Anki cards.</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="clearSavedWords()" style="color:var(--red);">Clear all ×</button>
+      </div>
+      <!-- Bulk actions bar -->
+      <div id="wordsActionBar" style="display:none;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(200,16,46,0.08);border:1px solid rgba(200,16,46,0.2);border-radius:10px;flex-wrap:wrap;">
+        <span id="wordsSelectedCount" style="font-size:0.85rem;font-weight:600;flex:1;">0 selected</span>
+        <button class="btn btn-primary btn-sm" onclick="exportSelectedWordsToAnki()">🃏 Export to Anki</button>
+        <button class="btn btn-ghost btn-sm" onclick="deselectAllWords()">✕ Deselect</button>
+      </div>
+      <!-- Select controls -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn btn-ghost btn-sm" onclick="selectAllWords()">Select all</button>
+        <button class="btn btn-ghost btn-sm" onclick="deselectAllWords()">Deselect all</button>
       </div>
       <div id="wordsList"></div>
     </div><!-- /logPanewords -->
@@ -2519,7 +2533,8 @@ function showTab(id) {
   });
   document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
   if (id === 'practice') setPracticeMode(practiceMode || 'chat');
-  if (id === 'read') updateReadLibCount();
+  if (id === 'read') { updateReadLibCount(); document.body.classList.add('read-active'); }
+  else { document.body.classList.remove('read-active'); }
   if (id === 'log') renderErrors();
 }
 function switchWriteMode(mode, btn) {
@@ -5865,6 +5880,47 @@ function updateWordsBadge() {
   if (el) el.textContent = window.savedWords?.length ? '(' + window.savedWords.length + ')' : '';
 }
 
+function updateWordsActionBar() {
+  const selected = document.querySelectorAll('.word-checkbox:checked');
+  const bar   = document.getElementById('wordsActionBar');
+  const count = document.getElementById('wordsSelectedCount');
+  if (!bar) return;
+  bar.style.display = selected.length > 0 ? 'flex' : 'none';
+  if (count) count.textContent = selected.length + ' word' + (selected.length === 1 ? '' : 's') + ' selected';
+}
+
+function selectAllWords() {
+  document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = true);
+  updateWordsActionBar();
+}
+
+function deselectAllWords() {
+  document.querySelectorAll('.word-checkbox').forEach(cb => cb.checked = false);
+  const bar = document.getElementById('wordsActionBar');
+  if (bar) bar.style.display = 'none';
+}
+
+async function exportSelectedWordsToAnki() {
+  const selected = [...document.querySelectorAll('.word-checkbox:checked')].map(cb => parseInt(cb.dataset.idx));
+  if (!selected.length) return;
+  const words = selected.map(i => window.savedWords[i]).filter(Boolean);
+  // Build kontext-style cards from saved word data – no API call needed
+  const cards = words.map((w, j) => ({
+    type: 'kontext',
+    id: Date.now() + j,
+    word: w.word,
+    sentence_da: w.word,
+    sentence_en: w.translation,
+    word_en: w.translation,
+    ipa: '',
+    wordtype: w.form || '',
+    mnemonic: w.note || '',
+    grammar_note: w.form || '',
+  }));
+  await buildAndDownloadApkg(cards, 'dansk_frem_words');
+  deselectAllWords();
+}
+
 function renderWordsList() {
   updateWordsBadge();
   const container = document.getElementById('wordsList');
@@ -5875,10 +5931,14 @@ function renderWordsList() {
       <div style="font-size:2rem;margin-bottom:12px;">📚</div>
       <div>No words saved yet. Read a text and click words to save them.</div>
     </div>`;
+    deselectAllWords();
     return;
   }
   container.innerHTML = window.savedWords.map((w, i) => `
-    <div class="word-log-item">
+    <div class="word-log-item" style="cursor:pointer;" onclick="document.getElementById('wordCb${i}').click()">
+      <input type="checkbox" id="wordCb${i}" class="word-checkbox" data-idx="${i}"
+        style="width:16px;height:16px;accent-color:var(--red);flex-shrink:0;cursor:pointer;"
+        onclick="event.stopPropagation();updateWordsActionBar()">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:2px;">
           <span class="word-log-da">${esc(w.word)}</span>
@@ -5887,7 +5947,7 @@ function renderWordsList() {
         <div class="word-log-note">${esc(w.form)}${w.context ? ' · ' + esc(w.context) : ''}</div>
         ${w.note ? `<div class="word-log-note" style="color:var(--accent);">💡 ${esc(w.note)}</div>` : ''}
       </div>
-      <button onclick="deleteWord(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;flex-shrink:0;padding:4px;">🗑️</button>
+      <button onclick="event.stopPropagation();deleteWord(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;flex-shrink:0;padding:4px;">🗑️</button>
     </div>`).join('');
 }
 
