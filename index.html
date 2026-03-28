@@ -1426,12 +1426,12 @@
   <div id="log" class="section">
 
     <!-- LOG MODE SWITCHER -->
-    <div style="display:flex;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
-      <button class="chat-mode-btn active" id="logModeFejlBtn" onclick="setLogMode('fejl')">📋 Errors<span class="err-badge" id="errBadgeLog" style="display:none;margin-left:4px;"></span></button>
-      <button class="chat-mode-btn" id="logModeWordsBtn" onclick="setLogMode('words')">📚 Words <span id="wordsBadge" style="font-size:0.7rem;opacity:0.7;"></span></button>
-      <button class="chat-mode-btn" id="logModeArchivBtn" onclick="setLogMode('archiv')">📦 Archive</button>
-      <button class="chat-mode-btn" id="logModeNoterBtn" onclick="setLogMode('noter')">📓 Notes</button>
-      <button class="chat-mode-btn" id="logModeAnkiBtn" onclick="setLogMode('anki')">🃏 Anki</button>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:5px;">
+      <button class="chat-mode-btn active" id="logModeFejlBtn" onclick="setLogMode('fejl')" style="flex:1;min-width:calc(33% - 6px);">📋 Errors<span class="err-badge" id="errBadgeLog" style="display:none;margin-left:4px;"></span></button>
+      <button class="chat-mode-btn" id="logModeWordsBtn" onclick="setLogMode('words')" style="flex:1;min-width:calc(33% - 6px);">📚 Words <span id="wordsBadge" style="font-size:0.7rem;opacity:0.7;"></span></button>
+      <button class="chat-mode-btn" id="logModeArchivBtn" onclick="setLogMode('archiv')" style="flex:1;min-width:calc(33% - 6px);">📦 Archive</button>
+      <button class="chat-mode-btn" id="logModeNoterBtn" onclick="setLogMode('noter')" style="flex:1;min-width:calc(50% - 6px);">📓 Notes</button>
+      <button class="chat-mode-btn" id="logModeAnkiBtn" onclick="setLogMode('anki')" style="flex:1;min-width:calc(50% - 6px);">🃏 Anki</button>
     </div>
 
     <!-- FEJL PANE -->
