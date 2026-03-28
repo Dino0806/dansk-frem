@@ -913,7 +913,7 @@
       <div class="stat-card"><div class="stat-num" id="statSentences">0</div><div class="stat-label">Longest text (words)</div></div>
       <div class="stat-card"><div class="stat-num" id="statChats">0</div><div class="stat-label" data-i18n="statChats">Conversations</div></div>
       <div class="stat-card"><div class="stat-num" id="statDailyWords">0</div><div class="stat-label" id="statDailyLabel">Words today / 100</div></div>
-      <div class="stat-card"><div class="stat-num" id="statStreakHome">0</div><div class="stat-label">🔥 Day streak</div></div>
+      <div class="stat-card"><div class="stat-num" id="statTextsRead">0</div><div class="stat-label">📖 Texts read</div></div>
     </div>
 
     <!-- INSIGHTS: Strengths/Weaknesses + Hours Learned -->
@@ -1902,8 +1902,8 @@ window.updateUI = function updateUI() {
   const wordsToday = (window.stats.dailyActivity && window.stats.dailyActivity[todayStr()]) || 0;
   document.getElementById('statDailyWords').textContent = wordsToday;
   document.getElementById('statDailyLabel').textContent = `Words today / ${goal}`;
-  const streakHome = document.getElementById('statStreakHome');
-  if (streakHome) streakHome.textContent = window.stats.streak || 0;
+  const textsReadEl = document.getElementById('statTextsRead');
+  if (textsReadEl) textsReadEl.textContent = (window.readLibrary || []).length;
   // streak badge
   const streak = window.stats.streak || 0;
   const streakEl = document.getElementById('streakCount');
@@ -1949,6 +1949,8 @@ function renderStrengthsWeaknesses() {
   const totalChats   = s.chats || 0;
   const totalPhrases = (window.sprogOeer || []).reduce((sum, oe) => sum + (oe.phrases?.length || 0), 0);
   const ankiCount    = (window.ankiCards || []).length;
+  const savedWords   = (window.savedWords || []).length;
+  const readTexts    = (window.readLibrary || []).length;
 
   // Count errors per area
   const errBySource = {};
@@ -1960,11 +1962,7 @@ function renderStrengthsWeaknesses() {
   });
 
   // ── SCORE EACH AREA (positive - negative, capped 0–100) ──
-  // Score formula: positive actions raise score, errors lower it.
-  // Each area normalized so 0 = never practiced, 100 = excellent ratio.
-
   function score(positive, errors, weight) {
-    // positive = activity points, errors = mistake count, weight = scale factor
     if (positive === 0 && errors === 0) return null; // never touched
     const raw = (positive * weight) - (errors * 2);
     const max = Math.max(positive * weight, 1);
@@ -1973,9 +1971,17 @@ function renderStrengthsWeaknesses() {
 
   const areas = [
     {
+      id: 'reading',
+      label: '📖 Reading',
+      positiveVal: savedWords + (readTexts * 3), // saved words + texts read
+      errors: 0,
+      weight: 4,
+      tip: `${readTexts} texts saved · ${savedWords} words looked up`,
+    },
+    {
       id: 'writing',
       label: '✍️ Writing',
-      positiveVal: Math.round(totalWords / 50),   // 1 point per 50 words
+      positiveVal: Math.round(totalWords / 50),
       errors: (errBySource.skriv || 0) + (errBySource.job || 0) + (errBySource.billede || 0),
       weight: 3,
       tip: `${totalWords} words written`,
@@ -1991,7 +1997,7 @@ function renderStrengthsWeaknesses() {
     {
       id: 'grammar',
       label: '📐 Grammar',
-      positiveVal: Math.round(totalWords / 30), // every 30 words written = 1 grammar point
+      positiveVal: Math.round(totalWords / 30),
       errors: (errByTag.grammatik || 0) + (errByTag.ordstilling || 0),
       weight: 4,
       tip: `${(errByTag.grammatik || 0) + (errByTag.ordstilling || 0)} grammar errors logged`,
@@ -1999,10 +2005,10 @@ function renderStrengthsWeaknesses() {
     {
       id: 'vocabulary',
       label: '🗺️ Vocabulary',
-      positiveVal: totalPhrases + ankiCount,
+      positiveVal: totalPhrases + ankiCount + savedWords,
       errors: errByTag.ordvalg || 0,
       weight: 3,
-      tip: `${totalPhrases} phrases · ${ankiCount} Anki cards`,
+      tip: `${totalPhrases} phrases · ${ankiCount} Anki cards · ${savedWords} saved words`,
     },
     {
       id: 'testing',
