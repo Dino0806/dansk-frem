@@ -1949,8 +1949,15 @@ function renderStrengthsWeaknesses() {
   const totalChats   = s.chats || 0;
   const totalPhrases = (window.sprogOeer || []).reduce((sum, oe) => sum + (oe.phrases?.length || 0), 0);
   const ankiCount    = (window.ankiCards || []).length;
-  const savedWords   = (window.savedWords || []).length;
-  const readTexts    = (window.readLibrary || []).length;
+  const savedWordsCount = (window.savedWords || []).length;
+  const readTexts       = (window.readLibrary || []).length;
+
+  // Reading score: based on absolute thresholds (no error source)
+  // 100% = 20 texts + 100 saved words
+  const readingActivity = (readTexts * 5) + savedWordsCount; // max meaningful = 100+100 = 200
+  const readingScore    = readTexts === 0 && savedWordsCount === 0
+    ? null
+    : Math.min(100, Math.round((readingActivity / 200) * 100));
 
   // Count errors per area
   const errBySource = {};
@@ -1973,10 +1980,11 @@ function renderStrengthsWeaknesses() {
     {
       id: 'reading',
       label: '📖 Reading',
-      positiveVal: savedWords + (readTexts * 3), // saved words + texts read
+      positiveVal: readingActivity,
       errors: 0,
-      weight: 4,
-      tip: `${readTexts} texts saved · ${savedWords} words looked up`,
+      weight: 1,
+      sc: readingScore,   // pre-computed – bypass generic score()
+      tip: `${readTexts} texts saved · ${savedWordsCount} words looked up`,
     },
     {
       id: 'writing',
@@ -2005,10 +2013,10 @@ function renderStrengthsWeaknesses() {
     {
       id: 'vocabulary',
       label: '🗺️ Vocabulary',
-      positiveVal: totalPhrases + ankiCount + savedWords,
+      positiveVal: totalPhrases + ankiCount + savedWordsCount,
       errors: errByTag.ordvalg || 0,
       weight: 3,
-      tip: `${totalPhrases} phrases · ${ankiCount} Anki cards · ${savedWords} saved words`,
+      tip: `${totalPhrases} phrases · ${ankiCount} Anki cards · ${savedWordsCount} saved words`,
     },
     {
       id: 'testing',
@@ -2020,9 +2028,9 @@ function renderStrengthsWeaknesses() {
     },
   ];
 
-  // Compute scores
+  // Compute scores – use pre-computed sc if already set
   const scored = areas
-    .map(a => ({ ...a, sc: score(a.positiveVal, a.errors, a.weight) }))
+    .map(a => ({ ...a, sc: a.sc !== undefined ? a.sc : score(a.positiveVal, a.errors, a.weight) }))
     .filter(a => a.sc !== null)
     .sort((a, b) => a.sc - b.sc);
 
