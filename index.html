@@ -51,11 +51,13 @@
       const snap = await getDoc(doc(db, 'users', uid));
       if (!snap.exists()) return;
       const d = snap.data();
-      if (d.errorLog)   { window.errorLog    = d.errorLog;   localStorage.setItem('danskFrem_errorLog',   JSON.stringify(d.errorLog)); }
-      if (d.stats)      { window.stats       = d.stats;      localStorage.setItem('danskFrem_stats',      JSON.stringify(d.stats)); }
-      if (d.notes)      { window.notes       = d.notes;      localStorage.setItem('danskFrem_notes',      JSON.stringify(d.notes)); }
-      if (d.archiveLog) { window.archiveLog  = d.archiveLog; localStorage.setItem('danskFrem_archiveLog', JSON.stringify(d.archiveLog)); }
-      if (d.oeer)       { window.sprogOeer   = d.oeer;       localStorage.setItem('danskFrem_oeer',       JSON.stringify(d.oeer)); }
+      if (d.errorLog)    { window.errorLog    = d.errorLog;    localStorage.setItem('danskFrem_errorLog',    JSON.stringify(d.errorLog)); }
+      if (d.stats)       { window.stats       = d.stats;       localStorage.setItem('danskFrem_stats',       JSON.stringify(d.stats)); }
+      if (d.notes)       { window.notes       = d.notes;       localStorage.setItem('danskFrem_notes',       JSON.stringify(d.notes)); }
+      if (d.archiveLog)  { window.archiveLog  = d.archiveLog;  localStorage.setItem('danskFrem_archiveLog',  JSON.stringify(d.archiveLog)); }
+      if (d.oeer)        { window.sprogOeer   = d.oeer;        localStorage.setItem('danskFrem_oeer',        JSON.stringify(d.oeer)); }
+      if (d.readLibrary) { window.readLibrary = d.readLibrary; localStorage.setItem('danskFrem_readLibrary', JSON.stringify(d.readLibrary)); }
+      if (d.savedWords)  { window.savedWords  = d.savedWords;  localStorage.setItem('danskFrem_savedWords',  JSON.stringify(d.savedWords)); }
       if (d.apiKey)    { window._danskApiKey  = d.apiKey;    window.appSettings = {...(window.appSettings||{}), apiKey: d.apiKey}; localStorage.setItem('danskFrem_settings', JSON.stringify(window.appSettings)); const el = document.getElementById('apiKeyInput'); if(el) el.value = d.apiKey; }
       if (typeof window.updateUI === 'function') window.updateUI();
       if (typeof window.renderNotes === 'function') window.renderNotes();
@@ -69,11 +71,13 @@
     syncUnsubscribe = onSnapshot(doc(db, 'users', uid), (snap) => {
       if (!snap.exists()) return;
       const d = snap.data();
-      if (d.errorLog)   { window.errorLog   = d.errorLog;   localStorage.setItem('danskFrem_errorLog',   JSON.stringify(d.errorLog)); }
-      if (d.stats)      { window.stats      = d.stats;      localStorage.setItem('danskFrem_stats',      JSON.stringify(d.stats)); }
-      if (d.notes)      { window.notes      = d.notes;      localStorage.setItem('danskFrem_notes',      JSON.stringify(d.notes)); }
-      if (d.archiveLog) { window.archiveLog = d.archiveLog; localStorage.setItem('danskFrem_archiveLog', JSON.stringify(d.archiveLog)); }
-      if (d.oeer)       { window.sprogOeer  = d.oeer;       localStorage.setItem('danskFrem_oeer',       JSON.stringify(d.oeer)); }
+      if (d.errorLog)    { window.errorLog    = d.errorLog;    localStorage.setItem('danskFrem_errorLog',    JSON.stringify(d.errorLog)); }
+      if (d.stats)       { window.stats       = d.stats;       localStorage.setItem('danskFrem_stats',       JSON.stringify(d.stats)); }
+      if (d.notes)       { window.notes       = d.notes;       localStorage.setItem('danskFrem_notes',       JSON.stringify(d.notes)); }
+      if (d.archiveLog)  { window.archiveLog  = d.archiveLog;  localStorage.setItem('danskFrem_archiveLog',  JSON.stringify(d.archiveLog)); }
+      if (d.oeer)        { window.sprogOeer   = d.oeer;        localStorage.setItem('danskFrem_oeer',        JSON.stringify(d.oeer)); }
+      if (d.readLibrary) { window.readLibrary = d.readLibrary; localStorage.setItem('danskFrem_readLibrary', JSON.stringify(d.readLibrary)); updateReadLibCount(); }
+      if (d.savedWords)  { window.savedWords  = d.savedWords;  localStorage.setItem('danskFrem_savedWords',  JSON.stringify(d.savedWords)); if (typeof renderWordsList === 'function') renderWordsList(); }
       if (typeof window.updateUI === 'function')      window.updateUI();
       if (typeof window.renderErrors === 'function')  window.renderErrors();
       if (typeof window.renderNotes === 'function')   window.renderNotes();
@@ -4372,7 +4376,7 @@ const I18N = {
     syncNotLoggedIn: 'Not signed in – data saved locally only',
     syncLoginBtn: 'Sign in with Google',
     syncLogoutBtn: 'Sign out',
-    syncHint: 'Error log, notes and stats sync automatically across all devices.',
+    syncHint: 'Error log, notes, read library, saved words and stats sync automatically across all devices.',
     settingsAbout: 'About',
     settingsClose: 'Close',
     yourLevel: 'Your level',
@@ -5707,6 +5711,7 @@ function saveCurrentText() {
   // Keep max 30 texts
   if (window.readLibrary.length > 30) window.readLibrary = window.readLibrary.slice(0,30);
   localStorage.setItem('danskFrem_readLibrary', JSON.stringify(window.readLibrary));
+  if (window._fbSave) window._fbSave({ readLibrary: window.readLibrary });
   readCurrentText.saved = true;
   const saveBtn = document.getElementById('readSaveBtn');
   saveBtn.textContent = '✓ Saved';
@@ -5750,6 +5755,7 @@ function openLibraryText(i) {
 function deleteLibraryText(i) {
   window.readLibrary.splice(i, 1);
   localStorage.setItem('danskFrem_readLibrary', JSON.stringify(window.readLibrary));
+  if (window._fbSave) window._fbSave({ readLibrary: window.readLibrary });
   renderReadLibrary();
 }
 
@@ -5811,8 +5817,50 @@ function saveReadWord() {
     note: w.note||'', date: new Date().toISOString(), context: readCurrentText?.title||''
   });
   localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
+  if (window._fbSave) window._fbSave({ savedWords: window.savedWords });
   if (w.el) w.el.classList.add('saved');
   closeReadTooltip();
+}
+
+function renderWordsList() {
+  const container = document.getElementById('wordsList');
+  if (!container) return;
+  window.savedWords = window.savedWords || [];
+  if (!window.savedWords.length) {
+    container.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);">
+      <div style="font-size:2rem;margin-bottom:12px;">📚</div>
+      <div>No words saved yet. Read a text and click words to save them.</div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = window.savedWords.map((w, i) => `
+    <div class="word-log-item">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:2px;">
+          <span class="word-log-da">${esc(w.word)}</span>
+          <span class="word-log-en">${esc(w.translation)}</span>
+        </div>
+        <div class="word-log-note">${esc(w.form)}${w.context ? ' · ' + esc(w.context) : ''}</div>
+        ${w.note ? `<div class="word-log-note" style="color:var(--accent);">💡 ${esc(w.note)}</div>` : ''}
+      </div>
+      <button onclick="deleteWord(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;flex-shrink:0;padding:4px;">🗑️</button>
+    </div>`).join('');
+}
+
+function deleteWord(i) {
+  window.savedWords = window.savedWords || [];
+  window.savedWords.splice(i, 1);
+  localStorage.setItem('danskFrem_savedWords', JSON.stringify(window.savedWords));
+  if (window._fbSave) window._fbSave({ savedWords: window.savedWords });
+  renderWordsList();
+}
+
+function clearSavedWords() {
+  if (!confirm('Delete all saved words?')) return;
+  window.savedWords = [];
+  localStorage.setItem('danskFrem_savedWords', JSON.stringify([]));
+  if (window._fbSave) window._fbSave({ savedWords: [] });
+  renderWordsList();
 }
 
 // ── COMPREHENSION QUESTIONS ──────────────────────────────────
